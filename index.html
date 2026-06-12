@@ -778,12 +778,17 @@
   }
 
   /* Weather Forecast Cards Specifics */
+  .weather-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
   .forecast-card {
     background: var(--surface-2);
-    padding: 12px;
+    padding: 12px 6px;
     border-radius: 12px;
     text-align: center;
-    min-width: 80px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
   }
@@ -795,6 +800,7 @@
     .live-clock { font-size: 0.7rem; padding: 4px 10px; }
     .weather-btn { font-size: 0.7rem; padding: 4px 10px; }
     .search-compact-text { display: none; }
+    .weather-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 6px; }
     .choice-container { gap: 20px; }
     .choice-card { width: 220px; padding: 20px; }
     .breathing-text { font-size: 1.5rem; }
@@ -988,7 +994,7 @@
 
 <!-- WEATHER MODAL -->
 <div id="weatherModal" class="choice-modal">
-  <div class="choice-container" style="background: var(--surface); padding: 30px; border-radius: var(--radius-card); max-width: 400px; width: 90%; position: relative;">
+  <div class="choice-container" style="background: var(--surface); padding: 30px; border-radius: var(--radius-card); max-width: 760px; width: 92%; position: relative;">
     <span class="close-choice" onclick="document.getElementById('weatherModal').classList.remove('active')" style="top: 15px; right: 20px; font-size: 1.5rem;">&times;</span>
     
     <div style="display: flex; justify-content: flex-start; align-items: center; gap: 12px; margin-bottom: 20px; margin-right: 36px; width: calc(100% - 36px);">
@@ -999,13 +1005,13 @@
     <input type="text" id="citySearch" placeholder="Search another city..." style="width: 100%; padding: 12px 16px; margin-bottom: 20px; border-radius: 40px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); outline: none; transition: var(--transition);">
     
     <div id="weatherDetails" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 4px; text-align: center; color: var(--accent); width: 100%;">--°C</div>
-    <div id="weatherExtra" style="font-size: 0.85rem; color: var(--text-2); text-align: center; margin-bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;"></div>
+    <div id="weatherExtra" style="font-size: 0.85rem; color: var(--text-2); text-align: center; margin-bottom: 24px; width: 100%; display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;"></div>
 
     <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">Hourly Forecast</h4>
-    <div id="hourlyCards" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; width: 100%; margin-bottom: 8px;"></div>
+    <div id="hourlyCards" class="weather-grid" style="margin-bottom: 16px;"></div>
 
     <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">5-Day Forecast</h4>
-    <div id="forecastCards" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; width: 100%;"></div>
+    <div id="forecastCards" class="weather-grid"></div>
   </div>
 </div>
 
@@ -1662,7 +1668,7 @@
       let startIdx = data.hourly.time.findIndex(t => new Date(t) >= nowIso);
       if (startIdx === -1) startIdx = 0;
       let hourlyHtml = '';
-      for (let i = startIdx; i < startIdx + 24 && i < data.hourly.time.length; i++) {
+      for (let i = startIdx; i < startIdx + 24 && i < data.hourly.time.length; i += 2) {
         const date = new Date(data.hourly.time[i]);
         const hourLabel = date.toLocaleTimeString('en-US', {hour: 'numeric'});
         const hEmoji = weatherCodes[data.hourly.weather_code[i]] || '☀️';
