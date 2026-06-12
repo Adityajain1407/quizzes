@@ -844,6 +844,34 @@
   .saved-back-btn:hover { background: var(--surface-2); }
   .saved-delete-btn { background: #d9534f; color: white; }
   .saved-delete-btn:hover { background: #c7362b; }
+  .saved-detail-wrap { position: relative; }
+  .saved-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1.3rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    z-index: 5;
+  }
+  .saved-nav-arrow:hover { background: var(--accent); color: white; }
+  .saved-nav-prev { left: -16px; }
+  .saved-nav-next { right: -16px; }
+  @media (max-width: 700px) {
+    .saved-nav-prev { left: -8px; width: 36px; height: 36px; font-size: 1.1rem; }
+    .saved-nav-next { right: -8px; width: 36px; height: 36px; font-size: 1.1rem; }
+  }
   #savedBtn.active { background: var(--accent); color: white; }
 </style>
 </head>
@@ -1201,20 +1229,24 @@
     }
     contentDiv.innerHTML = html;
     document.querySelectorAll(".folder-card").forEach(card => card.addEventListener("click",()=>navigateToFolder(card.dataset.folder)));
-    document.querySelectorAll(".saved-item").forEach(el => el.addEventListener("click", () => {
-      const item = savedItems.find(s => s.id === parseInt(el.dataset.id));
-      renderSavedDetail(item);
+    document.querySelectorAll(".saved-item").forEach((el, idx) => el.addEventListener("click", () => {
+      renderSavedDetail(savedItems, idx);
     }));
     updateBreadcrumb();
   }
-  function renderSavedDetail(item) {
+  function renderSavedDetail(items, idx) {
+    const item = items[idx];
     let optsHtml = '';
     for (let opt of item.opts) {
       const optLetter = opt.charAt(0);
       const cls = optLetter === item.ans ? 'correct-highlight' : '';
       optsHtml += `<div class="option ${cls}">${escapeHtml(opt)}</div>`;
     }
-    contentDiv.innerHTML = `<div class="saved-detail">
+    const prevArrow = idx > 0 ? `<button class="saved-nav-arrow saved-nav-prev" id="savedNavPrev" title="Previous saved question">‹</button>` : '';
+    const nextArrow = idx < items.length - 1 ? `<button class="saved-nav-arrow saved-nav-next" id="savedNavNext" title="Next saved question">›</button>` : '';
+    contentDiv.innerHTML = `<div class="saved-detail-wrap">
+      ${prevArrow}
+      <div class="saved-detail">
         <div class="question-text">${item.id}. ${escapeHtml(item.text)}</div>
         <div class="options-list">${optsHtml}</div>
         <div class="explanation-box">${formatExplanationRich(item.exp)}</div>
@@ -1222,8 +1254,12 @@
           <button class="saved-back-btn" id="savedDetailBack">← Back</button>
           <button class="saved-delete-btn" id="savedDetailDelete">🗑️ Delete from Saved</button>
         </div>
-      </div>`;
+      </div>
+      ${nextArrow}
+    </div>`;
     document.getElementById('savedDetailBack').onclick = () => renderNavigationView();
+    document.getElementById('savedNavPrev')?.addEventListener('click', () => renderSavedDetail(items, idx - 1));
+    document.getElementById('savedNavNext')?.addEventListener('click', () => renderSavedDetail(items, idx + 1));
     document.getElementById('savedDetailDelete').onclick = async () => {
       if (!db) { showToast("Unavailable (Firebase not loaded)"); return; }
       if (!confirm("Remove this question from Saved? This will also un-mark the Save button next time you open that quiz.")) return;
