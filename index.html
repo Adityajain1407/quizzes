@@ -205,7 +205,14 @@
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    margin-left: auto;
+  }
+  .header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border-2);
+    margin: 0 4px;
   }
   .weather-btn {
     background: var(--surface-2);
@@ -610,6 +617,188 @@
     color: var(--accent);
   }
 
+  /* ----- HUB MODAL (Widgets + Settings) ----- */
+  .hub-panel {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    width: 92%;
+    max-width: 640px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 26px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .hub-header h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .hub-scroll {
+    overflow-y: auto;
+    padding: 22px 26px 28px;
+  }
+  .hub-section + .hub-section {
+    margin-top: 28px;
+  }
+  .hub-section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .hub-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-3);
+    font-weight: 600;
+    margin: 16px 0 10px;
+  }
+  .hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+  }
+  .hub-grid .choice-card {
+    width: 100%;
+    padding: 22px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    box-shadow: var(--shadow-sm);
+  }
+  .hub-grid .choice-emoji { font-size: 2.6rem; margin-bottom: 10px; }
+  .hub-grid .choice-title { font-size: 1.05rem; margin-bottom: 4px; }
+  .hub-grid .choice-desc { font-size: 0.78rem; }
+  .theme-swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    gap: 10px;
+  }
+  .theme-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    border-radius: 14px;
+    border: 1px solid var(--border-2);
+    background: var(--surface-2);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--text);
+    transition: var(--transition);
+  }
+  .theme-swatch span:first-child { font-size: 1.6rem; }
+  .theme-swatch:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: var(--accent);
+  }
+  .daynight-row { display: flex; gap: 10px; }
+  .daynight-row .theme-swatch { flex-direction: row; flex: 1; padding: 12px; font-size: 0.85rem; }
+  .daynight-row .theme-swatch span:first-child { font-size: 1.2rem; }
+  .settings-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 40px;
+    border: 1px solid var(--border-2);
+    background: var(--surface-2);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    margin: 0 10px 10px 0;
+  }
+  .settings-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .settings-pill .chevron { font-size: 0.65rem; transition: transform 0.2s; }
+  .settings-pill.open .chevron { transform: rotate(180deg); }
+  .collapsible {
+    display: none;
+    margin: 4px 0 6px;
+    animation: fadeInDown 0.18s ease;
+  }
+  .collapsible.open { display: block; }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .clock-cal-layout {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .clock-col { flex: 0 0 auto; display: flex; justify-content: center; padding: 8px; }
+  .cal-col { flex: 1 1 260px; min-width: 240px; }
+  .clock-cal-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border-2);
+    opacity: 0.5;
+    min-height: 240px;
+  }
+  @media (max-width: 600px) {
+    .clock-cal-divider { display: none; }
+    .clock-cal-layout { gap: 16px; }
+  }
+  .calendar-header {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    width: 100%;
+    text-align: center;
+  }
+  .calendar-grid .cal-dow {
+    font-size: 0.72rem;
+    color: var(--text);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 0 8px;
+    opacity: 0.85;
+  }
+  .calendar-grid .cal-day {
+    padding: 8px 0;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--surface-2);
+  }
+  .calendar-grid .cal-day.other-month {
+    background: transparent;
+    color: var(--text-2);
+    opacity: 0.65;
+  }
+  .calendar-grid .cal-day.today {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+  }
+
   /* BREATHING MODAL */
   .breathing-modal {
     display: none;
@@ -804,7 +993,7 @@
     .header-inner { gap: 10px; height: 60px; }
     .logo-text { display: none; }
     .folders-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-    .live-clock { font-size: 0.7rem; padding: 4px 10px; }
+    .header-divider, .live-clock { display: none; }
     .weather-btn { font-size: 0.7rem; padding: 4px 10px; }
     .search-compact-text { display: none; }
     .weather-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 6px; }
@@ -902,8 +1091,8 @@
     <div class="header-actions">
       <button class="weather-btn" id="savedBtn" title="Saved Questions">🔖 Saved</button>
       <button class="weather-btn" id="weatherBtn" title="Interactive Weather">🌤️ Loading...</button>
-      <div class="theme-toggle" id="themeBtn" title="Change Theme">🎨</div>
-      <div class="live-clock" id="liveClock">--:-- -- • --- --, ---- • -------</div>
+      <div class="header-divider"></div>
+      <div class="live-clock" id="liveClock" style="cursor:pointer;">--:-- -- • -------</div>
     </div>
   </div>
 </header>
@@ -931,22 +1120,84 @@
 
 <!-- CHOICE MODAL -->
 <div id="choiceModal" class="choice-modal">
-  <span class="close-choice" id="closeChoiceBtn">&times;</span>
-  <div class="choice-container">
-    <div class="choice-card" id="dinoChoiceCard">
-      <div class="choice-emoji">🦖</div>
-      <div class="choice-title">Dino Runner</div>
-      <div class="choice-desc">Classic Chrome Dino game – jump over cacti, beat your high score.</div>
+  <div class="hub-panel">
+    <div class="hub-header">
+      <h3>✨ Quick Access</h3>
+      <span class="close-choice" id="closeChoiceBtn" style="position: static; font-size: 1.6rem;">&times;</span>
     </div>
-    <div class="choice-card" id="breathingChoiceCard">
-      <div class="choice-emoji">🧘</div>
-      <div class="choice-title">Breathing Exercise</div>
-      <div class="choice-desc">4-7-8 technique with animated circle & voice guidance.</div>
+    <div class="hub-scroll">
+      <div class="hub-section">
+        <div class="hub-section-title">🎮 Widgets</div>
+        <div class="hub-grid">
+          <div class="choice-card" id="dinoChoiceCard">
+            <div class="choice-emoji">🦖</div>
+            <div class="choice-title">Dino Runner</div>
+            <div class="choice-desc">Classic Chrome Dino game – jump over cacti, beat your high score.</div>
+          </div>
+          <div class="choice-card" id="breathingChoiceCard">
+            <div class="choice-emoji">🧘</div>
+            <div class="choice-title">Breathing Exercise</div>
+            <div class="choice-desc">4-7-8 technique with animated circle &amp; voice guidance.</div>
+          </div>
+        </div>
+      </div>
+      <div class="hub-section">
+        <div class="hub-section-title">⚙️ Settings</div>
+        <button class="settings-pill" id="themePillBtn" onclick="toggleSettingsPanel('themePanel', this)">
+          <span>🎨</span><span>Themes</span><span class="chevron">▾</span>
+        </button>
+        <button class="settings-pill" id="appearancePillBtn" onclick="toggleSettingsPanel('appearancePanel', this)">
+          <span>🌗</span><span>Appearance</span><span class="chevron">▾</span>
+        </button>
+
+        <div class="collapsible" id="themePanel">
+          <div class="theme-swatch-grid">
+            <button class="theme-swatch" style="background:#fff7ed; border-color:#f97316; color:#c2410c;" onclick="setTheme('default')"><span>🟠</span><span>Default</span></button>
+            <button class="theme-swatch" style="background:#e0f2fe; border-color:#0284c7; color:#075985;" onclick="setTheme('ocean')"><span>🌊</span><span>Ocean</span></button>
+            <button class="theme-swatch" style="background:#dcfce7; border-color:#16a34a; color:#166534;" onclick="setTheme('forest')"><span>🌲</span><span>Forest</span></button>
+            <button class="theme-swatch" style="background:#ffe4e6; border-color:#e11d48; color:#9f1239;" onclick="setTheme('sunset')"><span>🌅</span><span>Sunset</span></button>
+            <button class="theme-swatch" style="background:#f3e8ff; border-color:#9333ea; color:#6b21a8;" onclick="setTheme('amethyst')"><span>🔮</span><span>Amethyst</span></button>
+            <button class="theme-swatch" style="background:#f4f4f5; border-color:#000000; color:#000000;" onclick="setTheme('monochrome')"><span>⬛</span><span>Monochrome</span></button>
+          </div>
+        </div>
+
+        <div class="collapsible" id="appearancePanel">
+          <div class="daynight-row">
+            <button class="theme-swatch" onclick="setDarkMode(false)"><span>☀️</span><span>Day</span></button>
+            <button class="theme-swatch" onclick="setDarkMode(true)"><span>🌙</span><span>Night</span></button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- DINO GAME MODAL (dynamic srcdoc) -->
+<!-- CLOCK & CALENDAR MODAL -->
+<div id="clockModal" class="choice-modal">
+  <div class="hub-panel" style="max-width: 760px;">
+    <div class="hub-header">
+      <h3>🕐 Clock & Calendar</h3>
+      <span class="close-choice" id="closeClockBtn" style="position: static; font-size: 1.6rem;">&times;</span>
+    </div>
+    <div class="hub-scroll clock-cal-layout">
+      <div class="clock-col">
+        <svg id="analogClockSvg" viewBox="0 0 240 240" width="240" height="240">
+          <circle cx="120" cy="120" r="116" style="fill:var(--surface-2); stroke:var(--border-2); stroke-width:2;"/>
+          <g id="clockTicks"></g>
+          <g id="clockNumbers" style="fill:var(--text); font-size:16px; font-weight:700; font-family:inherit;"></g>
+          <line id="hourHand" x1="120" y1="120" x2="120" y2="68" style="stroke:var(--text); stroke-width:5; stroke-linecap:round;"/>
+          <line id="minHand" x1="120" y1="120" x2="120" y2="44" style="stroke:var(--text); stroke-width:3.5; stroke-linecap:round;"/>
+          <line id="secHand" x1="120" y1="120" x2="120" y2="34" style="stroke:var(--accent); stroke-width:2; stroke-linecap:round;"/>
+          <circle cx="120" cy="120" r="4" style="fill:var(--accent);"/>
+        </svg>
+      </div>
+      <div class="clock-cal-divider"></div>
+      <div class="cal-col">
+        <div id="calendarWrap" style="width:100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="dinoModal" class="dino-modal">
   <div class="dino-card">
     <div class="dino-header">
@@ -972,30 +1223,6 @@
     <div class="breathing-text" id="breathingStepText">Breathe In</div>
     <div class="timer-text" id="timerDisplay">4</div>
     <button class="stop-breathing" id="stopBreathingBtn">Stop Exercise</button>
-  </div>
-</div>
-
-<!-- THEME MODAL -->
-<div id="themeModal" class="choice-modal">
-  <div class="choice-container" style="background: var(--surface); padding: 30px; border-radius: var(--radius-card); max-width: 320px; width: 90%; position: relative;">
-    <span class="close-choice" onclick="document.getElementById('themeModal').classList.remove('active')" style="top: 15px; right: 20px; font-size: 1.5rem;">&times;</span>
-    <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; text-align: center; width: 100%;">Choose Theme</h3>
-    
-    <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('default')">🟠 Default</button>
-      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('ocean')">🌊 Ocean</button>
-      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('forest')">🌲 Forest</button>
-      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('sunset')">🌅 Sunset</button>
-      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('amethyst')">🔮 Amethyst</button>
-      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('monochrome')">⬛ Monochrome</button>
-    </div>
-
-    <div style="height: 1px; background: var(--border-2); margin: 20px 0; width: 100%;"></div>
-    
-    <div style="display: flex; gap: 10px; width: 100%;">
-      <button class="toolbar-btn" style="flex: 1; text-align: center;" onclick="setDarkMode(false)">☀️ Day</button>
-      <button class="toolbar-btn" style="flex: 1; text-align: center;" onclick="setDarkMode(true)">🌙 Night</button>
-    </div>
   </div>
 </div>
 
@@ -1595,40 +1822,155 @@
   // ----- LIVE CLOCK -----
   function updateClock() {
     const now = new Date();
-    let h = now.getHours(), m = now.getMinutes().toString().padStart(2,'0'), s = now.getSeconds().toString().padStart(2,'0'), ap = h>=12?'PM':'AM';
+    let h = now.getHours(), m = now.getMinutes().toString().padStart(2,'0'), s = now.getSeconds(), ap = h>=12?'PM':'AM';
     h = h%12||12;
-    const date = now.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
     const day = now.toLocaleDateString(undefined, {weekday:'long'});
-    document.getElementById("liveClock").textContent = `${h}:${m}:${s} ${ap} • ${date} • ${day}`;
+    document.getElementById("liveClock").textContent = `${h}:${m} ${ap} • ${day}`;
+    updateAnalogClock(now, h, parseInt(m), s);
+  }
+  function setHand(id, deg) {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('transform', `rotate(${deg} 120 120)`);
+  }
+  function updateAnalogClock(now, h12, m, s) {
+    setHand('secHand', s * 6);
+    setHand('minHand', m * 6 + s * 0.1);
+    setHand('hourHand', (h12 % 12) * 30 + m * 0.5);
+  }
+  function buildClockFace() {
+    const ticks = document.getElementById('clockTicks');
+    const numbers = document.getElementById('clockNumbers');
+    if (!ticks || !numbers || ticks.childElementCount) return; // build once
+    const cx = 120, cy = 120;
+    for (let i = 0; i < 12; i++) {
+      const angle = (i * 30 - 90) * Math.PI / 180;
+      const isHour = true;
+      // Hour tick
+      const outer = 116, innerH = 102, innerHalf = 108;
+      const x1 = cx + outer * Math.cos(angle), y1 = cy + outer * Math.sin(angle);
+      const x2 = cx + innerH * Math.cos(angle), y2 = cy + innerH * Math.sin(angle);
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+      line.setAttribute('style','stroke:var(--text-2); stroke-width:3; stroke-linecap:round;');
+      ticks.appendChild(line);
+      // Half-hour tick (15deg offset)
+      const hAngle = ((i * 30 + 15) - 90) * Math.PI / 180;
+      const hx1 = cx + outer * Math.cos(hAngle), hy1 = cy + outer * Math.sin(hAngle);
+      const hx2 = cx + innerHalf * Math.cos(hAngle), hy2 = cy + innerHalf * Math.sin(hAngle);
+      const hline = document.createElementNS('http://www.w3.org/2000/svg','line');
+      hline.setAttribute('x1', hx1); hline.setAttribute('y1', hy1);
+      hline.setAttribute('x2', hx2); hline.setAttribute('y2', hy2);
+      hline.setAttribute('style','stroke:var(--border-2); stroke-width:1.5; stroke-linecap:round;');
+      ticks.appendChild(hline);
+      // Number label (1-12)
+      const num = i === 0 ? 12 : i;
+      const nr = 92;
+      const nx = cx + nr * Math.cos(angle), ny = cy + nr * Math.sin(angle);
+      const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+      text.setAttribute('x', nx); text.setAttribute('y', ny);
+      text.setAttribute('text-anchor','middle');
+      text.setAttribute('dominant-baseline','central');
+      text.textContent = num;
+      numbers.appendChild(text);
+    }
   }
   setInterval(updateClock,1000); updateClock();
   // Refresh weather automatically every 15 minutes
   setInterval(() => fetchWeatherInteractive(), 15 * 60 * 1000);
 
+  // ----- CLOCK MODAL: open + calendar -----
+  document.getElementById('liveClock').addEventListener('click', () => {
+    buildClockFace();
+    renderCalendar();
+    document.getElementById('clockModal').classList.add('active');
+  });
+  document.getElementById('closeClockBtn').addEventListener('click', () => {
+    document.getElementById('clockModal').classList.remove('active');
+  });
+  function renderCalendar() {
+    const now = new Date();
+    const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
+    const monthName = now.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+    // Monday-first: convert JS getDay() (Sun=0) to Mon=0..Sun=6
+    const firstDayRaw = new Date(year, month, 1).getDay();
+    const leading = (firstDayRaw + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const totalCells = leading + daysInMonth;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    let html = `<div class="calendar-header">${monthName}</div><div class="calendar-grid">`;
+    for (const d of dows) html += `<div class="cal-dow">${d}</div>`;
+    for (let i = 0; i < leading; i++) {
+      html += `<div class="cal-day other-month">${prevMonthDays - leading + 1 + i}</div>`;
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      html += `<div class="cal-day${d === today ? ' today' : ''}">${d}</div>`;
+    }
+    for (let d = 1; d <= trailing; d++) {
+      html += `<div class="cal-day other-month">${d}</div>`;
+    }
+    html += `</div>`;
+    document.getElementById('calendarWrap').innerHTML = html;
+  }
+
   // ----- THEMES SYSTEM -----
+  function toggleSettingsPanel(panelId, btn) {
+    const panel = document.getElementById(panelId);
+    const isOpen = panel.classList.contains('open');
+    // Close any other open panel/pill
+    document.querySelectorAll('.collapsible.open').forEach(p => { if (p.id !== panelId) p.classList.remove('open'); });
+    document.querySelectorAll('.settings-pill.open').forEach(b => { if (b !== btn) b.classList.remove('open'); });
+    panel.classList.toggle('open', !isOpen);
+    btn.classList.toggle('open', !isOpen);
+  }
+
+  const PORTAL_SETTINGS_KEY = 'quiz_portal_settings';
+  function syncPortalSettings() {
+    if (!db) return;
+    const theme = document.body.getAttribute('data-theme') || 'default';
+    const dark = document.body.classList.contains('dark');
+    db.ref(PORTAL_SETTINGS_KEY).set({ theme, dark }).catch(() => {});
+  }
   function setTheme(theme) {
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('quiz_theme', theme);
-    document.getElementById('themeModal').classList.remove('active');
+    syncPortalSettings();
     showToast(`Theme changed: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+    document.getElementById('themePanel')?.classList.remove('open');
+    document.getElementById('themePillBtn')?.classList.remove('open');
   }
 
   function setDarkMode(isDark) {
     if (isDark) document.body.classList.add('dark');
     else document.body.classList.remove('dark');
     localStorage.setItem('quiz_dark', isDark);
+    syncPortalSettings();
+    document.getElementById('appearancePanel')?.classList.remove('open');
+    document.getElementById('appearancePillBtn')?.classList.remove('open');
   }
 
-  function initTheme() {
-    const savedTheme = localStorage.getItem('quiz_theme') || 'default';
-    const savedDark = localStorage.getItem('quiz_dark') === 'true';
-    document.body.setAttribute('data-theme', savedTheme);
-    setDarkMode(savedDark);
+  async function initTheme() {
+    // Local fallback first (instant, avoids flash of default theme)
+    let theme = localStorage.getItem('quiz_theme') || 'default';
+    let dark = localStorage.getItem('quiz_dark') === 'true';
+    // Then prefer the synced cross-device setting from Firebase, if available
+    if (db) {
+      try {
+        const snap = await db.ref(PORTAL_SETTINGS_KEY).get();
+        if (snap.exists()) {
+          const remote = snap.val();
+          if (remote.theme) theme = remote.theme;
+          if (typeof remote.dark === 'boolean') dark = remote.dark;
+          localStorage.setItem('quiz_theme', theme);
+          localStorage.setItem('quiz_dark', dark);
+        }
+      } catch(e) {}
+    }
+    document.body.setAttribute('data-theme', theme);
+    setDarkMode(dark);
   }
-
-  document.getElementById('themeBtn').addEventListener('click', () => {
-    document.getElementById('themeModal').classList.add('active');
-  });
 
   // ----- INTERACTIVE WEATHER (Open-Meteo High Res) -----
   let weatherLat = 24.7443; // Default Tikamgarh
@@ -1761,8 +2103,8 @@
     if (e.target === document.getElementById('choiceModal')) document.getElementById('choiceModal').classList.remove("active");
     if (e.target === document.getElementById('dinoModal')) closeDinoGame();
     if (e.target === document.getElementById('breathingModal')) stopBreathing();
-    if (e.target === document.getElementById('themeModal')) document.getElementById('themeModal').classList.remove('active');
     if (e.target === document.getElementById('weatherModal')) document.getElementById('weatherModal').classList.remove('active');
+    if (e.target === document.getElementById('clockModal')) document.getElementById('clockModal').classList.remove('active');
   });
 
   function showToast(msg) {
