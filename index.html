@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aditya's Quiz Portal</title>
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.15);
+    --text: #1a1a1a;
+    --text2: #5a5a5a;
+    --text3: #8a8a8a;
+    --accent: #c43a0b;
+    --accent-bg: #fff0eb;
+    --accent-border: rgba(196,58,11,0.2);
+    --folder-bg: #fff8f5;
+    --folder-border: rgba(196,58,11,0.15);
+    --tag-bg: #f0ede8;
+    --tag-text: #5a5a5a;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07);
+    --shadow2: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --surface: #1c1b19;
+      --surface2: #242320;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --text: #f0ede8;
+      --text2: #a8a49e;
+      --text3: #6a6660;
+      --accent: #ff8c5a;
+      --accent-bg: #2a1a12;
+      --accent-border: rgba(255,140,90,0.2);
+      --folder-bg: #1e1a17;
+      --folder-border: rgba(255,140,90,0.15);
+      --tag-bg: #2a2825;
+      --tag-text: #a8a49e;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow2: 0 4px 16px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border2);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .logo-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .search-wrap {
+    flex: 1;
+    max-width: 320px;
+  }
+  .search {
+    width: 100%;
+    padding: 7px 12px 7px 34px;
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search:focus { border-color: var(--accent); }
+  .search-wrap-inner {
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .header-count {
+    font-size: 12px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  /* Main layout */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 40px;
+  }
+  .hero h1 {
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .hero p {
+    font-size: 14px;
+    color: var(--text2);
+  }
+  .hero-accent {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Subject section */
+  .subject-section {
+    margin-bottom: 48px;
+  }
+  .subject-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 0.5px solid var(--border2);
+  }
+  .subject-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent-bg);
+    border: 0.5px solid var(--accent-border);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .subject-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .subject-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text3);
+    background: var(--tag-bg);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* Folder */
+  .folder {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s;
+  }
+  .folder:hover { border-color: var(--border2); }
+  .folder-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--folder-bg);
+    border-bottom: 0.5px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .folder.open .folder-header {
+    border-bottom-color: var(--folder-border);
+  }
+  .folder-header:hover { background: var(--accent-bg); }
+  .folder-chevron {
+    font-size: 14px;
+    color: var(--text3);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .folder.open .folder-chevron { transform: rotate(90deg); }
+  .folder-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+  .folder-badge {
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--tag-bg);
+    padding: 2px 9px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .folder-body {
+    display: none;
+    padding: 8px 0;
+  }
+  .folder.open .folder-body { display: block; }
+
+  /* Quiz item */
+  .quiz-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px 10px 42px;
+    text-decoration: none;
+    gap: 10px;
+    transition: background 0.12s;
+    border-radius: 0;
+  }
+  .quiz-item:hover { background: var(--surface2); }
+  .quiz-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+  .quiz-name {
+    font-size: 13.5px;
+    color: var(--text);
+    flex: 1;
+    line-height: 1.4;
+  }
+  .quiz-arrow {
+    font-size: 13px;
+    color: var(--text3);
+    opacity: 0;
+    transition: opacity 0.12s, transform 0.12s;
+  }
+  .quiz-item:hover .quiz-arrow { opacity: 1; transform: translateX(2px); }
+  .quiz-item:hover .quiz-dot { opacity: 1; }
+
+  /* Empty state */
+  .folder-empty {
+    padding: 16px 18px 16px 42px;
+    font-size: 13px;
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  /* Loading / error */
+  .state-msg {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text3);
+    font-size: 14px;
+  }
+  .state-msg .icon { font-size: 32px; margin-bottom: 12px; }
+
+  /* Search highlight */
+  .quiz-item.hidden { display: none; }
+  .folder.all-hidden { opacity: 0.4; pointer-events: none; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .main { padding: 20px 16px 60px; }
+    .header { padding: 0 16px; }
+    .logo-text { display: none; }
+    .search-wrap { max-width: none; }
+    .hero h1 { font-size: 21px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon">🏺</div>
+      <span class="logo-text">Aditya's Quiz Portal</span>
+    </a>
+    <div class="search-wrap">
+      <div class="search-wrap-inner">
+        <span class="search-icon">🔍</span>
+        <input class="search" type="text" placeholder="Search quizzes..." id="searchInput" autocomplete="off">
+      </div>
+    </div>
+    <span class="header-count" id="headerCount"></span>
+  </div>
+</header>
+
+<main class="main">
+  <div class="hero">
+    <h1>Quiz Library</h1>
+    <p>Browse quizzes by subject. Click any topic to start. <span class="hero-accent">All progress syncs across your devices.</span></p>
+  </div>
+
+  <div id="content">
+    <div class="state-msg">
+      <div class="icon">⏳</div>
+      Loading quizzes...
+    </div>
+  </div>
+</main>
+
+<script>
+const GITHUB_USER = 'adityajain1407';
+const GITHUB_REPO = 'quizzes';
+const GITHUB_BRANCH = 'main';
+const BASE_URL = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}`;
+const API_BASE = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
+
+// Subject structure — add more subjects/subfolders here as needed
+const STRUCTURE = [
+  {
+    id: 'history',
+    label: 'History',
+    icon: '📜',
+    folders: [
+      { id: 'ancient-history',  label: 'Ancient History',  path: 'History/Ancient History' },
+      { id: 'medieval-history', label: 'Medieval History', path: 'History/Medieval History' },
+      { id: 'modern-history',   label: 'Modern History',   path: 'History/Modern History'  },
+    ]
+  }
+  // To add Geography later, append an object here following the same pattern
+];
+
+function cleanName(filename) {
+  return filename
+    .replace(/\.html$/i, '')
+    .replace(/^\d+[\.\-\s]+/, '')
+    .trim();
+}
+
+async function loadQuizzes() {
+  try {
+    const res = await fetch(API_BASE);
+    if (!res.ok) throw new Error('GitHub API error');
+    const data = await res.json();
+    const files = (data.tree || [])
+      .filter(f => f.type === 'blob' && f.path.endsWith('.html') && f.path !== 'index.html');
+    return files;
+  } catch(e) {
+    return null;
+  }
+}
+
+function getQuizzesForFolder(files, folderPath) {
+  return files.filter(f => {
+    const dir = f.path.substring(0, f.path.lastIndexOf('/'));
+    return dir.toLowerCase() === folderPath.toLowerCase();
+  });
+}
+
+function getRootQuizzes(files) {
+  return files.filter(f => !f.path.includes('/'));
+}
+
+function buildFolderHTML(folder, quizzes) {
+  const items = quizzes.length
+    ? quizzes.map(q => {
+        const name = cleanName(q.path.split('/').pop());
+        const url = `${BASE_URL}/${encodeURIComponent(q.path).replace(/%2F/g, '/')}`;
+        return `<a class="quiz-item" href="${url}" target="_blank" data-name="${name.toLowerCase()}">
+          <span class="quiz-dot"></span>
+          <span class="quiz-name">${name}</span>
+          <span class="quiz-arrow">→</span>
+        </a>`;
+      }).join('')
+    : `<div class="folder-empty">No quizzes yet — upload .html files to the "${folder.label}" folder in GitHub.</div>`;
+
+  return `<div class="folder" id="folder-${folder.id}">
+    <div class="folder-header" onclick="toggleFolder('folder-${folder.id}')">
+      <span class="folder-chevron">▶</span>
+      <span class="folder-name">${folder.label}</span>
+      <span class="folder-badge">${quizzes.length} quiz${quizzes.length !== 1 ? 'zes' : ''}</span>
+    </div>
+    <div class="folder-body">${items}</div>
+  </div>`;
+}
+
+function buildSubjectHTML(subject, files) {
+  let totalCount = 0;
+  const foldersHTML = subject.folders.map(folder => {
+    const quizzes = getQuizzesForFolder(files, folder.path);
+    totalCount += quizzes.length;
+    return buildFolderHTML(folder, quizzes);
+  }).join('');
+
+  return `<section class="subject-section" id="subject-${subject.id}">
+    <div class="subject-header">
+      <div class="subject-icon">${subject.icon}</div>
+      <span class="subject-title">${subject.label}</span>
+      <span class="subject-count">${totalCount} total</span>
+    </div>
+    ${foldersHTML}
+  </section>`;
+}
+
+function toggleFolder(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function initSearch(totalCount) {
+  document.getElementById('headerCount').textContent = `${totalCount} quiz${totalCount !== 1 ? 'zes' : ''}`;
+  const input = document.getElementById('searchInput');
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    let visibleTotal = 0;
+    document.querySelectorAll('.quiz-item').forEach(item => {
+      const name = item.dataset.name || '';
+      const match = !q || name.includes(q);
+      item.classList.toggle('hidden', !match);
+      if (match) visibleTotal++;
+    });
+    // Auto-open folders with matches, collapse empty ones
+    document.querySelectorAll('.folder').forEach(folder => {
+      const visible = folder.querySelectorAll('.quiz-item:not(.hidden)').length;
+      if (q) {
+        folder.classList.toggle('open', visible > 0);
+        folder.classList.toggle('all-hidden', visible === 0);
+      } else {
+        folder.classList.remove('all-hidden');
+      }
+    });
+    document.getElementById('headerCount').textContent =
+      q ? `${visibleTotal} match${visibleTotal !== 1 ? 'es' : ''}` : `${totalCount} quiz${totalCount !== 1 ? 'zes' : ''}`;
+  });
+}
+
+async function init() {
+  const content = document.getElementById('content');
+  const files = await loadQuizzes();
+
+  if (!files) {
+    content.innerHTML = `<div class="state-msg">
+      <div class="icon">⚠️</div>
+      Could not load quizzes. Make sure you are opening this page via<br>
+      <strong>https://adityajain1407.github.io/quizzes/</strong>
+    </div>`;
+    return;
+  }
+
+  let totalCount = 0;
+  files.forEach(f => { if (f.path !== 'index.html') totalCount++; });
+
+  let html = STRUCTURE.map(subject => buildSubjectHTML(subject, files)).join('');
+
+  // Loose files at root (not in any folder)
+  const rootQuizzes = getRootQuizzes(files);
+  if (rootQuizzes.length > 0) {
+    const items = rootQuizzes.map(q => {
+      const name = cleanName(q.path);
+      const url = `${BASE_URL}/${q.path}`;
+      return `<a class="quiz-item" href="${url}" target="_blank" data-name="${name.toLowerCase()}">
+        <span class="quiz-dot"></span>
+        <span class="quiz-name">${name}</span>
+        <span class="quiz-arrow">→</span>
+      </a>`;
+    }).join('');
+    html += `<section class="subject-section">
+      <div class="subject-header">
+        <div class="subject-icon">📁</div>
+        <span class="subject-title">Uncategorised</span>
+        <span class="subject-count">${rootQuizzes.length} total</span>
+      </div>
+      <div class="folder open" id="folder-root">
+        <div class="folder-header" onclick="toggleFolder('folder-root')">
+          <span class="folder-chevron">▶</span>
+          <span class="folder-name">All files</span>
+          <span class="folder-badge">${rootQuizzes.length} quiz${rootQuizzes.length !== 1 ? 'zes' : ''}</span>
+        </div>
+        <div class="folder-body">${items}</div>
+      </div>
+    </section>`;
+  }
+
+  if (totalCount === 0) {
+    html = `<div class="state-msg">
+      <div class="icon">📭</div>
+      No quizzes found yet.<br>Upload your quiz HTML files to the correct folders in GitHub.
+    </div>`;
+  }
+
+  content.innerHTML = html;
+  initSearch(totalCount);
+}
+
+init();
+</script>
+</body>
+</html>
