@@ -1437,6 +1437,7 @@
   
   function openChoiceModal() { choiceModal.classList.add("active"); }
   choiceTrigger.addEventListener("click", openChoiceModal);
+  document.getElementById("closeChoiceBtn").addEventListener("click", () => choiceModal.classList.remove("active"));
 
   // ----- DINO GAME (WITH MOBILE TOUCH FIX) -----
   const dinoModal = document.getElementById("dinoModal");
