@@ -6,7 +6,7 @@
 <title>Aditya's Quiz Portal — File Explorer</title>
 <style>
   /* ----- LIGHT THEME (DEFAULT) ----- */
-  :root {
+  :root, body[data-theme="default"] {
     --bg: #f4f6fa;
     --surface: #ffffff;
     --surface-2: #f8fafc;
@@ -24,11 +24,11 @@
     --shadow-lg: 0 15px 25px -8px rgba(0,0,0,0.1);
     --radius-card: 20px;
     --radius-folder: 16px;
-    --transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    --transition: all 0.25s ease;
   }
 
-  /* Dark theme */
-  body.dark {
+  /* Default Dark theme */
+  body[data-theme="default"].dark {
     --bg: #0f172a;
     --surface: #1e293b;
     --surface-2: #0f172a;
@@ -42,6 +42,88 @@
     --accent-dark: #f97316;
     --accent-bg: #2d1a11;
   }
+
+  /* ----- OCEAN THEME ----- */
+  body[data-theme="ocean"] {
+    --bg: #e0f2fe; --surface: rgba(255, 255, 255, 0.7); --surface-2: rgba(255, 255, 255, 0.9); --surface-3: #bae6fd;
+    --border: rgba(2, 132, 199, 0.1); --border-2: rgba(2, 132, 199, 0.2);
+    --text: #082f49; --text-2: #0369a1; --text-3: #0284c7;
+    --accent: #0284c7; --accent-dark: #0369a1; --accent-bg: #e0f2fe;
+    --shadow-md: 0 8px 16px rgba(2, 132, 199, 0.1);
+    --radius-card: 30px; --radius-folder: 24px;
+    backdrop-filter: blur(10px);
+  }
+  body[data-theme="ocean"].dark {
+    --bg: #082f49; --surface: rgba(12, 74, 110, 0.7); --surface-2: rgba(12, 74, 110, 0.9); --surface-3: #0369a1;
+    --border: rgba(255,255,255,0.1); --text: #e0f2fe; --text-2: #bae6fd; --accent: #38bdf8; --accent-bg: rgba(56, 189, 248, 0.1);
+  }
+
+  /* ----- FOREST THEME ----- */
+  body[data-theme="forest"] {
+    --bg: #f0fdf4; --surface: #ffffff; --surface-2: #dcfce7; --surface-3: #bbf7d0;
+    --border: rgba(22, 163, 74, 0.15); --border-2: rgba(22, 163, 74, 0.25);
+    --text: #14532d; --text-2: #166534; --text-3: #15803d;
+    --accent: #16a34a; --accent-dark: #15803d; --accent-bg: #dcfce7;
+    --shadow-md: 0 4px 12px rgba(22, 163, 74, 0.08);
+    --radius-card: 12px; --radius-folder: 12px;
+  }
+  body[data-theme="forest"].dark {
+    --bg: #052e16; --surface: #14532d; --surface-2: #166534; --surface-3: #15803d;
+    --border: rgba(255,255,255,0.1); --text: #f0fdf4; --text-2: #dcfce7; --accent: #4ade80; --accent-bg: rgba(74, 222, 128, 0.1);
+  }
+
+  /* ----- SUNSET THEME ----- */
+  body[data-theme="sunset"] {
+    --bg: #fff1f2; --surface: #ffffff; --surface-2: #ffe4e6; --surface-3: #fecdd3;
+    --border: rgba(225, 29, 72, 0.1); --border-2: rgba(225, 29, 72, 0.2);
+    --text: #881337; --text-2: #be123c; --text-3: #e11d48;
+    --accent: #e11d48; --accent-dark: #be123c; --accent-bg: #ffe4e6;
+    --shadow-md: 0 10px 20px rgba(225, 29, 72, 0.15);
+    --radius-card: 20px; --radius-folder: 20px;
+  }
+  body[data-theme="sunset"].dark {
+    --bg: #4c0519; --surface: #881337; --surface-2: #9f1239; --surface-3: #be123c;
+    --border: rgba(255,255,255,0.1); --text: #fff1f2; --text-2: #ffe4e6; --accent: #fb7185; --accent-bg: rgba(251, 113, 133, 0.1);
+  }
+
+  /* ----- AMETHYST THEME ----- */
+  body[data-theme="amethyst"] {
+    --bg: #faf5ff; --surface: #ffffff; --surface-2: #f3e8ff; --surface-3: #e9d5ff;
+    --border: rgba(147, 51, 234, 0.15); --border-2: rgba(147, 51, 234, 0.25);
+    --text: #3b0764; --text-2: #581c87; --text-3: #7e22ce;
+    --accent: #9333ea; --accent-dark: #7e22ce; --accent-bg: #f3e8ff;
+    --shadow-md: 0 4px 15px rgba(147, 51, 234, 0.1);
+    --radius-card: 24px; --radius-folder: 24px;
+  }
+  body[data-theme="amethyst"].dark {
+    --bg: #2e1065; --surface: #3b0764; --surface-2: #581c87; --surface-3: #7e22ce;
+    --border: rgba(192, 132, 252, 0.4); --text: #faf5ff; --text-2: #f3e8ff; --accent: #c084fc; --accent-bg: rgba(192, 132, 252, 0.15);
+  }
+
+  /* ----- MONOCHROME THEME ----- */
+  body[data-theme="monochrome"] {
+    --bg: #ffffff; --surface: #ffffff; --surface-2: #f4f4f5; --surface-3: #e4e4e7;
+    --border: #000000; --border-2: #000000;
+    --text: #000000; --text-2: #3f3f46; --text-3: #52525b;
+    --accent: #000000; --accent-dark: #27272a; --accent-bg: #e4e4e7;
+    --shadow-md: 4px 4px 0px #000000;
+    --radius-card: 0px; --radius-folder: 0px;
+  }
+  body[data-theme="monochrome"].dark {
+    --bg: #000000; --surface: #000000; --surface-2: #18181b; --surface-3: #27272a;
+    --border: #ffffff; --border-2: #ffffff;
+    --text: #ffffff; --text-2: #e4e4e7; --accent: #ffffff; --accent-bg: #27272a;
+    --shadow-md: 4px 4px 0px #ffffff;
+  }
+
+  /* THEME HOVER PHYSICS */
+  body[data-theme="ocean"] .folder-card:hover { transform: translateY(-8px) scale(1.02); }
+  body[data-theme="forest"] .folder-card:hover { transform: rotate(2deg) scale(1.02); }
+  body[data-theme="sunset"] .folder-card:hover { transform: scale(1.05); }
+  body[data-theme="amethyst"] .folder-card:hover { transform: scale(0.96); box-shadow: inset 0 0 10px rgba(147, 51, 234, 0.2); }
+  body[data-theme="monochrome"] .folder-card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--border); }
+  body[data-theme="monochrome"] .folder-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px var(--border); }
+
 
   * {
     margin: 0;
@@ -120,10 +202,29 @@
     color: var(--text-2);
     font-weight: 500;
   }
+  
   .header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
+  }
+  .weather-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-radius: 40px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .weather-btn:hover {
+    background: var(--surface-3);
+    border-color: var(--accent);
   }
   .theme-toggle {
     background: var(--surface-2);
@@ -677,11 +778,23 @@
     transform: translateX(-50%) translateY(0);
   }
 
+  /* Weather Forecast Cards Specifics */
+  .forecast-card {
+    background: var(--surface-2);
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 80px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
   @media (max-width: 680px) {
     .header-inner { gap: 10px; height: 60px; }
     .logo-text { display: none; }
     .folders-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
     .live-clock { font-size: 0.7rem; padding: 4px 10px; }
+    .weather-btn { font-size: 0.7rem; padding: 4px 10px; }
     .search-compact-text { display: none; }
     .choice-container { gap: 20px; }
     .choice-card { width: 220px; padding: 20px; }
@@ -691,7 +804,7 @@
   }
 </style>
 </head>
-<body>
+<body data-theme="default">
 
 <header class="header">
   <div class="header-inner">
@@ -704,9 +817,10 @@
       <span class="search-compact-text">Search...</span>
     </div>
     <div class="header-actions">
-      <div class="theme-toggle" id="themeToggle">🌙</div>
+      <button class="weather-btn" id="weatherBtn" title="Interactive Weather">🌤️ Loading...</button>
+      <div class="theme-toggle" id="themeBtn" title="Change Theme">🎨</div>
+      <div class="live-clock" id="liveClock">--:-- -- • --- --, ---- • -------</div>
     </div>
-    <div class="live-clock" id="liveClock">--:-- -- • --- --, ---- • -------</div>
   </div>
 </header>
 
@@ -759,7 +873,7 @@
       <iframe id="dinoIframe" class="dino-iframe" title="Chrome Dino Game" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
     </div>
     <div class="dino-instructions">
-      ␣ Space / ↑ Arrow to jump — Avoid cacti — Try to beat your high score!
+      ␣ Space / ↑ Arrow / Tap Screen to jump — Try to beat your high score!
     </div>
   </div>
 </div>
@@ -774,6 +888,49 @@
     <div class="breathing-text" id="breathingStepText">Breathe In</div>
     <div class="timer-text" id="timerDisplay">4</div>
     <button class="stop-breathing" id="stopBreathingBtn">Stop Exercise</button>
+  </div>
+</div>
+
+<!-- THEME MODAL -->
+<div id="themeModal" class="choice-modal">
+  <div class="choice-container" style="background: var(--surface); padding: 30px; border-radius: var(--radius-card); max-width: 320px; width: 90%; position: relative;">
+    <span class="close-choice" onclick="document.getElementById('themeModal').classList.remove('active')" style="top: 15px; right: 20px; font-size: 1.5rem;">&times;</span>
+    <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 600; text-align: center; width: 100%;">Choose Theme</h3>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('default')">🟠 Default</button>
+      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('ocean')">🌊 Ocean</button>
+      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('forest')">🌲 Forest</button>
+      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('sunset')">🌅 Sunset</button>
+      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('amethyst')">🔮 Amethyst</button>
+      <button class="toolbar-btn" style="width: 100%; text-align: left; padding: 12px 20px;" onclick="setTheme('monochrome')">⬛ Monochrome</button>
+    </div>
+
+    <div style="height: 1px; background: var(--border-2); margin: 20px 0; width: 100%;"></div>
+    
+    <div style="display: flex; gap: 10px; width: 100%;">
+      <button class="toolbar-btn" style="flex: 1; text-align: center;" onclick="setDarkMode(false)">☀️ Day</button>
+      <button class="toolbar-btn" style="flex: 1; text-align: center;" onclick="setDarkMode(true)">🌙 Night</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEATHER MODAL -->
+<div id="weatherModal" class="choice-modal">
+  <div class="choice-container" style="background: var(--surface); padding: 30px; border-radius: var(--radius-card); max-width: 400px; width: 90%; position: relative;">
+    <span class="close-choice" onclick="document.getElementById('weatherModal').classList.remove('active')" style="top: 15px; right: 20px; font-size: 1.5rem;">&times;</span>
+    
+    <div style="display: flex; justify-content: flex-start; align-items: center; gap: 12px; margin-bottom: 20px; width: 100%;">
+      <h3 id="weatherCityName" style="font-size: 1.2rem; font-weight: 600;">Tikamgarh, MP</h3>
+      <button class="toolbar-btn" onclick="fetchWeatherInteractive()" style="padding: 6px 12px; font-size: 0.8rem;" title="Refresh Data">↻</button>
+    </div>
+    
+    <input type="text" id="citySearch" placeholder="Search another city..." style="width: 100%; padding: 12px 16px; margin-bottom: 20px; border-radius: 40px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); outline: none; transition: var(--transition);">
+    
+    <div id="weatherDetails" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 24px; text-align: center; color: var(--accent); width: 100%;">--°C</div>
+    
+    <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">5-Day Forecast</h4>
+    <div id="forecastCards" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; width: 100%;"></div>
   </div>
 </div>
 
@@ -1047,7 +1204,7 @@
     showResultsView();
   });
   closeOverlay.addEventListener("click", closeOverlayFunc);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeOverlayFunc(); });
+  
   overlayInput.addEventListener("input", (e) => performSearch(e.target.value));
   showResultsBtn.addEventListener("click", showResultsView);
   showHistoryBtn.addEventListener("click", renderHistoryPanel);
@@ -1055,27 +1212,33 @@
   // ----- CHOICE MODAL -----
   const choiceModal = document.getElementById("choiceModal");
   const choiceTrigger = document.getElementById("choiceTrigger");
-  const closeChoiceBtn = document.getElementById("closeChoiceBtn");
-  const dinoChoiceCard = document.getElementById("dinoChoiceCard");
-  const breathingChoiceCard = document.getElementById("breathingChoiceCard");
-
+  
   function openChoiceModal() { choiceModal.classList.add("active"); }
-  function closeChoiceModal() { choiceModal.classList.remove("active"); }
   choiceTrigger.addEventListener("click", openChoiceModal);
-  closeChoiceBtn.addEventListener("click", closeChoiceModal);
-  choiceModal.addEventListener("click", (e) => { if (e.target === choiceModal) closeChoiceModal(); });
 
-  // ----- DINO GAME (fetches from GitHub) -----
+  // ----- DINO GAME (WITH MOBILE TOUCH FIX) -----
   const dinoModal = document.getElementById("dinoModal");
   const closeDinoBtn = document.getElementById("closeDinoBtn");
   const dinoIframe = document.getElementById("dinoIframe");
+  const dinoChoiceCard = document.getElementById("dinoChoiceCard");
 
   async function loadDinoGame() {
     try {
       const response = await fetch("https://raw.githubusercontent.com/alexelzx/chrome-dino/main/dino.html");
       if (!response.ok) throw new Error("Failed to fetch game");
       const html = await response.text();
-      dinoIframe.srcdoc = html;
+      
+      // Inject script to convert touch events into Spacebar presses for mobile
+      const touchFix = `<script>
+        window.addEventListener('touchstart', (e) => {
+          const ev = new KeyboardEvent('keydown', { keyCode: 32, which: 32 });
+          document.dispatchEvent(ev);
+        });
+      <\/script>`;
+      
+      dinoIframe.srcdoc = html.replace('</body>', touchFix + '</body>');
+      dinoIframe.style.touchAction = 'none'; // Prevent scroll on tap
+      setTimeout(() => dinoIframe.focus(), 500);
     } catch (error) {
       console.warn("Could not load Dino game from GitHub, using fallback");
       dinoIframe.src = "https://eliot-akira.github.io/chrome-dino/";
@@ -1086,17 +1249,18 @@
     dinoModal.classList.add("active");
     if (!dinoIframe.srcdoc && !dinoIframe.src) {
       loadDinoGame();
+    } else {
+      setTimeout(() => dinoIframe.focus(), 500);
     }
   }
   function closeDinoGame() {
     dinoModal.classList.remove("active");
   }
   dinoChoiceCard.addEventListener("click", () => {
-    closeChoiceModal();
+    document.getElementById("choiceModal").classList.remove("active");
     openDinoGame();
   });
   closeDinoBtn.addEventListener("click", closeDinoGame);
-  dinoModal.addEventListener("click", (e) => { if (e.target === dinoModal) closeDinoGame(); });
 
   // ----- BREATHING EXERCISE (unchanged) -----
   const breathingModal = document.getElementById("breathingModal");
@@ -1104,6 +1268,7 @@
   const breathingStepText = document.getElementById("breathingStepText");
   const timerDisplay = document.getElementById("timerDisplay");
   const stopBreathingBtn = document.getElementById("stopBreathingBtn");
+  const breathingChoiceCard = document.getElementById("breathingChoiceCard");
   let breathingInterval = null;
   let currentPhase = 0;
   let timeLeft = 4;
@@ -1183,15 +1348,12 @@
     startBreathing();
   }
   breathingChoiceCard.addEventListener("click", () => {
-    closeChoiceModal();
+    document.getElementById("choiceModal").classList.remove("active");
     openBreathingExercise();
   });
   stopBreathingBtn.addEventListener("click", stopBreathing);
-  breathingModal.addEventListener("click", (e) => {
-    if (e.target === breathingModal) stopBreathing();
-  });
 
-  // ----- CLOCK -----
+  // ----- LIVE CLOCK -----
   function updateClock() {
     const now = new Date();
     let h = now.getHours(), m = now.getMinutes().toString().padStart(2,'0'), s = now.getSeconds().toString().padStart(2,'0'), ap = h>=12?'PM':'AM';
@@ -1202,27 +1364,106 @@
   }
   setInterval(updateClock,1000); updateClock();
 
-  // ----- DARK MODE -----
-  function initTheme() {
-    const toggle = document.getElementById("themeToggle");
-    const saved = localStorage.getItem("quizportal_theme");
-    if (saved === "dark") { document.body.classList.add("dark"); toggle.textContent="☀️"; }
-    else if (saved === "light") { document.body.classList.remove("dark"); toggle.textContent="🌙"; }
-    else { document.body.classList.remove("dark"); toggle.textContent="🌙"; localStorage.setItem("quizportal_theme","light"); }
-    toggle.addEventListener("click", () => {
-      if (document.body.classList.contains("dark")) {
-        document.body.classList.remove("dark");
-        localStorage.setItem("quizportal_theme","light");
-        toggle.textContent="🌙";
-        showToast("Light mode");
-      } else {
-        document.body.classList.add("dark");
-        localStorage.setItem("quizportal_theme","dark");
-        toggle.textContent="☀️";
-        showToast("Dark mode");
-      }
-    });
+  // ----- THEMES SYSTEM -----
+  function setTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('quiz_theme', theme);
+    document.getElementById('themeModal').classList.remove('active');
+    showToast(`Theme changed: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
   }
+
+  function setDarkMode(isDark) {
+    if (isDark) document.body.classList.add('dark');
+    else document.body.classList.remove('dark');
+    localStorage.setItem('quiz_dark', isDark);
+  }
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('quiz_theme') || 'default';
+    const savedDark = localStorage.getItem('quiz_dark') === 'true';
+    document.body.setAttribute('data-theme', savedTheme);
+    setDarkMode(savedDark);
+  }
+
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    document.getElementById('themeModal').classList.add('active');
+  });
+
+  // ----- INTERACTIVE WEATHER (Open-Meteo High Res) -----
+  let weatherLat = 24.7443; // Default Tikamgarh
+  let weatherLon = 78.8318;
+  
+  const weatherCodes = {
+    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
+    51: '🌧️', 53: '🌧️', 55: '🌧️', 61: '🌧️', 63: '🌧️', 65: '🌧️',
+    71: '❄️', 73: '❄️', 75: '❄️', 80: '🌧️', 81: '🌧️', 82: '🌧️',
+    95: '⛈️', 96: '⛈️', 99: '⛈️'
+  };
+
+  async function fetchWeatherInteractive() {
+    try {
+      // High Res Open-Meteo endpoint with exact cache busting
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${weatherLat}&longitude=${weatherLon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&_=${new Date().getTime()}`, { cache: 'no-store' });
+      const data = await res.json();
+      
+      const temp = Math.round(data.current.temperature_2m);
+      const code = data.current.weather_code;
+      const emoji = weatherCodes[code] || '☀️';
+      
+      document.getElementById('weatherBtn').textContent = `${emoji} ${temp}°C`;
+      document.getElementById('weatherDetails').textContent = `${emoji} ${temp}°C`;
+
+      let forecastHtml = '';
+      for(let i=0; i<5; i++) {
+        const date = new Date(data.daily.time[i]);
+        const dayName = date.toLocaleDateString('en-US', {weekday: 'short'});
+        const dEmoji = weatherCodes[data.daily.weather_code[i]] || '☀️';
+        const max = Math.round(data.daily.temperature_2m_max[i]);
+        const min = Math.round(data.daily.temperature_2m_min[i]);
+        forecastHtml += `<div class="forecast-card">
+          <div style="font-size:0.8rem; margin-bottom:4px; font-weight:600;">${dayName}</div>
+          <div style="font-size:1.6rem; margin: 4px 0;">${dEmoji}</div>
+          <div style="font-size:0.85rem; font-weight:500;">${max}° <span style="color:var(--text-3)">${min}°</span></div>
+        </div>`;
+      }
+      document.getElementById('forecastCards').innerHTML = forecastHtml;
+    } catch(e) {
+      console.error(e);
+      document.getElementById('weatherBtn').textContent = '⚠️ Err';
+    }
+  }
+
+  document.getElementById('weatherBtn').addEventListener('click', () => {
+    document.getElementById('weatherModal').classList.add('active');
+  });
+
+  document.getElementById('citySearch').addEventListener('change', async (e) => {
+    const query = e.target.value;
+    if(!query) return;
+    try {
+      const geores = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`);
+      const geodata = await geores.json();
+      if(geodata.results && geodata.results.length > 0) {
+        weatherLat = geodata.results[0].latitude;
+        weatherLon = geodata.results[0].longitude;
+        document.getElementById('weatherCityName').textContent = geodata.results[0].name;
+        fetchWeatherInteractive();
+      } else {
+        showToast("City not found");
+      }
+    } catch(err) { showToast("Error searching city"); }
+  });
+
+  // Modal Click-Outside Handlers
+  window.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('searchOverlay')) closeOverlayFunc();
+    if (e.target === document.getElementById('choiceModal')) document.getElementById('choiceModal').classList.remove("active");
+    if (e.target === document.getElementById('dinoModal')) closeDinoGame();
+    if (e.target === document.getElementById('breathingModal')) stopBreathing();
+    if (e.target === document.getElementById('themeModal')) document.getElementById('themeModal').classList.remove('active');
+    if (e.target === document.getElementById('weatherModal')) document.getElementById('weatherModal').classList.remove('active');
+  });
+
   function showToast(msg) {
     const t = document.getElementById("toast");
     t.textContent = msg; t.classList.add("show");
@@ -1231,6 +1472,9 @@
   function escapeHtml(str) { return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
 
   async function init() {
+    initTheme();
+    fetchWeatherInteractive();
+    
     const files = await loadFiles();
     if (!files || !files.length) {
       contentDiv.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div>Could not load quizzes from GitHub.<br>Make sure the repository is public.</div>`;
@@ -1241,8 +1485,8 @@
     renderNavigationView();
     loadHistory();
   }
+  
   init();
-  initTheme();
 </script>
 </body>
 </html>
