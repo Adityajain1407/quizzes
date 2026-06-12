@@ -802,6 +802,49 @@
     .timer-text { font-size: 1.2rem; }
     .dino-card { padding: 15px; }
   }
+  /* ----- SAVED QUESTIONS VIEW ----- */
+  .saved-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .saved-item:last-child { border-bottom: none; }
+  .saved-item:hover { background: var(--surface-2); padding-left: 26px; }
+  .saved-item-name { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+  .saved-detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .saved-detail .question-text { font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; border-left: 5px solid var(--accent); padding-left: 1rem; color: var(--text); }
+  .saved-detail .options-list { display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0; }
+  .saved-detail .option { background: var(--surface-2); border: 1.5px solid var(--border-2); border-radius: 1rem; padding: 0.7rem 1rem; font-size: 1rem; font-weight: 500; color: var(--text); }
+  .saved-detail .option.correct-highlight { background: #d3f0d9; border-color: #2b7e3a; color: #145c23; font-weight: bold; }
+  body.dark .saved-detail .option.correct-highlight,
+  body[data-theme] .dark .saved-detail .option.correct-highlight { background: #1e5631; border-color: #5fad6e; color: #e2ffea; }
+  .saved-detail .explanation-box { background: #fef7e0; border-left: 6px solid #ffb347; border-radius: 1rem; padding: 1rem; margin: 1rem 0; font-size: 0.95rem; color: #2c3e4e; }
+  .dark .saved-detail .explanation-box { background: #2b2f3e; border-left-color: #ffae42; color: #f0f3fc; }
+  .saved-detail .explanation-line { margin-bottom: 0.8rem; }
+  .saved-detail .exp-correct { color: #1f6e2f; font-weight: bold; background: #e0f3e3; padding: 0.2rem 0.6rem; border-radius: 24px; display: inline-block; font-size: 0.9rem; margin-right: 6px; }
+  .saved-detail .exp-incorrect { color: #bc3f2e; font-weight: bold; background: #ffe1dc; padding: 0.2rem 0.6rem; border-radius: 24px; display: inline-block; font-size: 0.9rem; margin-right: 6px; }
+  .dark .saved-detail .exp-correct { background: #1e5631; color: #e2ffea; }
+  .dark .saved-detail .exp-incorrect { background: #792e26; color: #ffe0dc; }
+  .saved-detail .exp-text { color: inherit; font-weight: 600; }
+  .saved-detail-actions { display: flex; gap: 12px; margin-top: 1.2rem; flex-wrap: wrap; }
+  .saved-back-btn, .saved-delete-btn {
+    border: none; border-radius: 40px; padding: 10px 20px; font-weight: bold; cursor: pointer; transition: var(--transition);
+  }
+  .saved-back-btn { background: var(--surface-3); color: var(--text); }
+  .saved-back-btn:hover { background: var(--surface-2); }
+  .saved-delete-btn { background: #d9534f; color: white; }
+  .saved-delete-btn:hover { background: #c7362b; }
+  #savedBtn.active { background: var(--accent); color: white; }
 </style>
 </head>
 <body data-theme="default">
@@ -817,6 +860,7 @@
       <span class="search-compact-text">Search...</span>
     </div>
     <div class="header-actions">
+      <button class="weather-btn" id="savedBtn" title="Saved Questions">🔖 Saved</button>
       <button class="weather-btn" id="weatherBtn" title="Interactive Weather">🌤️ Loading...</button>
       <div class="theme-toggle" id="themeBtn" title="Change Theme">🎨</div>
       <div class="live-clock" id="liveClock">--:-- -- • --- --, ---- • -------</div>
@@ -934,7 +978,29 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
+  // ----- FIREBASE (for Saved Questions) -----
+  const firebaseConfig = {
+    apiKey: "AIzaSyDX9dw3QKC23S7ukdqvropANz4qUvI3Bq0",
+    authDomain: "aditya-quizzes-5a3c6.firebaseapp.com",
+    databaseURL: "https://aditya-quizzes-5a3c6-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "aditya-quizzes-5a3c6",
+    storageBucket: "aditya-quizzes-5a3c6.firebasestorage.app",
+    messagingSenderId: "792902679820",
+    appId: "1:792902679820:web:6af51ad185fcb8e1341d29"
+  };
+  let db = null;
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+      db = firebase.database();
+    } else {
+      console.warn("Firebase SDK did not load — Saved Questions feature will be unavailable.");
+    }
+  } catch(e) { console.warn("Firebase init failed:", e); }
+
   // ----- CORE QUIZ FETCH & NAVIGATION (unchanged) -----
   const GITHUB_USER = "adityajain1407";
   const GITHUB_REPO = "quizzes";
@@ -978,11 +1044,62 @@
   }
 
   let rootTree = null, currentPath = [];
+  let savedMode = false, savedTree = null;
   const contentDiv = document.getElementById("content");
   const breadcrumbContainer = document.getElementById("breadcrumb-container");
 
-  function getNodeFromPath(path) {
-    let node = rootTree;
+  // ----- SAVED QUESTIONS HELPERS -----
+  function getSafeTopicName(filePath) {
+    const name = cleanName(filePath.split("/").pop());
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  }
+  function formatExplanationRich(expText) {
+    const lines = (expText || '').split(/\r?\n/);
+    let htmlLines = [];
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      const match = line.match(/^(\([a-d]\))\s*(Correct|Incorrect)\s*[-–—]+\s*(.*)$/i);
+      if (match) {
+        const isCorrect = match[2].toLowerCase() === 'correct';
+        htmlLines.push(`<div class="explanation-line"><span class="${isCorrect ? 'exp-correct' : 'exp-incorrect'}">${match[1]} ${match[2]}</span><span class="exp-text">${escapeHtml(match[3])}</span></div>`);
+      } else {
+        htmlLines.push(`<div class="explanation-line"><span class="exp-text">${escapeHtml(line)}</span></div>`);
+      }
+    }
+    return htmlLines.join('');
+  }
+  function countSaved(node) {
+    let count = (node.__saved__ || []).length;
+    for (const child of Object.values(node.__folders__)) count += countSaved(child);
+    return count;
+  }
+  async function buildSavedTree() {
+    const tree = { __folders__: {}, __files__: [] };
+    if (!db) return tree;
+    const items = getAllSearchableItems().filter(i => i.type === "quiz");
+    for (const item of items) {
+      const safe = getSafeTopicName(item.fullPath);
+      try {
+        const snap = await db.ref(`quiz_saved_questions_${safe}`).get();
+        if (!snap.exists()) continue;
+        const data = snap.val();
+        let node = tree;
+        for (const part of item.path) {
+          if (!node.__folders__[part]) node.__folders__[part] = { __folders__: {}, __files__: [] };
+          node = node.__folders__[part];
+        }
+        if (!node.__folders__[item.name]) node.__folders__[item.name] = { __folders__: {}, __files__: [], __saved__: [] };
+        node.__folders__[item.name].__saved__ = Object.entries(data)
+          .map(([id, q]) => ({ id: Number(id), ...q, safeTopicName: safe, quizName: item.name }))
+          .sort((a, b) => a.id - b.id);
+      } catch(e) { /* skip on error */ }
+    }
+    return tree;
+  }
+
+  function getNodeFromPath(tree, path) {
+    let node = tree;
     for (const folder of path) {
       if (node.__folders__[folder]) node = node.__folders__[folder];
       else return null;
@@ -1020,19 +1137,24 @@
   }
 
   function renderNavigationView() {
-    if (!rootTree) return;
-    const currentNode = getNodeFromPath(currentPath);
+    const tree = savedMode ? savedTree : rootTree;
+    if (!tree) return;
+    const currentNode = getNodeFromPath(tree, currentPath);
     if (!currentNode) { contentDiv.innerHTML = `<div class="empty-state">Folder not found</div>`; return; }
     const subfolders = Object.entries(currentNode.__folders__).sort((a,b)=>a[0].localeCompare(b[0]));
     const quizzes = currentNode.__files__;
+    const savedItems = currentNode.__saved__ || [];
     let html = "";
     if (subfolders.length) {
       html += `<div class="folders-grid">`;
       for (const [name, node] of subfolders) {
+        const count = savedMode ? countSaved(node) : countQuizzes(node);
+        const icon = savedMode && node.__saved__ ? "🔖" : "📁";
+        const label = savedMode && node.__saved__ ? `${count} saved` : `${count} quiz${count!==1?'zes':''}`;
         html += `<div class="folder-card" data-folder="${name.replace(/"/g,'&quot;')}">
-          <div class="folder-icon">📁</div>
+          <div class="folder-icon">${icon}</div>
           <div class="folder-name">${escapeHtml(name)}</div>
-          <div class="folder-count">${countQuizzes(node)} quiz${countQuizzes(node)!==1?'zes':''}</div>
+          <div class="folder-count">${label}</div>
         </div>`;
       }
       html += `</div>`;
@@ -1046,14 +1168,58 @@
       }
       html += `</div>`;
     }
-    if (!subfolders.length && !quizzes.length) html = `<div class="empty-state">📭 This folder is empty</div>`;
+    if (savedItems.length) {
+      html += `<div class="quizzes-list">`;
+      for (const item of savedItems) {
+        html += `<div class="saved-item" data-id="${item.id}"><div class="saved-item-name">🔖 Question ${item.id}</div><span class="quiz-arrow">→</span></div>`;
+      }
+      html += `</div>`;
+    }
+    if (!subfolders.length && !quizzes.length && !savedItems.length) {
+      html = savedMode
+        ? `<div class="empty-state">🔖 No saved questions here yet.<br>Tap 🔖 Save on a question while attempting a quiz to add it.</div>`
+        : `<div class="empty-state">📭 This folder is empty</div>`;
+    }
     contentDiv.innerHTML = html;
     document.querySelectorAll(".folder-card").forEach(card => card.addEventListener("click",()=>navigateToFolder(card.dataset.folder)));
+    document.querySelectorAll(".saved-item").forEach(el => el.addEventListener("click", () => {
+      const item = savedItems.find(s => s.id === parseInt(el.dataset.id));
+      renderSavedDetail(item);
+    }));
     updateBreadcrumb();
+  }
+  function renderSavedDetail(item) {
+    let optsHtml = '';
+    for (let opt of item.opts) {
+      const optLetter = opt.charAt(0);
+      const cls = optLetter === item.ans ? 'correct-highlight' : '';
+      optsHtml += `<div class="option ${cls}">${escapeHtml(opt)}</div>`;
+    }
+    contentDiv.innerHTML = `<div class="saved-detail">
+        <div class="question-text">${item.id}. ${escapeHtml(item.text)}</div>
+        <div class="options-list">${optsHtml}</div>
+        <div class="explanation-box">${formatExplanationRich(item.exp)}</div>
+        <div class="saved-detail-actions">
+          <button class="saved-back-btn" id="savedDetailBack">← Back</button>
+          <button class="saved-delete-btn" id="savedDetailDelete">🗑️ Delete from Saved</button>
+        </div>
+      </div>`;
+    document.getElementById('savedDetailBack').onclick = () => renderNavigationView();
+    document.getElementById('savedDetailDelete').onclick = async () => {
+      if (!db) { showToast("Unavailable (Firebase not loaded)"); return; }
+      if (!confirm("Remove this question from Saved? This will also un-mark the Save button next time you open that quiz.")) return;
+      try {
+        await db.ref(`quiz_saved_questions_${item.safeTopicName}/${item.id}`).remove();
+        savedTree = await buildSavedTree();
+        renderNavigationView();
+        showToast("Removed from Saved");
+      } catch(e) { showToast("Could not delete — check connection"); }
+    };
   }
   function navigateToFolder(name) { currentPath.push(name); renderNavigationView(); }
   function updateBreadcrumb() {
-    let html = `<div class="breadcrumb"><span class="breadcrumb-item breadcrumb-home" data-path="root">🏠 Home</span>`;
+    const homeLabel = savedMode ? "🔖 Saved" : "🏠 Home";
+    let html = `<div class="breadcrumb"><span class="breadcrumb-item breadcrumb-home" data-path="root">${homeLabel}</span>`;
     for (let i=0; i<currentPath.length; i++) {
       html += `<span class="breadcrumb-sep">›</span><span class="breadcrumb-item" data-path-index="${i}">${escapeHtml(currentPath[i])}</span>`;
     }
@@ -1146,6 +1312,7 @@
     document.querySelectorAll(".search-result-item[data-type='folder']").forEach(el => {
       el.addEventListener("click", () => {
         const pathArr = JSON.parse(decodeURIComponent(el.dataset.path));
+        if (savedMode) { savedMode = false; const b=document.getElementById('savedBtn'); b.textContent='🔖 Saved'; b.classList.remove('active'); }
         currentPath = pathArr;
         renderNavigationView();
         closeOverlayFunc();
@@ -1435,6 +1602,25 @@
 
   document.getElementById('weatherBtn').addEventListener('click', () => {
     document.getElementById('weatherModal').classList.add('active');
+  });
+
+  document.getElementById('savedBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('savedBtn');
+    if (!db) { showToast("Saved Questions unavailable (Firebase not loaded)"); return; }
+    if (!savedMode) {
+      btn.textContent = '⏳ Loading...';
+      savedTree = await buildSavedTree();
+      savedMode = true;
+      currentPath = [];
+      btn.textContent = '📚 All Quizzes';
+      btn.classList.add('active');
+    } else {
+      savedMode = false;
+      currentPath = [];
+      btn.textContent = '🔖 Saved';
+      btn.classList.remove('active');
+    }
+    renderNavigationView();
   });
 
   document.getElementById('citySearch').addEventListener('change', async (e) => {
