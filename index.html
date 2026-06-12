@@ -161,42 +161,47 @@ async function loadFiles() {
     const res = await fetch(API_URL);
     if (!res.ok) throw new Error();
     const data = await res.json();
-    return (data.tree || []).filter(f => f.type === 'blob' && f.path.endsWith('.html') && f.path !== 'index.html');
+    return (data.tree || []).filter(f => f.type === 'blob' && (f.path.endsWith('.html') || f.path.endsWith('.md')) && f.path !== 'index.html' && !f.path.endsWith('README.md'));
   } catch(e) { return null; }
 }
 
 function buildTree(files) {
-  // Build a nested object: tree[L1][L2][L3] = [files] or tree[L1][L2] = [files]
   const tree = {};
   for (const f of files) {
     const parts = f.path.split('/');
+    const isQuiz = f.path.endsWith('.html');
     if (parts.length === 1) {
-      // Root level file
+      if (!isQuiz) continue; // skip root placeholder.md
       if (!tree['__root__']) tree['__root__'] = { '__files__': [] };
       tree['__root__']['__files__'].push(f);
     } else if (parts.length === 2) {
-      // L1/file.html
-      const [l1, fname] = parts;
+      const [l1] = parts;
       if (!tree[l1]) tree[l1] = {};
-      if (!tree[l1]['__files__']) tree[l1]['__files__'] = [];
-      tree[l1]['__files__'].push(f);
+      if (isQuiz) {
+        if (!tree[l1]['__files__']) tree[l1]['__files__'] = [];
+        tree[l1]['__files__'].push(f);
+      }
+      // placeholder.md just registers the L1 folder — no file added
     } else if (parts.length === 3) {
-      // L1/L2/file.html
-      const [l1, l2, fname] = parts;
+      const [l1, l2] = parts;
       if (!tree[l1]) tree[l1] = {};
       if (!tree[l1][l2]) tree[l1][l2] = {};
-      if (!tree[l1][l2]['__files__']) tree[l1][l2]['__files__'] = [];
-      tree[l1][l2]['__files__'].push(f);
+      if (isQuiz) {
+        if (!tree[l1][l2]['__files__']) tree[l1][l2]['__files__'] = [];
+        tree[l1][l2]['__files__'].push(f);
+      }
+      // placeholder.md just registers the L2 folder
     } else if (parts.length === 4) {
-      // L1/L2/L3/file.html
-      const [l1, l2, l3, fname] = parts;
+      const [l1, l2, l3] = parts;
       if (!tree[l1]) tree[l1] = {};
       if (!tree[l1][l2]) tree[l1][l2] = {};
       if (!tree[l1][l2][l3]) tree[l1][l2][l3] = { '__files__': [] };
-      if (!tree[l1][l2][l3]['__files__']) tree[l1][l2][l3]['__files__'] = [];
-      tree[l1][l2][l3]['__files__'].push(f);
+      if (isQuiz) {
+        if (!tree[l1][l2][l3]['__files__']) tree[l1][l2][l3]['__files__'] = [];
+        tree[l1][l2][l3]['__files__'].push(f);
+      }
+      // placeholder.md just registers the L3 folder
     }
-    // deeper than 4 levels ignored
   }
   return tree;
 }
@@ -316,7 +321,7 @@ async function init() {
   const rootNode = tree['__root__'] || {};
   const rootFiles = rootNode['__files__'] || [];
 
-  let totalCount = safeFiles.length;
+  let totalCount = safeFiles.filter(f => f.path.endsWith('.html')).length;
   let html = '';
 
   if (l1keys.length === 0 && rootFiles.length === 0) {
