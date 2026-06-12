@@ -998,8 +998,12 @@
     
     <input type="text" id="citySearch" placeholder="Search another city..." style="width: 100%; padding: 12px 16px; margin-bottom: 20px; border-radius: 40px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); outline: none; transition: var(--transition);">
     
-    <div id="weatherDetails" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 24px; text-align: center; color: var(--accent); width: 100%;">--°C</div>
-    
+    <div id="weatherDetails" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 4px; text-align: center; color: var(--accent); width: 100%;">--°C</div>
+    <div id="weatherExtra" style="font-size: 0.85rem; color: var(--text-2); text-align: center; margin-bottom: 20px; width: 100%; display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;"></div>
+
+    <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">Hourly Forecast</h4>
+    <div id="hourlyCards" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; width: 100%; margin-bottom: 8px;"></div>
+
     <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">5-Day Forecast</h4>
     <div id="forecastCards" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; width: 100%;"></div>
   </div>
@@ -1627,16 +1631,53 @@
   async function fetchWeatherInteractive() {
     try {
       // High Res Open-Meteo endpoint with exact cache busting
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${weatherLat}&longitude=${weatherLon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&_=${new Date().getTime()}`, { cache: 'no-store' });
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${weatherLat}&longitude=${weatherLon}&current=temperature_2m,weather_code,apparent_temperature,relative_humidity_2m,wind_speed_10m,is_day&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset&timezone=auto&_=${new Date().getTime()}`, { cache: 'no-store' });
       const data = await res.json();
-      
+
       const temp = Math.round(data.current.temperature_2m);
       const code = data.current.weather_code;
       const emoji = weatherCodes[code] || '☀️';
-      
+
       document.getElementById('weatherBtn').textContent = `${emoji} ${temp}°C`;
       document.getElementById('weatherDetails').textContent = `${emoji} ${temp}°C`;
 
+      // Current details row
+      const feelsLike = Math.round(data.current.apparent_temperature);
+      const humidity = data.current.relative_humidity_2m;
+      const wind = Math.round(data.current.wind_speed_10m);
+      const uvToday = Math.round(data.daily.uv_index_max[0]);
+      const sunrise = new Date(data.daily.sunrise[0]).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+      const sunset = new Date(data.daily.sunset[0]).toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+      document.getElementById('weatherExtra').innerHTML = `
+        <span>🌡️ Feels ${feelsLike}°C</span>
+        <span>💧 ${humidity}%</span>
+        <span>💨 ${wind} km/h</span>
+        <span>☀️ UV ${uvToday}</span>
+        <span>🌅 ${sunrise}</span>
+        <span>🌇 ${sunset}</span>
+      `;
+
+      // Hourly forecast (next 24 hours from now)
+      const nowIso = new Date();
+      let startIdx = data.hourly.time.findIndex(t => new Date(t) >= nowIso);
+      if (startIdx === -1) startIdx = 0;
+      let hourlyHtml = '';
+      for (let i = startIdx; i < startIdx + 24 && i < data.hourly.time.length; i++) {
+        const date = new Date(data.hourly.time[i]);
+        const hourLabel = date.toLocaleTimeString('en-US', {hour: 'numeric'});
+        const hEmoji = weatherCodes[data.hourly.weather_code[i]] || '☀️';
+        const hTemp = Math.round(data.hourly.temperature_2m[i]);
+        const pop = data.hourly.precipitation_probability[i];
+        hourlyHtml += `<div class="forecast-card">
+          <div style="font-size:0.75rem; margin-bottom:4px; font-weight:600;">${i === startIdx ? 'Now' : hourLabel}</div>
+          <div style="font-size:1.4rem; margin: 2px 0;">${hEmoji}</div>
+          <div style="font-size:0.85rem; font-weight:500;">${hTemp}°</div>
+          <div style="font-size:0.7rem; color:var(--text-3);">💧${pop}%</div>
+        </div>`;
+      }
+      document.getElementById('hourlyCards').innerHTML = hourlyHtml;
+
+      // 5-day forecast
       let forecastHtml = '';
       for(let i=0; i<5; i++) {
         const date = new Date(data.daily.time[i]);
@@ -1644,10 +1685,12 @@
         const dEmoji = weatherCodes[data.daily.weather_code[i]] || '☀️';
         const max = Math.round(data.daily.temperature_2m_max[i]);
         const min = Math.round(data.daily.temperature_2m_min[i]);
+        const dPop = data.daily.precipitation_probability_max[i];
         forecastHtml += `<div class="forecast-card">
           <div style="font-size:0.8rem; margin-bottom:4px; font-weight:600;">${dayName}</div>
           <div style="font-size:1.6rem; margin: 4px 0;">${dEmoji}</div>
           <div style="font-size:0.85rem; font-weight:500;">${max}° <span style="color:var(--text-3)">${min}°</span></div>
+          <div style="font-size:0.7rem; color:var(--text-3); margin-top:2px;">💧${dPop}%</div>
         </div>`;
       }
       document.getElementById('forecastCards').innerHTML = forecastHtml;
