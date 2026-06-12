@@ -1045,6 +1045,25 @@
 
   let rootTree = null, currentPath = [];
   let savedMode = false, savedTree = null;
+  let savedListeners = [];
+  function detachSavedListeners() {
+    for (const { ref, cb } of savedListeners) { try { ref.off('value', cb); } catch(e) {} }
+    savedListeners = [];
+  }
+  function attachSavedListeners() {
+    if (!db) return;
+    const items = getAllSearchableItems().filter(i => i.type === "quiz");
+    for (const item of items) {
+      const safe = getSafeTopicName(item.fullPath);
+      const ref = db.ref(`quiz_saved_questions_${safe}`);
+      const cb = async () => {
+        savedTree = await buildSavedTree();
+        if (savedMode) renderNavigationView();
+      };
+      ref.on('value', cb, (e) => console.warn("Saved listener error:", e));
+      savedListeners.push({ ref, cb });
+    }
+  }
   const contentDiv = document.getElementById("content");
   const breadcrumbContainer = document.getElementById("breadcrumb-container");
 
@@ -1150,7 +1169,7 @@
       for (const [name, node] of subfolders) {
         const count = savedMode ? countSaved(node) : countQuizzes(node);
         const icon = savedMode && node.__saved__ ? "🔖" : "📁";
-        const label = savedMode && node.__saved__ ? `${count} saved` : `${count} quiz${count!==1?'zes':''}`;
+        const label = savedMode ? `${count} saved` : `${count} quiz${count!==1?'zes':''}`;
         html += `<div class="folder-card" data-folder="${name.replace(/"/g,'&quot;')}">
           <div class="folder-icon">${icon}</div>
           <div class="folder-name">${escapeHtml(name)}</div>
@@ -1312,7 +1331,7 @@
     document.querySelectorAll(".search-result-item[data-type='folder']").forEach(el => {
       el.addEventListener("click", () => {
         const pathArr = JSON.parse(decodeURIComponent(el.dataset.path));
-        if (savedMode) { savedMode = false; const b=document.getElementById('savedBtn'); b.textContent='🔖 Saved'; b.classList.remove('active'); }
+        if (savedMode) { detachSavedListeners(); savedMode = false; const b=document.getElementById('savedBtn'); b.textContent='🔖 Saved'; b.classList.remove('active'); }
         currentPath = pathArr;
         renderNavigationView();
         closeOverlayFunc();
@@ -1610,11 +1629,13 @@
     if (!savedMode) {
       btn.textContent = '⏳ Loading...';
       savedTree = await buildSavedTree();
+      attachSavedListeners();
       savedMode = true;
       currentPath = [];
       btn.textContent = '📚 All Quizzes';
       btn.classList.add('active');
     } else {
+      detachSavedListeners();
       savedMode = false;
       currentPath = [];
       btn.textContent = '🔖 Saved';
