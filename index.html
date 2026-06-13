@@ -1375,7 +1375,14 @@
   async function buildSavedTree() {
     const tree = { __folders__: {}, __files__: [] };
     if (!db) return tree;
-    const items = getAllSearchableItems().filter(i => i.type === "quiz");
+    const allItems = getAllSearchableItems();
+    // Map each folder/quiz to its natural position in rootTree (matches normal-view order)
+    const orderMap = new Map();
+    allItems.forEach((it, idx) => {
+      const key = it.type === "folder" ? it.path.join("/") : [...it.path, it.name].join("/");
+      if (!orderMap.has(key)) orderMap.set(key, idx);
+    });
+    const items = allItems.filter(i => i.type === "quiz");
     for (const item of items) {
       const safe = getSafeTopicName(item.fullPath);
       try {
@@ -1383,11 +1390,14 @@
         if (!snap.exists()) continue;
         const data = snap.val();
         let node = tree;
+        let pathSoFar = [];
         for (const part of item.path) {
-          if (!node.__folders__[part]) node.__folders__[part] = { __folders__: {}, __files__: [] };
+          pathSoFar.push(part);
+          if (!node.__folders__[part]) node.__folders__[part] = { __folders__: {}, __files__: [], __order__: orderMap.get(pathSoFar.join("/")) ?? 0 };
           node = node.__folders__[part];
         }
-        if (!node.__folders__[item.name]) node.__folders__[item.name] = { __folders__: {}, __files__: [], __saved__: [] };
+        const quizKey = [...item.path, item.name].join("/");
+        if (!node.__folders__[item.name]) node.__folders__[item.name] = { __folders__: {}, __files__: [], __saved__: [], __order__: orderMap.get(quizKey) ?? 0 };
         node.__folders__[item.name].__saved__ = Object.entries(data)
           .map(([id, q]) => ({ id: Number(id), ...q, safeTopicName: safe, quizName: item.name }))
           .sort((a, b) => a.id - b.id);
@@ -1439,7 +1449,10 @@
     if (!tree) return;
     const currentNode = getNodeFromPath(tree, currentPath);
     if (!currentNode) { contentDiv.innerHTML = `<div class="empty-state">Folder not found</div>`; return; }
-    const subfolders = Object.entries(currentNode.__folders__).sort((a,b)=>a[0].localeCompare(b[0]));
+    const subfolders = Object.entries(currentNode.__folders__).sort((a,b) => {
+      if (savedMode) return (a[1].__order__ ?? 0) - (b[1].__order__ ?? 0);
+      return a[0].localeCompare(b[0]);
+    });
     const quizzes = currentNode.__files__;
     const savedItems = currentNode.__saved__ || [];
     let html = "";
