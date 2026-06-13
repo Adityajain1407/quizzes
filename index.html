@@ -818,12 +818,30 @@
     .clock-cal-layout { gap: 16px; }
   }
   .calendar-header {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-weight: 700;
     font-size: 1rem;
     color: var(--text);
     margin-bottom: 14px;
   }
+  .cal-nav-btn {
+    border: 1px solid var(--border-2);
+    background: var(--surface-2);
+    color: var(--text);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+  }
+  .cal-nav-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
   .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -2111,10 +2129,13 @@
   document.getElementById('closeClockBtn').addEventListener('click', () => {
     document.getElementById('clockModal').classList.remove('active');
   });
+  let calViewYear, calViewMonth;
   function renderCalendar() {
     const now = new Date();
-    const year = now.getFullYear(), month = now.getMonth(), today = now.getDate();
-    const monthName = now.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+    const realToday = now.getDate(), realMonth = now.getMonth(), realYear = now.getFullYear();
+    if (calViewYear === undefined) { calViewYear = realYear; calViewMonth = realMonth; }
+    const year = calViewYear, month = calViewMonth;
+    const monthName = new Date(year, month, 1).toLocaleDateString(undefined, {month:'long', year:'numeric'});
     // Monday-first: convert JS getDay() (Sun=0) to Mon=0..Sun=6
     const firstDayRaw = new Date(year, month, 1).getDay();
     const leading = (firstDayRaw + 6) % 7;
@@ -2123,19 +2144,32 @@
     const totalCells = leading + daysInMonth;
     const trailing = (7 - (totalCells % 7)) % 7;
     const dows = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    let html = `<div class="calendar-header">${monthName}</div><div class="calendar-grid">`;
+    let html = `<div class="calendar-header">
+      <button class="cal-nav-btn" id="calPrevBtn" title="Previous month">‹</button>
+      <span>${monthName}</span>
+      <button class="cal-nav-btn" id="calNextBtn" title="Next month">›</button>
+    </div><div class="calendar-grid">`;
     for (const d of dows) html += `<div class="cal-dow">${d}</div>`;
     for (let i = 0; i < leading; i++) {
       html += `<div class="cal-day other-month">${prevMonthDays - leading + 1 + i}</div>`;
     }
     for (let d = 1; d <= daysInMonth; d++) {
-      html += `<div class="cal-day${d === today ? ' today' : ''}">${d}</div>`;
+      const isToday = (d === realToday && month === realMonth && year === realYear);
+      html += `<div class="cal-day${isToday ? ' today' : ''}">${d}</div>`;
     }
     for (let d = 1; d <= trailing; d++) {
       html += `<div class="cal-day other-month">${d}</div>`;
     }
     html += `</div>`;
     document.getElementById('calendarWrap').innerHTML = html;
+    document.getElementById('calPrevBtn').addEventListener('click', () => {
+      calViewMonth--; if (calViewMonth < 0) { calViewMonth = 11; calViewYear--; }
+      renderCalendar();
+    });
+    document.getElementById('calNextBtn').addEventListener('click', () => {
+      calViewMonth++; if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+      renderCalendar();
+    });
   }
 
   // ----- THEMES SYSTEM -----
