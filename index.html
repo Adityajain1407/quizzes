@@ -187,6 +187,11 @@
     cursor: pointer;
     transition: var(--transition);
     white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 480px;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   .search-compact:hover {
     background: var(--surface-3);
@@ -209,9 +214,10 @@
     margin-left: auto;
   }
   .header-divider {
-    width: 1px;
-    height: 24px;
-    background: var(--border-2);
+    width: 1.5px;
+    height: 28px;
+    background: var(--text-3);
+    opacity: 0.4;
     margin: 0 4px;
   }
   .weather-btn {
@@ -1080,8 +1086,8 @@
 
 <header class="header">
   <div class="header-inner">
-    <div class="logo" id="choiceTrigger">
-      <div class="logo-icon">🔽</div>
+    <div class="logo" id="logoHome" style="cursor:pointer;" title="Home">
+      <div class="logo-icon">📚</div>
       <span class="logo-text">Aditya's Quiz Portal</span>
     </div>
     <div class="search-compact" id="searchCompact">
@@ -1090,9 +1096,11 @@
     </div>
     <div class="header-actions">
       <button class="weather-btn" id="savedBtn" title="Saved Questions">🔖 Saved</button>
-      <button class="weather-btn" id="weatherBtn" title="Interactive Weather">🌤️ Loading...</button>
       <div class="header-divider"></div>
       <div class="live-clock" id="liveClock" style="cursor:pointer;">--:-- -- • -------</div>
+      <button class="weather-btn" id="weatherBtn" title="Interactive Weather">🌤️ Loading...</button>
+      <div class="header-divider"></div>
+      <div class="theme-toggle" id="choiceTrigger" title="Widgets & Settings">⚙️</div>
     </div>
   </div>
 </header>
@@ -1681,6 +1689,18 @@
   function openChoiceModal() { choiceModal.classList.add("active"); }
   choiceTrigger.addEventListener("click", openChoiceModal);
   document.getElementById("closeChoiceBtn").addEventListener("click", () => choiceModal.classList.remove("active"));
+
+  document.getElementById("logoHome").addEventListener("click", () => {
+    if (savedMode) {
+      detachSavedListeners();
+      savedMode = false;
+      const b = document.getElementById('savedBtn');
+      b.textContent = '🔖 Saved';
+      b.classList.remove('active');
+    }
+    currentPath = [];
+    renderNavigationView();
+  });
 
   // ----- DINO GAME (WITH MOBILE TOUCH FIX) -----
   const dinoModal = document.getElementById("dinoModal");
