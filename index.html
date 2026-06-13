@@ -1302,24 +1302,23 @@
 
 <!-- WEATHER MODAL -->
 <div id="weatherModal" class="choice-modal">
-  <div class="choice-container" style="background: var(--surface); padding: 30px; border-radius: var(--radius-card); max-width: 760px; width: 92%; position: relative;">
-    <span class="close-choice" onclick="document.getElementById('weatherModal').classList.remove('active')" style="top: 15px; right: 20px; font-size: 1.5rem;">&times;</span>
-    
-    <div style="display: flex; justify-content: flex-start; align-items: center; gap: 12px; margin-bottom: 20px; margin-right: 36px; width: calc(100% - 36px);">
-      <h3 id="weatherCityName" style="font-size: 1.2rem; font-weight: 600;">Tikamgarh, MP</h3>
-      <button class="toolbar-btn" onclick="fetchWeatherInteractive()" style="padding: 6px 12px; font-size: 0.8rem; position: relative; z-index: 5;" title="Refresh Data">↻</button>
+  <div class="hub-panel" style="max-width: 760px;">
+    <div class="hub-header">
+      <h3 style="display:flex; align-items:center; gap:10px;">🌤️ <span id="weatherCityName">Tikamgarh, MP</span> <button class="toolbar-btn" onclick="fetchWeatherInteractive()" style="padding: 4px 10px; font-size: 0.8rem;" title="Refresh Data">↻</button></h3>
+      <span class="close-choice" onclick="document.getElementById('weatherModal').classList.remove('active')" style="position: static; font-size: 1.6rem;">&times;</span>
     </div>
-    
-    <input type="text" id="citySearch" placeholder="Search another city..." style="width: 100%; padding: 12px 16px; margin-bottom: 20px; border-radius: 40px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); outline: none; transition: var(--transition);">
-    
-    <div id="weatherDetails" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 4px; text-align: center; color: var(--accent); width: 100%;">--°C</div>
-    <div id="weatherExtra" style="font-size: 0.85rem; color: var(--text-2); text-align: center; margin-bottom: 24px; width: 100%; display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;"></div>
+    <div class="hub-scroll">
+      <input type="text" id="citySearch" placeholder="Search another city..." style="width: 100%; padding: 12px 16px; margin-bottom: 20px; border-radius: 40px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); outline: none; transition: var(--transition); box-sizing: border-box;">
 
-    <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">Hourly Forecast</h4>
-    <div id="hourlyCards" class="weather-scroll-row" style="margin-bottom: 16px;"></div>
+      <div id="weatherDetails" style="font-size: 2.8rem; font-weight: bold; margin-bottom: 4px; text-align: center; color: var(--accent); width: 100%;">--°C</div>
+      <div id="weatherExtra" style="font-size: 0.85rem; color: var(--text-2); text-align: center; margin-bottom: 24px; width: 100%; display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;"></div>
 
-    <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">5-Day Forecast</h4>
-    <div id="forecastCards" class="weather-grid"></div>
+      <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">Hourly Forecast</h4>
+      <div id="hourlyCards" class="weather-scroll-row" style="margin-bottom: 16px;"></div>
+
+      <h4 style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-2); text-transform: uppercase; font-weight: 600; width: 100%;">5-Day Forecast</h4>
+      <div id="forecastCards" class="weather-grid"></div>
+    </div>
   </div>
 </div>
 
