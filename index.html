@@ -1669,14 +1669,27 @@
   const showResultsBtn = document.getElementById("showResultsBtn");
   const showHistoryBtn = document.getElementById("showHistoryBtn");
 
-  let currentSearchQuery = "", currentResults = [];
+  let currentSearchQuery = "", currentResults = [], currentSavedResults = [];
 
-  function performSearch(query) {
+  function flattenSavedQuizzes(node, path = []) {
+    let out = [];
+    for (const [name, child] of Object.entries(node.__folders__ || {})) {
+      if (child.__saved__) {
+        out.push({ name, path: [...path, name], parentPath: path.length ? path.join(" / ") : "Root", count: child.__saved__.length });
+      }
+      out = out.concat(flattenSavedQuizzes(child, [...path, name]));
+    }
+    return out;
+  }
+
+  async function performSearch(query) {
     currentSearchQuery = query;
-    if (!query.trim()) { currentResults = []; renderResultsPanel(); return; }
+    if (!query.trim()) { currentResults = []; currentSavedResults = []; renderResultsPanel(); return; }
     const allItems = getAllSearchableItems();
     const lowerQuery = query.toLowerCase();
     currentResults = allItems.filter(item => item.name.toLowerCase().includes(lowerQuery));
+    if (db && !savedTree) { savedTree = await buildSavedTree(); }
+    currentSavedResults = savedTree ? flattenSavedQuizzes(savedTree).filter(s => s.name.toLowerCase().includes(lowerQuery)) : [];
     if (query.trim()) addToHistory(query);
     renderResultsPanel();
   }
@@ -1685,7 +1698,7 @@
       resultsPanel.innerHTML = `<div class="empty-state">🔍 Type something to search...</div>`;
       return;
     }
-    if (currentResults.length === 0) {
+    if (currentResults.length === 0 && currentSavedResults.length === 0) {
       resultsPanel.innerHTML = `<div class="empty-state">😕 No results for "${escapeHtml(currentSearchQuery)}"</div>`;
       return;
     }
@@ -1705,6 +1718,13 @@
         <span class="result-arrow">→</span>
       </div>`;
     }
+    html += `</div><div class="results-column"><div class="results-header">🔖 Saved (${currentSavedResults.length})</div>`;
+    for (const s of currentSavedResults) {
+      html += `<div class="search-result-item" data-type="saved" data-path="${encodeURIComponent(JSON.stringify(s.path))}">
+        <div><span class="result-name">🔖 ${escapeHtml(s.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(s.parentPath)}</span></div>
+        <span class="result-time">${s.count} saved</span>
+      </div>`;
+    }
     html += `</div>`;
     resultsPanel.innerHTML = html;
     document.querySelectorAll(".search-result-item[data-type='folder']").forEach(el => {
@@ -1722,6 +1742,22 @@
         window.open(el.dataset.url, "_blank");
         closeOverlayFunc();
         showToast("Opening quiz...");
+      });
+    });
+    document.querySelectorAll(".search-result-item[data-type='saved']").forEach(el => {
+      el.addEventListener("click", () => {
+        const pathArr = JSON.parse(decodeURIComponent(el.dataset.path));
+        if (!savedMode) {
+          attachSavedListeners();
+          savedMode = true;
+          const b = document.getElementById('savedBtn');
+          b.textContent = '📚 All Quizzes';
+          b.classList.add('active');
+        }
+        currentPath = pathArr;
+        renderNavigationView();
+        closeOverlayFunc();
+        showToast(`Opened saved questions: ${pathArr.join(" / ")}`);
       });
     });
   }
@@ -1760,6 +1796,7 @@
     overlayInput.value = "";
     currentSearchQuery = "";
     currentResults = [];
+    currentSavedResults = [];
   }
   searchCompact.addEventListener("click", () => {
     overlay.classList.add("active");
