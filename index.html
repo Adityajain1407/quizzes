@@ -3750,36 +3750,82 @@
 
   async function ghMove(oldPath, newPath) {
     if (oldPath === newPath) return;
-    const isFolder = !oldPath.includes('.') || !oldPath.split('/').pop().includes('.');
+    const token = getPAT();
+    if (!token) { showToast('⚠️ No GitHub token — open ⚙️ Settings → GitHub Token'); return; }
+    const isFolder = !oldPath.split('/').pop().includes('.');
+    const isRename = oldPath.split('/').slice(0,-1).join('/') === newPath.split('/').slice(0,-1).join('/');
     showToast('⏳ Working...');
     try {
+      let filesWithSha;
       if (isFolder) {
-        // Move/rename folder = move all files inside it
-        const files = getAllFilesUnder(rootTree, oldPath);
-        for (const filePath of files) {
-          const relative = filePath.substring(oldPath.length + 1);
-          const destPath = newPath + '/' + relative;
-          const data = await ghApiGet(filePath);
-          if (!data) continue;
-          await ghCreateOrUpdate(destPath, data.content.replace(/\n/g,''), null);
-          await ghDeleteFile(filePath, data.sha, `Portal: move ${filePath}`);
+        filesWithSha = await ghGetAllFilesRecursive(oldPath); // [{path, sha}]
+        if (!filesWithSha.length) {
+          // Empty folder — just move the .gitkeep
+          filesWithSha = []; // nothing to move, will create .gitkeep at new location
+          const newKeep = newPath + '/.gitkeep';
+          await ghCreateOrUpdate(newKeep, btoa(''), null);
+          // Delete old .gitkeep if exists
+          const oldKeep = oldPath + '/.gitkeep';
+          try {
+            const r = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(oldKeep)}`,
+              { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+            if (r.ok) { const d = await r.json(); await ghDeleteFile(oldKeep, d.sha); }
+          } catch(e) {}
+        } else {
+          for (const { path: fp, sha } of filesWithSha) {
+            const relative = fp.substring(oldPath.length + 1);
+            const dest = newPath + '/' + relative;
+            // Get file content
+            const r = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(fp)}`,
+              { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+            if (!r.ok) { showToast(`❌ Cannot read: ${fp.split('/').pop()}`); return; }
+            const d = await r.json();
+            const ok1 = await ghCreateOrUpdate(dest, d.content.replace(/\n/g,''), null);
+            if (!ok1) { showToast(`❌ Cannot create: ${dest.split('/').pop()}`); return; }
+            const ok2 = await ghDeleteFile(fp, sha);
+            if (!ok2) { showToast(`❌ Cannot delete: ${fp.split('/').pop()}`); return; }
+          }
         }
       } else {
-        const data = await ghApiGet(oldPath);
-        if (!data) { showToast('❌ Could not read file'); return; }
-        await ghCreateOrUpdate(newPath, data.content.replace(/\n/g,''), null);
-        await ghDeleteFile(oldPath, data.sha, `Portal: rename/move ${oldPath}`);
+        // Single file
+        const r = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(oldPath)}`,
+          { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } });
+        if (!r.ok) { const e = await r.json().catch(()=>({})); showToast(`❌ ${r.status}: ${e.message||'Cannot read file'}`); return; }
+        const d = await r.json();
+        const ok1 = await ghCreateOrUpdate(newPath, d.content.replace(/\n/g,''), null);
+        if (!ok1) { showToast('❌ Cannot create file at new location'); return; }
+        const ok2 = await ghDeleteFile(oldPath, d.sha);
+        if (!ok2) { showToast('❌ Cannot delete old file'); return; }
       }
-      showToast('✅ Done!');
+
+      // Optimistic UI update
+      const newTree = JSON.parse(JSON.stringify(rootTree)); // deep clone
+      if (isFolder) {
+        const oldParts = oldPath.split('/');
+        const newParts = newPath.split('/');
+        let src = newTree;
+        for (const p of oldParts.slice(0,-1)) src = src.__folders__[p] || src;
+        const movedNode = src.__folders__[oldParts[oldParts.length-1]];
+        if (movedNode) {
+          delete src.__folders__[oldParts[oldParts.length-1]];
+          let dest = newTree;
+          for (const p of newParts.slice(0,-1)) { if (!dest.__folders__[p]) dest.__folders__[p]={__files__:[],__folders__:{}}; dest = dest.__folders__[p]; }
+          dest.__folders__[newParts[newParts.length-1]] = movedNode;
+        }
+      }
+      rootTree = newTree;
       clearSelection();
-      const isRename = oldPath.split('/').slice(0,-1).join('/') === newPath.split('/').slice(0,-1).join('/');
-      await refreshFilesAndSync({
+      renderNavigationView();
+      showToast(`✅ ${isRename ? 'Renamed' : 'Moved'}!`);
+
+      // Background sync
+      refreshFilesAndSync({
         type: isRename ? 'rename' : 'move',
         itemType: isFolder ? 'folder' : 'quiz',
         oldPath, newPath,
         displayName: cleanName(oldPath.split('/').pop())
       });
-    } catch(e) { showToast('❌ Error: ' + e.message); }
+    } catch(e) { showToast('❌ ' + e.message); console.error('ghMove error:', e); }
   }
 
   async function ghDelete(path) {
@@ -3788,11 +3834,10 @@
     showToast('⏳ Deleting...');
     try {
       const isFolder = !path.split('/').pop().includes('.');
-      let filesWithSha; // array of {path, sha}
+      let filesWithSha;
       if (isFolder) {
-        filesWithSha = await ghGetAllFilesRecursive(path); // returns [{path, sha}]
+        filesWithSha = await ghGetAllFilesRecursive(path);
       } else {
-        // Single file: get its sha
         const res = await fetch(
           `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(path)}`,
           { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } }
@@ -3806,12 +3851,11 @@
         filesWithSha = [{ path: data.path || path, sha: data.sha }];
       }
       if (!filesWithSha.length) { showToast('❌ Nothing found at: ' + path); return; }
-      let deleted = 0;
+
       for (const { path: filePath, sha } of filesWithSha) {
         const ok = await ghDeleteFile(filePath, sha);
         if (!ok) { showToast(`❌ Could not delete: ${filePath.split('/').pop()}`); return; }
-        deleted++;
-        // Cascade Firebase logs for quiz files
+        // Cascade Firebase logs
         if (db && (filePath.endsWith('.html') || filePath.endsWith('.md'))) {
           const safe = cleanName(filePath.split('/').pop()).toLowerCase().replace(/[^a-z0-9]+/g,'_');
           try { await db.ref(`quiz_saved_state_${safe}`).remove(); } catch(e) {}
@@ -3819,9 +3863,24 @@
           try { await db.ref(`quiz_saved_questions_${safe}`).remove(); } catch(e) {}
         }
       }
-      showToast(`✅ Deleted!`);
+
+      // Optimistic UI: remove from local tree immediately
+      const parts = path.split('/');
+      const folderName = parts[parts.length - 1];
+      const parentParts = parts.slice(0, -1);
+      let parent = rootTree;
+      for (const p of parentParts) parent = parent.__folders__[p] || parent;
+      if (isFolder) {
+        delete parent.__folders__[folderName];
+      } else {
+        parent.__files__ = parent.__files__.filter(f => f.path !== path);
+      }
       clearSelection();
-      await refreshFilesAndSync({
+      renderNavigationView();
+      showToast(`✅ Deleted!`);
+
+      // Background sync
+      refreshFilesAndSync({
         type: 'delete',
         itemType: isFolder ? 'folder' : 'quiz',
         oldPath: path,
