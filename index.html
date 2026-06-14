@@ -2892,29 +2892,41 @@
   function renderLibSaved(body) {
     if (!db) { body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>Firebase not connected.</div>`; return; }
     body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">⏳</div>Loading saved questions...</div>`;
-    // Reuse existing saved questions tree logic
     buildSavedTree().then(tree => {
-      if (!tree) { body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>No saved questions yet.<br>Tap 🔖 Save on a question while attempting a quiz.</div>`; return; }
       const allSaved = flattenSavedQuizzes(tree);
-      if (!allSaved.length) { body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>No saved questions yet.</div>`; return; }
+      if (!allSaved.length) {
+        body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>No saved questions yet.<br>Double-tap or tap 🔖 Save on a question while in a quiz.</div>`;
+        return;
+      }
       let html = '';
       for (const s of allSaved) {
-        html += `<div class="recent-item" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:4px;" data-savedpath="${escapeHtml(s.path)}">
-          <div style="font-weight:600;color:var(--text);font-size:0.9rem;">📖 ${escapeHtml(s.name)}</div>
-          <div style="font-size:0.75rem;color:var(--text-3);">${s.count} saved question${s.count!==1?'s':''}</div>
+        // s.path is an array like ['Muskan Quiz', 'History', 'Prehistory...']
+        const pathStr = s.path.join('/');
+        const folder = s.path.slice(0,-1).join(' › ') || 'Root';
+        html += `<div class="recent-item lib-saved-item" style="cursor:pointer;" data-savedpath="${escapeHtml(pathStr)}">
+          <div class="recent-icon">🔖</div>
+          <div class="recent-info">
+            <div class="recent-name">${escapeHtml(s.name)}</div>
+            <div class="recent-folder">📁 ${escapeHtml(folder)}</div>
+            <div class="recent-time">${s.count} saved question${s.count!==1?'s':''}</div>
+          </div>
+          <span class="quiz-arrow" style="color:var(--text-3);opacity:0.6;">→</span>
         </div>`;
       }
       body.innerHTML = html;
-      body.querySelectorAll('[data-savedpath]').forEach(el => el.addEventListener('click', () => {
-        const parts = (el.dataset.savedpath||'').split('/');
+      body.querySelectorAll('.lib-saved-item').forEach(el => el.addEventListener('click', () => {
+        const pathArr = el.dataset.savedpath.split('/');
         if (savedMode) { detachSavedListeners(); savedMode = false; }
+        savedTree = tree;
         attachSavedListeners();
         savedMode = true;
-        savedTree = tree;
-        currentPath = parts;
+        currentPath = pathArr;
         closeLibrary();
         renderNavigationView();
       }));
+    }).catch(e => {
+      body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">⚠️</div>Error loading saved questions.</div>`;
+      console.error('renderLibSaved error:', e);
     });
   }
 
