@@ -3383,7 +3383,7 @@
   let selectionActive = false;
 
   // --- PAT storage ---
-  function getPAT() { return localStorage.getItem(PAT_KEY) || ''; }
+  function getPAT() { return (localStorage.getItem(PAT_KEY) || '').trim(); }
   function savePAT(token) { localStorage.setItem(PAT_KEY, token.trim()); }
 
   // --- PAT modal ---
@@ -3645,7 +3645,7 @@
         `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(filePath)}`,
         {
           method: 'PUT',
-          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: `Portal: create folder ${folderName}`,
             content: btoa(''), // empty file, base64 encoded
@@ -3689,7 +3689,7 @@
     const token = getPAT();
     if (!token) { showToast('⚠️ No GitHub token set — open ⚙️ Settings → GitHub Token'); return null; }
     const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(path)}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -3728,7 +3728,7 @@
     if (sha) body.sha = sha;
     const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(path)}`, {
       method: 'PUT',
-      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     return res.ok;
@@ -3738,7 +3738,7 @@
     const token = getPAT();
     const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(path)}`, {
       method: 'DELETE',
-      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: message || `Portal: delete ${path}`, sha, branch: GITHUB_BRANCH })
     });
     if (!res.ok) {
@@ -3795,7 +3795,7 @@
         // Single file: get its sha
         const res = await fetch(
           `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(path)}`,
-          { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' } }
+          { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } }
         );
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -3837,7 +3837,7 @@
     async function fetchFolder(fp) {
       const res = await fetch(
         `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(fp)}?ref=${GITHUB_BRANCH}`,
-        { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' } }
+        { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } }
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
