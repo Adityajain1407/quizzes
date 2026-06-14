@@ -1590,14 +1590,14 @@
   .item-star-btn {
     position: absolute;
     bottom: 8px; right: 8px;
-    width: 26px; height: 26px;
+    width: 32px; height: 32px;
     border-radius: 50%;
     border: none;
     background: transparent;
     color: var(--text-3);
     cursor: pointer;
     opacity: 0;
-    font-size: 1rem;
+    font-size: 1.25rem;
     display: flex; align-items: center; justify-content: center;
     transition: opacity 0.15s, color 0.15s, transform 0.15s;
     z-index: 10;
@@ -2541,8 +2541,15 @@
   choiceTrigger.addEventListener("click", openChoiceModal);
   document.getElementById("closeChoiceBtn").addEventListener("click", () => choiceModal.classList.remove("active"));
 
+  let favViewActive = false;
   document.getElementById("logoFav").addEventListener("click", () => {
-    openFavouritesView();
+    if (favViewActive) {
+      favViewActive = false;
+      exitFavouritesView();
+    } else {
+      favViewActive = true;
+      openFavouritesView();
+    }
   });
 
   // ----- DINO GAME (WITH MOBILE TOUCH FIX) -----
@@ -3047,17 +3054,26 @@
     menu.className = 'ctx-menu';
     menu.id = 'activeCtxMenu';
     const isStarred = isFavourited(path);
-    const starLabel = isStarred ? '⭐ Unstar' : '☆ Add to Favourites';
+    const starLabel = isStarred ? '⭐ Remove from Favourites' : '☆ Add to Favourites';
     const resetLogsBtn = type === 'quiz'
-      ? `<button class="ctx-menu-item" onclick="ctxResetLogs('${escapeHtml(path)}','${escapeHtml(name)}')">🔄 Reset Logs</button>` : '';
+      ? `<button class="ctx-menu-item" id="ctxResetLogsBtn">🔄 Reset Logs</button>` : '';
     menu.innerHTML = `
-      <button class="ctx-menu-item" onclick="ctxToggleFav('${escapeHtml(path)}','${escapeHtml(name)}','${type}')">${starLabel}</button>
-      <button class="ctx-menu-item" onclick="ctxRename('${escapeHtml(path)}','${escapeHtml(name)}')">✏️ Rename</button>
-      <button class="ctx-menu-item" onclick="ctxMove('${escapeHtml(path)}')">📂 Move</button>
+      <button class="ctx-menu-item" id="ctxStarBtn">${starLabel}</button>
+      <button class="ctx-menu-item" id="ctxRenameBtn">✏️ Rename</button>
+      <button class="ctx-menu-item" id="ctxMoveBtn">📂 Move</button>
       ${resetLogsBtn}
-      <button class="ctx-menu-item danger" onclick="ctxDelete('${escapeHtml(path)}','${escapeHtml(name)}')">🗑️ Delete</button>
+      <button class="ctx-menu-item danger" id="ctxDeleteBtn">🗑️ Delete</button>
     `;
     container.appendChild(menu);
+
+    // Wire up via JS (not inline onclick) to avoid escaping issues
+    document.getElementById('ctxStarBtn').onclick = () => { closeCtxMenu(); toggleFavourite(path, name, type); };
+    document.getElementById('ctxRenameBtn').onclick = () => { closeCtxMenu(); openRenameModal(path, name); };
+    document.getElementById('ctxMoveBtn').onclick = () => { closeCtxMenu(); openMoveModal([path]); };
+    document.getElementById('ctxDeleteBtn').onclick = () => { closeCtxMenu(); openDeleteModal([path], name); };
+    if (type === 'quiz') {
+      document.getElementById('ctxResetLogsBtn').onclick = () => { closeCtxMenu(); ctxResetLogs(path, name); };
+    }
     const rect = e.target.getBoundingClientRect();
     const mw = 190, mh = type === 'quiz' ? 180 : 145;
     let left = rect.right + 4, top = rect.top;
@@ -3440,14 +3456,17 @@
 
   async function toggleFavourite(path, name, type) {
     const key = btoa(path).replace(/=/g,'');
-    if (favourites[key]) {
+    const wasStarred = !!favourites[key];
+    if (wasStarred) {
       delete favourites[key];
+      if (db) db.ref(`${FAV_KEY}/${key}`).remove().catch(()=>{});
+      showToast('☆ Removed from Favourites');
     } else {
-      favourites[key] = { path, name, type };
+      favourites[key] = { path, name, type, ts: Date.now() };
+      if (db) db.ref(`${FAV_KEY}/${key}`).set(favourites[key]).catch(()=>{});
+      showToast('⭐ Added to Favourites');
     }
-    if (db) db.ref(`${FAV_KEY}/${key}`).set(favourites[key] || null).catch(()=>{});
     renderNavigationView();
-    showToast(favourites[key] ? '⭐ Added to Favourites' : '☆ Removed from Favourites');
   }
 
   async function ctxToggleFav(path, name, type) {
@@ -3465,7 +3484,8 @@
     }
     const contentDiv = document.getElementById('content');
     const favList = Object.values(favourites);
-    const folders = favList.filter(f => f.type === 'folder');
+    const folders = favList.filter(f => f.type === 'folder').sort((a,b) =>
+      (a.name||a.path).localeCompare(b.name||b.path));
     const quizzes = favList.filter(f => f.type === 'quiz');
 
     let html = `<div class="fav-view">
@@ -3493,15 +3513,18 @@
     html += `<div class="fav-section-title">📖 Starred Quizzes</div>`;
     if (!quizzes.length) html += `<div class="fav-empty">No starred quizzes yet. Hover/long-press a quiz and click ☆</div>`;
     else {
+      // Sort quizzes newest-first by ts
+      const sortedQuizzes = [...quizzes].sort((a,b) => (b.ts||0) - (a.ts||0));
       html += `<div class="quizzes-list">`;
-      for (const fav of quizzes) {
+      for (const fav of sortedQuizzes) {
         const fname = fav.path.split('/').pop();
         const displayName = cleanName(fname);
         const url = BASE_URL + '/' + fav.path.split('/').map(p=>encodeURIComponent(p)).join('/');
-        html += `<div class="quiz-item" style="position:relative;" data-favquizurl="${escapeHtml(url)}" data-favpath="${escapeHtml(fav.path)}">
-          <button class="item-star-btn starred" data-path="${escapeHtml(fav.path)}" data-name="${escapeHtml(fname)}" data-type="quiz">⭐</button>
+        const folderPath = fav.path.split('/').slice(0,-1).join(' › ') || 'Root';
+        html += `<div class="quiz-item fav-quiz-card" style="position:relative;cursor:pointer;user-select:none;" data-favquizurl="${escapeHtml(url)}" data-favpath="${escapeHtml(fav.path)}">
           <div class="quiz-info"><span class="quiz-dot"></span><span class="quiz-name">${escapeHtml(displayName)}</span></div>
-          <span style="font-size:0.75rem;color:var(--text-3);">${escapeHtml(fav.path.split('/').slice(0,-1).join(' › ') || 'Root')}</span>
+          <span style="font-size:0.75rem;color:var(--text-3);white-space:nowrap;">${escapeHtml(folderPath)}</span>
+          <button class="fav-unstar-btn" data-path="${escapeHtml(fav.path)}" data-name="${escapeHtml(fname)}" data-type="quiz" title="Remove from Favourites" style="flex-shrink:0;background:transparent;border:none;font-size:1.25rem;cursor:pointer;color:#f59e0b;padding:4px 8px;border-radius:50%;transition:transform 0.15s;">⭐</button>
           <span class="quiz-arrow">→</span>
         </div>`;
       }
@@ -3517,19 +3540,34 @@
       if (e.target.closest('.item-star-btn')) return;
       const favPath = card.dataset.favpath;
       const parts = favPath ? favPath.split('/') : [];
-      // verify folder still exists
       const node = getNodeFromPath(rootTree, parts);
       if (!node) { showChangePopup('📁 Folder not found', 'This folder may have been deleted or moved.', 'danger'); return; }
+      favViewActive = false;
       currentPath = parts;
       renderNavigationView();
     }));
 
-    // Quiz click: open quiz (same tab if standalone, new tab otherwise)
-    contentDiv.querySelectorAll('[data-favquizurl]').forEach(el => el.addEventListener('click', (e) => {
-      if (e.target.closest('.item-star-btn')) return;
+    // Folder star buttons (unstar)
+    contentDiv.querySelectorAll('.fav-folder-card .item-star-btn').forEach(btn => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type)
+        .then(() => openFavouritesView());
+    }));
+
+    // Quiz unstar buttons (dedicated button, NOT the item-star-btn class to avoid conflicts)
+    contentDiv.querySelectorAll('.fav-unstar-btn').forEach(btn => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type)
+        .then(() => openFavouritesView());
+    }));
+
+    // Quiz click: open quiz
+    contentDiv.querySelectorAll('.fav-quiz-card').forEach(el => el.addEventListener('click', (e) => {
+      if (e.target.closest('.fav-unstar-btn')) return;
       const url = el.dataset.favquizurl;
       const path = el.dataset.favpath;
-      // verify quiz still exists in tree
       if (rootTree && !findFileInTree(rootTree, path)) {
         showChangePopup('📖 Quiz not found', 'This quiz may have been deleted or moved.', 'danger'); return;
       }
@@ -3537,17 +3575,10 @@
       if (isStandalone) location.href = url;
       else window.open(url, '_blank');
     }));
-
-    // Star buttons in fav view (unstar)
-    contentDiv.querySelectorAll('.item-star-btn').forEach(btn => btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type);
-      // Re-render fav view
-      openFavouritesView();
-    }));
   }
 
   function exitFavouritesView() {
+    favViewActive = false;
     currentPath = [];
     renderNavigationView();
   }
