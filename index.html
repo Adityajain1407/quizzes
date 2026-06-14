@@ -1402,6 +1402,190 @@
     .logo-icon { font-size: 1.4rem; }
     .search-compact, .weather-btn, .live-clock { width: 36px; height: 36px; min-width: 36px; }
   }
+  /* ----- FILE MANAGER: selection, action bar, menus, modals ----- */
+
+  /* Checkbox that appears on hover/long-press */
+  .folder-card, .quiz-item { position: relative; }
+  .item-checkbox {
+    position: absolute;
+    top: 8px; left: 8px;
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border-2);
+    background: var(--surface);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+    z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; color: #fff;
+  }
+  .folder-card:hover .item-checkbox,
+  .quiz-item:hover .item-checkbox,
+  .item-checkbox.visible,
+  .selection-mode .item-checkbox { opacity: 1; }
+  .item-checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .item-checkbox.checked::after { content: "✓"; }
+
+  /* Three-dot menu trigger per item */
+  .item-menu-btn {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    cursor: pointer;
+    opacity: 0;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.15s, background 0.15s;
+    z-index: 10;
+  }
+  .folder-card:hover .item-menu-btn,
+  .quiz-item:hover .item-menu-btn,
+  .item-menu-btn.visible { opacity: 1; }
+  .item-menu-btn:hover { background: var(--surface-2); color: var(--text); }
+
+  /* Context dropdown menu */
+  .ctx-menu {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    z-index: 3000;
+    min-width: 160px;
+    overflow: hidden;
+    animation: fadeInDown 0.12s ease;
+  }
+  .ctx-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    transition: background 0.12s;
+  }
+  .ctx-menu-item:hover { background: var(--surface-2); }
+  .ctx-menu-item.danger { color: #d9453d; }
+  .ctx-menu-item.danger:hover { background: #fff0ef; }
+
+  /* Floating action bar shown when items are selected */
+  .selection-bar {
+    position: fixed;
+    bottom: max(24px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 40px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    z-index: 2000;
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    white-space: nowrap;
+  }
+  .selection-bar.visible { transform: translateX(-50%) translateY(0); }
+  .selection-bar-count {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text);
+    padding: 0 8px;
+  }
+  .sel-bar-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border-radius: 40px;
+    border: none;
+    background: var(--surface-2);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .sel-bar-btn:hover { background: var(--accent); color: var(--button-text); }
+  .sel-bar-btn.danger:hover { background: #d9453d; color: #fff; }
+  .sel-bar-divider { width: 1px; height: 24px; background: var(--border-2); margin: 0 2px; }
+
+  /* Rename / Move / PAT input modals */
+  .fm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .fm-modal {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-lg);
+    animation: fadeInDown 0.2s ease;
+  }
+  .fm-modal h3 { color: var(--text); margin-bottom: 0.4rem; font-size: 1.1rem; }
+  .fm-modal p { color: var(--text-2); font-size: 0.9rem; margin-bottom: 1rem; }
+  .fm-modal input, .fm-modal select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-2);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .fm-modal input:focus, .fm-modal select:focus { border-color: var(--accent); }
+  .fm-modal input[type="password"] { letter-spacing: 2px; }
+  .fm-modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  .fm-btn {
+    padding: 9px 20px;
+    border-radius: 40px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .fm-btn:hover { opacity: 0.85; }
+  .fm-btn-primary { background: var(--accent); color: var(--button-text); }
+  .fm-btn-cancel { background: var(--surface-2); color: var(--text); }
+  .fm-btn-danger { background: #d9453d; color: #fff; }
+
+  /* PAT status indicator */
+  .pat-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 40px;
+    margin-top: 4px;
+    display: inline-block;
+  }
+  .pat-status.set { background: #d3f0d9; color: #145c23; }
+  .pat-status.unset { background: var(--surface-2); color: var(--text-3); }
+
   /* ----- SAVED QUESTIONS VIEW ----- */
   .saved-item {
     display: flex;
@@ -1507,6 +1691,16 @@
   </div>
 </main>
 <div id="toast" class="toast-msg"></div>
+<div id="selectionBar" class="selection-bar">
+  <span class="selection-bar-count" id="selCountLabel">0 selected</span>
+  <div class="sel-bar-divider"></div>
+  <button class="sel-bar-btn" id="selMoveBtn" onclick="openMoveModal()">📂 Move</button>
+  <button class="sel-bar-btn" id="selRenameBtn" onclick="openRenameModal()">✏️ Rename</button>
+  <button class="sel-bar-btn danger" id="selDeleteBtn" onclick="openDeleteModal()">🗑️ Delete</button>
+  <div class="sel-bar-divider"></div>
+  <button class="sel-bar-btn" onclick="clearSelection()">✕</button>
+</div>
+<div id="ctxMenuContainer"></div>
 
 <!-- SEARCH OVERLAY -->
 <div id="searchOverlay" class="search-overlay">
@@ -1554,6 +1748,9 @@
         </button>
         <button class="settings-pill" id="installAppBtn" style="display:none;" onclick="triggerInstallApp()">
           <span>📲</span><span>Install App</span>
+        </button>
+        <button class="settings-pill" id="ghTokenPillBtn" onclick="openPATModal()">
+          <span>🔑</span><span>GitHub Token</span>
         </button>
 
         <div class="collapsible" id="themePanel">
@@ -1873,7 +2070,10 @@
         const count = savedMode ? countSaved(node) : countQuizzes(node);
         const icon = savedMode && node.__saved__ ? "🔖" : "📁";
         const label = savedMode ? `${count} saved` : `${count} quiz${count!==1?'zes':''}`;
-        html += `<div class="folder-card" data-folder="${name.replace(/"/g,'&quot;')}">
+        const itemPath = [...currentPath, name].join('/');
+        html += `<div class="folder-card" data-folder="${name.replace(/"/g,'&quot;')}" data-path="${escapeHtml(itemPath)}" data-type="folder">
+          <div class="item-checkbox" data-path="${escapeHtml(itemPath)}"></div>
+          <button class="item-menu-btn" data-path="${escapeHtml(itemPath)}" data-type="folder" data-name="${escapeHtml(name)}">⋮</button>
           <div class="folder-icon">${icon}</div>
           <div class="folder-name">${escapeHtml(name)}</div>
           <div class="folder-count">${label}</div>
@@ -1886,7 +2086,12 @@
       for (const f of quizzes) {
         const name = cleanName(f.path.split("/").pop());
         const url = BASE_URL + "/" + f.path.split("/").map(p=>encodeURIComponent(p)).join("/");
-        html += `<a class="quiz-item quiz-link" href="${url}" target="_blank"><div class="quiz-info"><span class="quiz-dot"></span><span class="quiz-name">${escapeHtml(name)}</span></div><span class="quiz-arrow">→</span></a>`;
+        html += `<a class="quiz-item quiz-link" href="${url}" target="_blank" data-path="${escapeHtml(f.path)}" data-type="quiz">
+          <div class="item-checkbox" data-path="${escapeHtml(f.path)}"></div>
+          <div class="quiz-info"><span class="quiz-dot"></span><span class="quiz-name">${escapeHtml(name)}</span></div>
+          <button class="item-menu-btn" data-path="${escapeHtml(f.path)}" data-type="quiz" data-name="${escapeHtml(f.path.split('/').pop())}">⋮</button>
+          <span class="quiz-arrow">→</span>
+        </a>`;
       }
       html += `</div>`;
     }
@@ -1904,9 +2109,48 @@
     }
     contentDiv.innerHTML = html;
     contentDiv.classList.remove('content-enter');
-    void contentDiv.offsetWidth; // restart animation
+    void contentDiv.offsetWidth;
     contentDiv.classList.add('content-enter');
-    document.querySelectorAll(".folder-card").forEach(card => card.addEventListener("click",()=>navigateToFolder(card.dataset.folder)));
+
+    // Folder: click navigates, unless checkbox or menu-btn was the target
+    document.querySelectorAll(".folder-card").forEach(card => card.addEventListener("click", (e) => {
+      if (e.target.closest('.item-checkbox') || e.target.closest('.item-menu-btn')) return;
+      if (selectionActive) { toggleItemSelect(card.dataset.path); return; }
+      navigateToFolder(card.dataset.folder);
+    }));
+    // Quiz link: prevent navigation if in selection mode or checkbox/menu clicked
+    document.querySelectorAll(".quiz-item.quiz-link").forEach(link => link.addEventListener("click", (e) => {
+      if (e.target.closest('.item-checkbox') || e.target.closest('.item-menu-btn')) { e.preventDefault(); return; }
+      if (selectionActive) { e.preventDefault(); toggleItemSelect(link.dataset.path); }
+    }));
+
+    // Checkboxes
+    document.querySelectorAll(".item-checkbox").forEach(cb => cb.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleItemSelect(cb.dataset.path);
+    }));
+
+    // Three-dot menus
+    document.querySelectorAll(".item-menu-btn").forEach(btn => btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      showCtxMenu(e, btn.dataset.path, btn.dataset.type, btn.dataset.name);
+    }));
+
+    // Long-press to enter selection mode (touch)
+    let lpTimer = null;
+    document.querySelectorAll(".folder-card, .quiz-item").forEach(el => {
+      el.addEventListener("touchstart", (e) => {
+        lpTimer = setTimeout(() => {
+          toggleItemSelect(el.dataset.path);
+          el.querySelector('.item-checkbox')?.classList.add('visible');
+          navigator.vibrate && navigator.vibrate(30);
+        }, 500);
+      }, { passive: true });
+      el.addEventListener("touchend", () => clearTimeout(lpTimer));
+      el.addEventListener("touchmove", () => clearTimeout(lpTimer));
+    });
+
     document.querySelectorAll(".saved-item").forEach((el, idx) => el.addEventListener("click", () => {
       renderSavedDetail(savedItems, idx);
     }));
@@ -2617,6 +2861,348 @@
     if (e.target === document.getElementById('clockModal')) document.getElementById('clockModal').classList.remove('active');
   });
 
+  // =====================================================================
+  // FILE MANAGER — PAT, selection, context menu, GitHub API, Firebase sync
+  // =====================================================================
+
+  const PAT_KEY = 'quiz_portal_gh_pat';
+  const FM_SYNC_KEY = 'quiz_portal_file_changed';
+  let selectedPaths = new Set();
+  let selectionActive = false;
+
+  // --- PAT storage ---
+  function getPAT() { return localStorage.getItem(PAT_KEY) || ''; }
+  function savePAT(token) { localStorage.setItem(PAT_KEY, token.trim()); }
+
+  // --- PAT modal ---
+  function openPATModal() {
+    const current = getPAT();
+    showFMModal({
+      title: '🔑 GitHub Access Token',
+      body: `<p>Required for rename, move and delete. <a href="https://github.com/settings/tokens/new?scopes=repo&description=AditPortalToken" target="_blank" style="color:var(--accent)">Generate a token</a> with <strong>repo</strong> scope (or <strong>public_repo</strong> for public repos).<br>Stored only on this device in localStorage.</p>
+             <input type="password" id="patInput" placeholder="ghp_xxxxxxxxxxxx" value="${escapeHtml(current)}">
+             ${current ? '<span class="pat-status set">✅ Token saved</span>' : '<span class="pat-status unset">⚪ No token saved</span>'}`,
+      buttons: [
+        { label: 'Save Token', cls: 'fm-btn-primary', action: () => {
+          const val = document.getElementById('patInput').value.trim();
+          if (val) { savePAT(val); showToast('Token saved!'); }
+          else { localStorage.removeItem(PAT_KEY); showToast('Token cleared.'); }
+        }},
+        { label: 'Cancel', cls: 'fm-btn-cancel' }
+      ]
+    });
+  }
+
+  // --- Selection management ---
+  function toggleItemSelect(path) {
+    if (!path) return;
+    if (selectedPaths.has(path)) selectedPaths.delete(path);
+    else selectedPaths.add(path);
+    selectionActive = selectedPaths.size > 0;
+    updateSelectionUI();
+  }
+  function clearSelection() {
+    selectedPaths.clear();
+    selectionActive = false;
+    updateSelectionUI();
+    renderNavigationView();
+  }
+  function updateSelectionUI() {
+    const bar = document.getElementById('selectionBar');
+    const count = selectedPaths.size;
+    document.getElementById('selCountLabel').textContent = `${count} selected`;
+    bar.classList.toggle('visible', count > 0);
+    // rename only works for single selection
+    document.getElementById('selRenameBtn').style.opacity = count === 1 ? '' : '0.4';
+    document.getElementById('selRenameBtn').disabled = count !== 1;
+    // update checkbox states
+    document.querySelectorAll('.item-checkbox').forEach(cb => {
+      cb.classList.toggle('checked', selectedPaths.has(cb.dataset.path));
+      cb.classList.toggle('visible', selectionActive);
+    });
+  }
+
+  // --- Context menu ---
+  function showCtxMenu(e, path, type, name) {
+    closeCtxMenu();
+    const container = document.getElementById('ctxMenuContainer');
+    const menu = document.createElement('div');
+    menu.className = 'ctx-menu';
+    menu.id = 'activeCtxMenu';
+    menu.innerHTML = `
+      <button class="ctx-menu-item" onclick="ctxRename('${escapeHtml(path)}','${escapeHtml(name)}')">✏️ Rename</button>
+      <button class="ctx-menu-item" onclick="ctxMove('${escapeHtml(path)}')">📂 Move</button>
+      <button class="ctx-menu-item danger" onclick="ctxDelete('${escapeHtml(path)}','${escapeHtml(name)}')">🗑️ Delete</button>
+    `;
+    container.appendChild(menu);
+    // Position near the trigger
+    const rect = e.target.getBoundingClientRect();
+    const mw = 170, mh = 130;
+    let left = rect.right + 4, top = rect.top;
+    if (left + mw > window.innerWidth) left = rect.left - mw - 4;
+    if (top + mh > window.innerHeight) top = window.innerHeight - mh - 8;
+    menu.style.left = Math.max(8, left) + 'px';
+    menu.style.top = Math.max(8, top) + 'px';
+    setTimeout(() => document.addEventListener('click', closeCtxMenuOnOutside), 10);
+  }
+  function closeCtxMenu() {
+    document.getElementById('activeCtxMenu')?.remove();
+    document.removeEventListener('click', closeCtxMenuOnOutside);
+  }
+  function closeCtxMenuOnOutside(e) {
+    if (!e.target.closest('#activeCtxMenu')) closeCtxMenu();
+  }
+  function ctxRename(path, name) { closeCtxMenu(); singlePath = path; singleName = name; openRenameModal(path, name); }
+  function ctxMove(path) { closeCtxMenu(); singlePath = path; openMoveModal([path]); }
+  function ctxDelete(path, name) { closeCtxMenu(); openDeleteModal([path], name); }
+  let singlePath = null, singleName = null;
+
+  // --- Rename modal ---
+  function openRenameModal(path, name) {
+    const isMulti = !path;
+    if (isMulti) {
+      if (selectedPaths.size !== 1) { showToast('Select exactly 1 item to rename'); return; }
+      path = [...selectedPaths][0];
+      name = path.split('/').pop();
+    }
+    const ext = name.includes('.') ? name.substring(name.lastIndexOf('.')) : '';
+    const base = name.substring(0, name.length - ext.length);
+    showFMModal({
+      title: '✏️ Rename',
+      body: `<p>Renaming: <strong>${escapeHtml(cleanName(name))}</strong></p>
+             <input type="text" id="renameInput" value="${escapeHtml(base)}" placeholder="New name">`,
+      buttons: [
+        { label: 'Rename', cls: 'fm-btn-primary', action: async () => {
+          const newBase = document.getElementById('renameInput').value.trim();
+          if (!newBase || newBase === base) return;
+          const newName = newBase + ext;
+          const newPath = path.substring(0, path.lastIndexOf('/') + 1) + newName;
+          await ghMove(path, newPath);
+        }},
+        { label: 'Cancel', cls: 'fm-btn-cancel' }
+      ]
+    });
+    setTimeout(() => {
+      const inp = document.getElementById('renameInput');
+      inp?.focus(); inp?.select();
+    }, 50);
+  }
+
+  // --- Move modal ---
+  function openMoveModal(paths) {
+    paths = paths || [...selectedPaths];
+    if (!paths.length) return;
+    // Build list of all folder paths in tree
+    const folders = ['/ (root)'];
+    function collectFolders(node, prefix) {
+      for (const [name] of Object.entries(node.__folders__)) {
+        const p = prefix ? `${prefix}/${name}` : name;
+        folders.push(p);
+        collectFolders(node.__folders__[name], p);
+      }
+    }
+    if (rootTree) collectFolders(rootTree, '');
+    const opts = folders.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+    showFMModal({
+      title: '📂 Move',
+      body: `<p>Moving ${paths.length} item(s) to:</p>
+             <select id="moveTarget">${opts}</select>`,
+      buttons: [
+        { label: 'Move', cls: 'fm-btn-primary', action: async () => {
+          const target = document.getElementById('moveTarget').value;
+          const targetFolder = target === '/ (root)' ? '' : target;
+          for (const p of paths) {
+            const fname = p.split('/').pop();
+            const newPath = targetFolder ? `${targetFolder}/${fname}` : fname;
+            await ghMove(p, newPath);
+          }
+        }},
+        { label: 'Cancel', cls: 'fm-btn-cancel' }
+      ]
+    });
+  }
+
+  // --- Delete modal ---
+  function openDeleteModal(paths, label) {
+    paths = paths || [...selectedPaths];
+    if (!paths.length) return;
+    label = label || `${paths.length} item(s)`;
+    showFMModal({
+      title: '🗑️ Delete',
+      body: `<p>Permanently delete <strong>${escapeHtml(cleanName(label))}</strong>?<br>This cannot be undone.</p>`,
+      buttons: [
+        { label: 'Delete', cls: 'fm-btn-danger', action: async () => {
+          for (const p of paths) await ghDelete(p);
+        }},
+        { label: 'Cancel', cls: 'fm-btn-cancel' }
+      ]
+    });
+  }
+
+  // --- Generic modal helper ---
+  function showFMModal({ title, body, buttons }) {
+    closeFMModal();
+    const backdrop = document.createElement('div');
+    backdrop.className = 'fm-modal-backdrop';
+    backdrop.id = 'fmModalBackdrop';
+    const btnsHtml = buttons.map((b, i) =>
+      `<button class="fm-btn ${b.cls}" id="fmBtn${i}">${b.label}</button>`
+    ).join('');
+    backdrop.innerHTML = `<div class="fm-modal"><h3>${title}</h3>${body}<div class="fm-modal-btns">${btnsHtml}</div></div>`;
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeFMModal(); });
+    buttons.forEach((b, i) => {
+      document.getElementById(`fmBtn${i}`).addEventListener('click', async () => {
+        if (b.action) await b.action();
+        closeFMModal();
+      });
+    });
+  }
+  function closeFMModal() { document.getElementById('fmModalBackdrop')?.remove(); }
+
+  // --- GitHub API helpers ---
+  async function ghApiGet(path) {
+    const token = getPAT();
+    if (!token) { showToast('⚠️ No GitHub token set — open ⚙️ Settings → GitHub Token'); return null; }
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!res.ok) return null;
+    return res.json();
+  }
+
+  async function ghGetFilesInFolder(folderPath) {
+    // Returns all files recursively under a folder path (for folder move/delete)
+    const allFiles = rootTree ? getAllFilesUnder(rootTree, folderPath) : [];
+    return allFiles;
+  }
+
+  function getAllFilesUnder(tree, targetPath) {
+    const parts = targetPath ? targetPath.split('/') : [];
+    let node = tree;
+    for (const p of parts) {
+      if (!node.__folders__[p]) return [];
+      node = node.__folders__[p];
+    }
+    const results = [];
+    function collect(n, prefix) {
+      for (const f of n.__files__) results.push(f.path);
+      for (const [name, child] of Object.entries(n.__folders__)) collect(child, prefix ? `${prefix}/${name}` : name);
+    }
+    collect(node, targetPath);
+    return results;
+  }
+
+  async function ghCreateOrUpdate(path, content, sha) {
+    const token = getPAT();
+    const body = { message: `Portal: update ${path}`, content, branch: GITHUB_BRANCH };
+    if (sha) body.sha = sha;
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return res.ok;
+  }
+
+  async function ghDeleteFile(path, sha, message) {
+    const token = getPAT();
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${encodeURIComponent(path)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: message || `Portal: delete ${path}`, sha, branch: GITHUB_BRANCH })
+    });
+    return res.ok;
+  }
+
+  async function ghMove(oldPath, newPath) {
+    if (oldPath === newPath) return;
+    const isFolder = !oldPath.includes('.') || !oldPath.split('/').pop().includes('.');
+    showToast('⏳ Working...');
+    try {
+      if (isFolder) {
+        // Move/rename folder = move all files inside it
+        const files = getAllFilesUnder(rootTree, oldPath);
+        for (const filePath of files) {
+          const relative = filePath.substring(oldPath.length + 1);
+          const destPath = newPath + '/' + relative;
+          const data = await ghApiGet(filePath);
+          if (!data) continue;
+          await ghCreateOrUpdate(destPath, data.content.replace(/\n/g,''), null);
+          await ghDeleteFile(filePath, data.sha, `Portal: move ${filePath}`);
+        }
+      } else {
+        const data = await ghApiGet(oldPath);
+        if (!data) { showToast('❌ Could not read file'); return; }
+        await ghCreateOrUpdate(newPath, data.content.replace(/\n/g,''), null);
+        await ghDeleteFile(oldPath, data.sha, `Portal: rename/move ${oldPath}`);
+      }
+      showToast('✅ Done!');
+      clearSelection();
+      await refreshFilesAndSync();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+  }
+
+  async function ghDelete(path) {
+    showToast('⏳ Deleting...');
+    try {
+      const isFolder = !path.split('/').pop().includes('.');
+      const files = isFolder ? getAllFilesUnder(rootTree, path) : [path];
+      for (const filePath of files) {
+        const data = await ghApiGet(filePath);
+        if (!data) continue;
+        await ghDeleteFile(filePath, data.sha);
+      }
+      showToast('✅ Deleted!');
+      clearSelection();
+      await refreshFilesAndSync();
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+  }
+
+  // --- Refresh + Firebase broadcast ---
+  async function refreshFilesAndSync() {
+    const files = await loadFiles();
+    if (files) {
+      rootTree = buildTree(files);
+      renderNavigationView();
+    }
+    // Broadcast to all other devices via Firebase
+    if (db) {
+      db.ref(FM_SYNC_KEY).set(Date.now()).catch(() => {});
+    }
+  }
+
+  // --- Firebase listener: auto-refresh on remote change (Option C) ---
+  function initFMSyncListener() {
+    if (!db) return;
+    db.ref(FM_SYNC_KEY).on('value', async (snap) => {
+      if (!snap.exists()) return;
+      const ts = snap.val();
+      if (!lastSyncTs) { lastSyncTs = ts; return; } // ignore first fire
+      if (ts > lastSyncTs) {
+        lastSyncTs = ts;
+        showToast('🔄 Files updated — refreshing...');
+        const files = await loadFiles();
+        if (files) { rootTree = buildTree(files); renderNavigationView(); }
+      }
+    });
+  }
+  let lastSyncTs = null;
+
+  // --- Polling fallback: re-fetch every 60s (Option A) ---
+  setInterval(async () => {
+    const files = await loadFiles();
+    if (files) {
+      const newTree = buildTree(files);
+      // Only re-render if something actually changed
+      if (JSON.stringify(newTree) !== JSON.stringify(rootTree)) {
+        rootTree = newTree;
+        renderNavigationView();
+        showToast('🔄 Quizzes updated');
+      }
+    }
+  }, 60000);
+
   function showToast(msg) {
     const t = document.getElementById("toast");
     t.textContent = msg; t.classList.add("show");
@@ -2662,6 +3248,7 @@
     renderNavigationView();
     loadHistory();
     setTimeout(() => document.getElementById('splashScreen')?.classList.add('hide'), 350);
+    initFMSyncListener();
   }
   
   // ----- Pull-to-refresh (mobile) -----
