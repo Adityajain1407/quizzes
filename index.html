@@ -1734,7 +1734,74 @@
   .item-star-btn.starred { opacity: 1; color: #f59e0b; }
   .item-star-btn:hover { transform: scale(1.2); }
 
-  /* ----- FAVOURITES VIEW ----- */
+  /* ----- LIBRARY HUB PANEL (🥷 ninja icon) ----- */
+  .library-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 2000;
+    display: none;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 70px 0 0 0;
+  }
+  .library-backdrop.open { display: flex; }
+  .library-panel {
+    background: var(--surface);
+    border-radius: 0 0 var(--radius-card) var(--radius-card);
+    border: 1px solid var(--border-2);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 520px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: fadeInDown 0.2s ease;
+    margin-left: max(16px, env(safe-area-inset-left));
+  }
+  .library-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-2);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .library-tab {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-3);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: color 0.15s, border-bottom 0.15s;
+    border-bottom: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .library-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .library-tab:hover { color: var(--text); }
+  .library-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 12px 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .library-body::-webkit-scrollbar { display: none; }
+  .library-empty {
+    text-align: center;
+    color: var(--text-3);
+    font-size: 0.9rem;
+    padding: 32px 16px;
+  }
+  .library-empty .lib-empty-icon { font-size: 2rem; margin-bottom: 8px; }
   .fav-view { padding: 0; }
   .fav-section-title {
     font-size: 0.78rem;
@@ -1907,8 +1974,6 @@
       <span class="search-compact-text">Search...</span>
     </div>
     <div class="header-actions">
-      <button class="weather-btn" id="savedBtn" title="Saved Questions"><span class="wbtn-icon">🔖</span> <span class="saved-btn-text">Saved</span></button>
-      <button class="weather-btn" id="recentsBtn" title="Recent Quizzes" onclick="openRecentsView()"><span class="wbtn-icon">🕐</span> <span class="saved-btn-text">Recents</span></button>
       <div class="header-divider"></div>
       <div class="live-clock" id="liveClock" style="cursor:pointer;"><span class="wbtn-icon">🕐</span><span class="clock-text" id="liveClockText">--:-- -- • -------</span></div>
       <button class="weather-btn" id="weatherBtn" title="Interactive Weather"><span class="wbtn-icon">🌤️</span> <span class="wx-text">Loading...</span></button>
@@ -1926,6 +1991,18 @@
   </div>
 </main>
 <div id="toast" class="toast-msg"></div>
+
+<!-- Library Hub (🥷 ninja) -->
+<div id="libraryBackdrop" class="library-backdrop">
+  <div class="library-panel" id="libraryPanel">
+    <div class="library-tabs">
+      <button class="library-tab active" id="libTabFav" onclick="switchLibTab('fav')">⭐ Favourites</button>
+      <button class="library-tab" id="libTabRecents" onclick="switchLibTab('recents')">🕐 Recents</button>
+      <button class="library-tab" id="libTabSaved" onclick="switchLibTab('saved')">🔖 Saved</button>
+    </div>
+    <div class="library-body" id="libraryBody"></div>
+  </div>
+</div>
 <div id="selectionBar" class="selection-bar">
   <span class="selection-bar-count" id="selCountLabel">0 selected</span>
   <div class="sel-bar-divider"></div>
@@ -2691,18 +2768,165 @@
   choiceTrigger.addEventListener("click", openChoiceModal);
   document.getElementById("closeChoiceBtn").addEventListener("click", () => choiceModal.classList.remove("active"));
 
-  let favViewActive = false;
+  // ----- LIBRARY HUB (🥷 ninja) -----
+  let libOpen = false;
+  let libTab = 'fav';
   let pathBeforeFav = [];
-  document.getElementById("logoFav").addEventListener("click", () => {
-    if (favViewActive) {
-      favViewActive = false;
-      currentPath = pathBeforeFav;
-      renderNavigationView();
+
+  function openLibrary(tab) {
+    pathBeforeFav = [...currentPath];
+    libOpen = true;
+    libTab = tab || libTab;
+    document.getElementById('libraryBackdrop').classList.add('open');
+    renderLibTab();
+  }
+  function closeLibrary() {
+    libOpen = false;
+    document.getElementById('libraryBackdrop').classList.remove('open');
+    currentPath = pathBeforeFav;
+    renderNavigationView();
+  }
+  function switchLibTab(tab) {
+    libTab = tab;
+    document.querySelectorAll('.library-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('libTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+    renderLibTab();
+  }
+  function renderLibTab() {
+    const body = document.getElementById('libraryBody');
+    if (libTab === 'fav') renderLibFav(body);
+    else if (libTab === 'recents') renderLibRecents(body);
+    else if (libTab === 'saved') renderLibSaved(body);
+  }
+
+  function renderLibFav(body) {
+    const favList = Object.values(favourites);
+    const folders = favList.filter(f => f.type === 'folder').sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    const quizzes = favList.filter(f => f.type === 'quiz').sort((a,b) => (b.ts||0)-(a.ts||0));
+    let html = '';
+    if (!favList.length) {
+      html = `<div class="library-empty"><div class="lib-empty-icon">⭐</div>No favourites yet.<br>Hover a folder or quiz and click ☆</div>`;
     } else {
-      pathBeforeFav = [...currentPath];
-      favViewActive = true;
-      openFavouritesView();
+      if (folders.length) {
+        html += `<div class="fav-section-title">📁 Starred Folders</div>`;
+        for (const fav of folders) {
+          const name = cleanName(fav.name || fav.path.split('/').pop());
+          html += `<div class="recent-item lib-fav-folder" data-favpath="${escapeHtml(fav.path)}" style="cursor:pointer;">
+            <div class="recent-icon">📁</div>
+            <div class="recent-info"><div class="recent-name">${escapeHtml(name)}</div><div class="recent-folder">${escapeHtml(fav.path.split('/').slice(0,-1).join(' › ') || 'Root')}</div></div>
+            <button class="item-star-btn starred lib-unstar" data-path="${escapeHtml(fav.path)}" data-name="${escapeHtml(fav.name||fav.path.split('/').pop())}" data-type="folder" style="opacity:1;color:#f59e0b;">⭐</button>
+          </div>`;
+        }
+      }
+      if (quizzes.length) {
+        html += `<div class="fav-section-title">📖 Starred Quizzes</div>`;
+        for (const fav of quizzes) {
+          const fname = fav.path.split('/').pop();
+          const name = cleanName(fname);
+          const url = BASE_URL + '/' + fav.path.split('/').map(p=>encodeURIComponent(p)).join('/');
+          html += `<div class="recent-item lib-fav-quiz" data-url="${escapeHtml(url)}" data-path="${escapeHtml(fav.path)}" style="cursor:pointer;">
+            <div class="recent-icon">📖</div>
+            <div class="recent-info"><div class="recent-name">${escapeHtml(name)}</div><div class="recent-folder">${escapeHtml(fav.path.split('/').slice(0,-1).join(' › ') || 'Root')}</div></div>
+            <button class="item-star-btn starred lib-unstar" data-path="${escapeHtml(fav.path)}" data-name="${escapeHtml(fname)}" data-type="quiz" style="opacity:1;color:#f59e0b;">⭐</button>
+          </div>`;
+        }
+      }
     }
+    body.innerHTML = html;
+    body.querySelectorAll('.lib-fav-folder').forEach(el => el.addEventListener('click', (e) => {
+      if (e.target.closest('.lib-unstar')) return;
+      const parts = (el.dataset.favpath||'').split('/');
+      if (!getNodeFromPath(rootTree, parts)) { showToast('Folder not found'); return; }
+      closeLibrary();
+      currentPath = parts;
+      renderNavigationView();
+    }));
+    body.querySelectorAll('.lib-fav-quiz').forEach(el => el.addEventListener('click', (e) => {
+      if (e.target.closest('.lib-unstar')) return;
+      logRecent(el.dataset.path);
+      if (isStandalone) location.href = el.dataset.url;
+      else window.open(el.dataset.url, '_blank');
+    }));
+    body.querySelectorAll('.lib-unstar').forEach(btn => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type)
+        .then(() => renderLibFav(body));
+    }));
+  }
+
+  function renderLibRecents(body) {
+    const sorted = Object.values(recents).sort((a,b) => b.ts - a.ts);
+    if (!sorted.length) {
+      body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🕐</div>No recent quizzes yet.<br>Open a quiz to see it here.</div>`;
+      return;
+    }
+    let html = '';
+    for (const r of sorted) {
+      const url = BASE_URL + '/' + r.path.split('/').map(p=>encodeURIComponent(p)).join('/');
+      const key = btoa(r.path).replace(/=/g,'');
+      const isNew = (Date.now() - r.ts) < 15 * 60 * 1000;
+      html += `<div class="recent-item lib-recent-item" data-url="${escapeHtml(url)}" data-path="${escapeHtml(r.path)}" data-key="${key}" style="cursor:pointer;">
+        <div class="recent-icon">📖</div>
+        <div class="recent-info">
+          <div class="recent-name">${escapeHtml(r.name)}</div>
+          <div class="recent-folder">📁 ${escapeHtml(r.folder)}</div>
+          <div class="recent-time">${isNew ? 'Opened recently' : formatRecentTime(r.ts)}</div>
+        </div>
+        ${isNew ? '<span class="recent-badge">Recent</span>' : ''}
+        <button class="recent-menu-btn lib-recent-remove" data-key="${key}" title="Remove">✕</button>
+      </div>`;
+    }
+    body.innerHTML = html;
+    body.querySelectorAll('.lib-recent-item').forEach(el => el.addEventListener('click', (e) => {
+      if (e.target.closest('.lib-recent-remove')) return;
+      logRecent(el.dataset.path);
+      if (isStandalone) location.href = el.dataset.url;
+      else window.open(el.dataset.url, '_blank');
+    }));
+    body.querySelectorAll('.lib-recent-remove').forEach(btn => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      delete recents[key];
+      if (db) db.ref(`${RECENTS_KEY}/${key}`).remove().catch(()=>{});
+      renderLibRecents(body);
+    }));
+  }
+
+  function renderLibSaved(body) {
+    if (!db) { body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>Firebase not connected.</div>`; return; }
+    body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">⏳</div>Loading saved questions...</div>`;
+    // Reuse existing saved questions tree logic
+    buildSavedTree().then(tree => {
+      if (!tree) { body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>No saved questions yet.<br>Tap 🔖 Save on a question while attempting a quiz.</div>`; return; }
+      const allSaved = flattenSavedQuizzes(tree);
+      if (!allSaved.length) { body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">🔖</div>No saved questions yet.</div>`; return; }
+      let html = '';
+      for (const s of allSaved) {
+        html += `<div class="recent-item" style="cursor:pointer;flex-direction:column;align-items:flex-start;gap:4px;" data-savedpath="${escapeHtml(s.path)}">
+          <div style="font-weight:600;color:var(--text);font-size:0.9rem;">📖 ${escapeHtml(s.name)}</div>
+          <div style="font-size:0.75rem;color:var(--text-3);">${s.count} saved question${s.count!==1?'s':''}</div>
+        </div>`;
+      }
+      body.innerHTML = html;
+      body.querySelectorAll('[data-savedpath]').forEach(el => el.addEventListener('click', () => {
+        const parts = (el.dataset.savedpath||'').split('/');
+        if (savedMode) { detachSavedListeners(); savedMode = false; }
+        attachSavedListeners();
+        savedMode = true;
+        savedTree = tree;
+        currentPath = parts;
+        closeLibrary();
+        renderNavigationView();
+      }));
+    });
+  }
+
+  document.getElementById("logoFav").addEventListener("click", () => {
+    if (libOpen) closeLibrary();
+    else openLibrary();
+  });
+  document.getElementById("libraryBackdrop").addEventListener("click", (e) => {
+    if (!e.target.closest('#libraryPanel')) closeLibrary();
   });
 
   // ----- DINO GAME (WITH MOBILE TOUCH FIX) -----
@@ -3651,114 +3875,11 @@
     });
   }
 
-  function openFavouritesView() {
-    // Exit saved mode if active
-    if (savedMode) {
-      detachSavedListeners(); savedMode = false;
-      const b = document.getElementById('savedBtn');
-      b.innerHTML = '🔖 <span class="saved-btn-text">Saved</span>';
-      b.classList.remove('active');
-    }
-    const contentDiv = document.getElementById('content');
-    const favList = Object.values(favourites);
-    const folders = favList.filter(f => f.type === 'folder').sort((a,b) =>
-      (a.name||a.path).localeCompare(b.name||b.path));
-    const quizzes = favList.filter(f => f.type === 'quiz');
-
-    let html = `<div class="fav-view">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-        <span style="font-size:1.4rem;">⭐</span>
-        <h2 style="font-size:1.1rem;font-weight:700;color:var(--text);">Favourites</h2>
-        <button onclick="exitFavouritesView()" style="margin-left:auto;background:var(--surface-2);border:1px solid var(--border-2);border-radius:40px;padding:5px 14px;color:var(--text);font-weight:600;cursor:pointer;font-size:0.85rem;">✕ Close</button>
-      </div>`;
-
-    html += `<div class="fav-section-title">📁 Starred Folders</div>`;
-    if (!folders.length) html += `<div class="fav-empty">No starred folders yet. Hover/long-press a folder and click ☆</div>`;
-    else {
-      html += `<div class="folders-grid${viewMode === 'list' ? ' list-view' : ''}">`;
-      for (const fav of folders) {
-        const displayName = cleanName(fav.name || fav.path.split('/').pop());
-        html += `<div class="folder-card fav-folder-card" data-favpath="${escapeHtml(fav.path)}" style="position:relative;">
-          <button class="item-star-btn starred" data-path="${escapeHtml(fav.path)}" data-name="${escapeHtml(fav.name)}" data-type="folder">⭐</button>
-          <div class="folder-icon">📁</div>
-          <div class="folder-name">${escapeHtml(displayName)}</div>
-        </div>`;
-      }
-      html += `</div>`;
-    }
-
-    html += `<div class="fav-section-title">📖 Starred Quizzes</div>`;
-    if (!quizzes.length) html += `<div class="fav-empty">No starred quizzes yet. Hover/long-press a quiz and click ☆</div>`;
-    else {
-      // Sort quizzes newest-first by ts
-      const sortedQuizzes = [...quizzes].sort((a,b) => (b.ts||0) - (a.ts||0));
-      html += `<div class="quizzes-list">`;
-      for (const fav of sortedQuizzes) {
-        const fname = fav.path.split('/').pop();
-        const displayName = cleanName(fname);
-        const url = BASE_URL + '/' + fav.path.split('/').map(p=>encodeURIComponent(p)).join('/');
-        const folderPath = fav.path.split('/').slice(0,-1).join(' › ') || 'Root';
-        html += `<div class="quiz-item fav-quiz-card" data-favquizurl="${escapeHtml(url)}" data-favpath="${escapeHtml(fav.path)}">
-          <div class="quiz-info"><span class="quiz-dot"></span><span class="quiz-name">${escapeHtml(displayName)}</span></div>
-          <span class="fav-folder-label">${escapeHtml(folderPath)}</span>
-          <button class="fav-unstar-btn" data-path="${escapeHtml(fav.path)}" data-name="${escapeHtml(fname)}" data-type="quiz" title="Remove from Favourites" style="background:transparent;border:none;font-size:1.25rem;cursor:pointer;color:#f59e0b;padding:4px 8px;line-height:1;">⭐</button>
-          <span class="quiz-arrow" style="display:none!important;"></span>
-        </div>`;
-      }
-      html += `</div>`;
-    }
-    html += `</div>`;
-
-    contentDiv.innerHTML = html;
-    contentDiv.classList.remove('content-enter'); void contentDiv.offsetWidth; contentDiv.classList.add('content-enter');
-
-    // Folder click: navigate to that folder
-    contentDiv.querySelectorAll('.fav-folder-card').forEach(card => card.addEventListener('click', (e) => {
-      if (e.target.closest('.item-star-btn')) return;
-      const favPath = card.dataset.favpath;
-      const parts = favPath ? favPath.split('/') : [];
-      const node = getNodeFromPath(rootTree, parts);
-      if (!node) { showChangePopup('📁 Folder not found', 'This folder may have been deleted or moved.', 'danger'); return; }
-      favViewActive = false;
-      currentPath = parts;
-      renderNavigationView();
-    }));
-
-    // Folder star buttons (unstar)
-    contentDiv.querySelectorAll('.fav-folder-card .item-star-btn').forEach(btn => btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type)
-        .then(() => openFavouritesView());
-    }));
-
-    // Quiz unstar buttons (dedicated button, NOT the item-star-btn class to avoid conflicts)
-    contentDiv.querySelectorAll('.fav-unstar-btn').forEach(btn => btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type)
-        .then(() => openFavouritesView());
-    }));
-
-    // Quiz click: open quiz
-    contentDiv.querySelectorAll('.fav-quiz-card').forEach(el => el.addEventListener('click', (e) => {
-      if (e.target.closest('.fav-unstar-btn')) return;
-      const url = el.dataset.favquizurl;
-      const path = el.dataset.favpath;
-      if (rootTree && !findFileInTree(rootTree, path)) {
-        showChangePopup('📖 Quiz not found', 'This quiz may have been deleted or moved.', 'danger'); return;
-      }
-      logRecent(path);
-      if (isStandalone) location.href = url;
-      else window.open(url, '_blank');
-    }));
-  }
+  function openFavouritesView() { openLibrary('fav'); }
+  function openRecentsView() { openLibrary('recents'); }
 
   function exitFavouritesView() {
-    favViewActive = false;
-    currentPath = pathBeforeFav || [];
-    pathBeforeFav = [];
-    renderNavigationView();
+    closeLibrary();
   }
 
   // Helper: find a file by path anywhere in the tree
@@ -3832,66 +3953,6 @@
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;
     return `Last opened ${day}/${mon}/${yr} at ${h}:${m} ${ampm}`;
-  }
-
-  function openRecentsView() {
-    const contentDiv = document.getElementById('content');
-    const sorted = Object.values(recents).sort((a,b) => b.ts - a.ts);
-
-    let html = `<div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <span style="font-size:1.4rem;">🕐</span>
-        <h2 style="font-size:1.1rem;font-weight:700;color:var(--text);">Recent Quizzes</h2>
-        <button onclick="exitRecentsView()" style="margin-left:auto;background:var(--surface-2);border:1px solid var(--border-2);border-radius:40px;padding:5px 14px;color:var(--text);font-weight:600;cursor:pointer;font-size:0.85rem;">✕ Close</button>
-      </div>`;
-
-    if (!sorted.length) {
-      html += `<div style="text-align:center;color:var(--text-3);padding:40px 0;font-size:0.95rem;">No recent quizzes yet.<br>Open a quiz to see it here.</div>`;
-    } else {
-      for (const r of sorted) {
-        const timeLabel = formatRecentTime(r.ts);
-        const isNew = (Date.now() - r.ts) < 15 * 60 * 1000;
-        const key = btoa(r.path).replace(/=/g,'');
-        const url = BASE_URL + '/' + r.path.split('/').map(p=>encodeURIComponent(p)).join('/');
-        html += `<div class="recent-item" data-recenturl="${escapeHtml(url)}" data-recentpath="${escapeHtml(r.path)}" data-recentkey="${key}">
-          <div class="recent-icon">📖</div>
-          <div class="recent-info">
-            <div class="recent-name">${escapeHtml(r.name)}</div>
-            <div class="recent-folder">📁 ${escapeHtml(r.folder)}</div>
-            <div class="recent-time">${timeLabel}</div>
-          </div>
-          ${isNew ? '<span class="recent-badge">Recent</span>' : ''}
-          <button class="recent-menu-btn" data-rpath="${escapeHtml(r.path)}" data-rname="${escapeHtml(r.name)}" data-rkey="${key}">⋮</button>
-        </div>`;
-      }
-    }
-    html += `</div>`;
-
-    contentDiv.innerHTML = html;
-    contentDiv.classList.remove('content-enter'); void contentDiv.offsetWidth; contentDiv.classList.add('content-enter');
-
-    contentDiv.querySelectorAll('.recent-item').forEach(el => el.addEventListener('click', (e) => {
-      if (e.target.closest('.recent-menu-btn')) return;
-      const path = el.dataset.recentpath;
-      const url = el.dataset.recenturl;
-      if (rootTree && !findFileInTree(rootTree, path)) {
-        showChangePopup('📖 Quiz not found', 'This quiz may have been deleted or moved.', 'danger');
-        return;
-      }
-      logRecent(path);
-      if (isStandalone) location.href = url;
-      else window.open(url, '_blank');
-    }));
-
-    contentDiv.querySelectorAll('.recent-menu-btn').forEach(btn => btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showRecentCtxMenu(e, btn.dataset.rpath, btn.dataset.rname, btn.dataset.rkey);
-    }));
-  }
-
-  function exitRecentsView() {
-    currentPath = [];
-    renderNavigationView();
   }
 
   function showRecentCtxMenu(e, path, name, key) {
