@@ -1929,7 +1929,7 @@
 <div id="selectionBar" class="selection-bar">
   <span class="selection-bar-count" id="selCountLabel">0 selected</span>
   <div class="sel-bar-divider"></div>
-  <button class="sel-bar-btn" id="selFavBtn" onclick="selFavAction()">☆ Favourite</button>
+  <button class="sel-bar-btn" id="selFavBtn" onclick="selFavAction()">☆ Add to Favourites</button>
   <button class="sel-bar-btn" id="selRenameBtn" onclick="openRenameModal()">✏️ Rename</button>
   <button class="sel-bar-btn" onclick="openMoveModal()">📂 Move</button>
   <button class="sel-bar-btn danger" onclick="openDeleteModal()">🗑️ Delete</button>
@@ -3197,7 +3197,9 @@
       selFavBtn.style.display = single ? '' : 'none';
       if (single) {
         const path = [...selectedPaths][0];
-        selFavBtn.textContent = isFavourited(path) ? '⭐ Unstar' : '☆ Favourite';
+        selFavBtn.innerHTML = isFavourited(path)
+          ? '⭐ Remove from Favourites'
+          : '☆ Add to Favourites';
       }
     }
     if (selRenameBtn) selRenameBtn.style.display = single ? '' : 'none';
@@ -3638,12 +3640,12 @@
   function selFavAction() {
     if (selectedPaths.size !== 1) return;
     const path = [...selectedPaths][0];
-    // find name and type from tree
     const file = findFileInTree(rootTree, path);
     const type = file ? 'quiz' : 'folder';
     const name = path.split('/').pop();
-    toggleFavourite(path, name, type);
-    updateSelectionUI();
+    toggleFavourite(path, name, type).then(() => {
+      updateSelectionUI(); // refresh button label after toggle
+    });
   }
 
   function openFavouritesView() {
