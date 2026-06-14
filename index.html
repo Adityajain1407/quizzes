@@ -2692,11 +2692,14 @@
   document.getElementById("closeChoiceBtn").addEventListener("click", () => choiceModal.classList.remove("active"));
 
   let favViewActive = false;
+  let pathBeforeFav = [];
   document.getElementById("logoFav").addEventListener("click", () => {
     if (favViewActive) {
       favViewActive = false;
-      exitFavouritesView();
+      currentPath = pathBeforeFav;
+      renderNavigationView();
     } else {
+      pathBeforeFav = [...currentPath];
       favViewActive = true;
       openFavouritesView();
     }
@@ -3753,7 +3756,8 @@
 
   function exitFavouritesView() {
     favViewActive = false;
-    currentPath = [];
+    currentPath = pathBeforeFav || [];
+    pathBeforeFav = [];
     renderNavigationView();
   }
 
