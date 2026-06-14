@@ -538,7 +538,6 @@
   .folders-grid.list-view .folder-card .item-checkbox {
     position: static;
     flex-shrink: 0;
-    margin-right: 0;
   }
   .folders-grid.list-view .folder-card .item-star-btn {
     position: static;
@@ -631,23 +630,25 @@
   .quizzes-grid .quiz-item::before { content: "📖"; font-size: 2rem; }
   .quizzes-grid .item-checkbox { position: absolute; top: 8px; left: 8px; margin-right: 0; }
   .quizzes-grid .item-star-btn { position: absolute; bottom: 8px; right: 8px; }
-  /* Quiz items — list view */
-  .quizzes-list .quiz-item {
-    display: flex;
-    align-items: center;
-    padding: 14px 20px;
-    text-decoration: none;
-    border-bottom: 1px solid var(--border);
-    transition: var(--transition);
-    gap: 10px;
-  }
-  .quizzes-list .quiz-item:last-child { border-bottom: none; }
-  .quizzes-list .quiz-item:hover { background: var(--surface-2); }
-  /* quiz-item shared */
+  /* Quiz items — shared */
   .quiz-item {
     text-decoration: none;
     color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
+  /* List view */
+  .quizzes-list .quiz-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .quizzes-list .quiz-item:last-child { border-bottom: none; }
+  .quizzes-list .quiz-item:hover { background: var(--surface-2); }
+  /* List view - checkbox left, star right, no gap shift */
+  .quizzes-list .quiz-item .item-checkbox { flex-shrink: 0; }
+  .quizzes-list .quiz-item .item-star-btn { flex-shrink: 0; }
   .fav-quiz-card {
     justify-content: flex-start !important;
     gap: 0 !important;
@@ -668,10 +669,7 @@
     flex-shrink: 0;
     pointer-events: all;
   }
-  .quizzes-list .quiz-item:hover {
-    background: var(--surface-2);
-    padding-left: 26px;
-  }
+
   .quiz-info {
     display: flex;
     align-items: center;
@@ -1477,65 +1475,49 @@
 
   /* Checkbox that appears on hover/long-press */
   .folder-card, .quiz-item { position: relative; }
+  /* === CHECKBOX: only visible in selection mode, never on hover === */
   .item-checkbox {
-    width: 20px; height: 20px;
-    min-width: 20px;
+    width: 20px; height: 20px; min-width: 20px;
     border-radius: 6px;
     border: 2px solid var(--border-2);
     background: var(--surface);
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.15s, background 0.15s, border-color 0.15s;
-    z-index: 10;
-    display: flex; align-items: center; justify-content: center;
+    display: none;
+    align-items: center; justify-content: center;
     font-size: 0.75rem; color: #fff;
     flex-shrink: 0;
-    margin-right: 10px;
+    transition: background 0.15s, border-color 0.15s;
+    z-index: 5;
   }
-  .folder-card:hover .item-checkbox,
-  .quiz-item:hover .item-checkbox,
-  .item-checkbox.visible,
-  .selection-mode .item-checkbox { opacity: 1; }
-  .item-checkbox.checked {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
+  .selection-active .item-checkbox { display: flex; }
+  .item-checkbox.checked { background: var(--accent); border-color: var(--accent); }
   .item-checkbox.checked::after { content: "✓"; }
 
-  /* Three-dot menu trigger per item */
-  .item-menu-btn {
-    width: 28px; height: 28px;
-    min-width: 28px;
+  /* === STAR BUTTON: right side, shows on hover === */
+  .item-star-btn {
+    width: 30px; height: 30px; min-width: 30px;
     border-radius: 50%;
     border: none;
     background: transparent;
     color: var(--text-3);
     cursor: pointer;
     opacity: 0;
-    font-size: 1rem;
+    font-size: 1.2rem;
     display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.15s, background 0.15s;
+    transition: opacity 0.15s, color 0.15s, transform 0.15s;
     flex-shrink: 0;
+    pointer-events: all;
   }
-  .folder-card:hover .item-menu-btn,
-  .quiz-item:hover .item-menu-btn,
-  .item-menu-btn.visible { opacity: 1; }
-  /* Folder card controls stay absolute (card is grid-based, center-aligned) */
+  .folder-card:hover .item-star-btn,
+  .quizzes-list .quiz-item:hover .item-star-btn,
+  .quizzes-grid .quiz-item:hover .item-star-btn { opacity: 1; }
+  .item-star-btn.starred { opacity: 1; color: #f59e0b; }
+  .item-star-btn:hover { transform: scale(1.2); }
+
+  /* === FOLDER CARD positions === */
   .folder-card { position: relative; }
-  .folder-card .item-checkbox {
-    position: absolute; top: 8px; left: 8px;
-    margin-right: 0;
-  }
-  .folder-card .item-menu-btn {
-    position: absolute; top: 6px; right: 6px;
-  }
-  .folder-card .item-star-btn {
-    position: absolute; bottom: 8px; right: 8px;
-  }
-  /* Quiz item controls are inline (row-based layout) */
-  .quiz-item { position: relative; }
-  .quiz-item .item-checkbox { margin-right: 10px; }
-  .item-menu-btn:hover { background: var(--surface-2); color: var(--text); }
+  .folder-card .item-checkbox { position: absolute; top: 8px; left: 8px; }
+  .folder-card .item-star-btn { position: absolute; bottom: 8px; right: 8px; }
 
   /* Context dropdown menu */
   .ctx-menu {
@@ -2313,43 +2295,44 @@
     void contentDiv.offsetWidth;
     contentDiv.classList.add('content-enter');
 
-    // Folder: click navigates, unless checkbox or menu-btn was the target
+    // Folder: click navigates, unless star/checkbox was target or in selection mode
     document.querySelectorAll(".folder-card").forEach(card => card.addEventListener("click", (e) => {
-      if (e.target.closest('.item-checkbox') || e.target.closest('.item-menu-btn')) return;
+      if (e.target.closest('.item-star-btn') || e.target.closest('.item-checkbox')) return;
       if (selectionActive) { toggleItemSelect(card.dataset.path); return; }
       navigateToFolder(card.dataset.folder);
     }));
-    // Quiz link: prevent navigation if in selection mode or checkbox/menu clicked
+    // Quiz link: prevent navigation if star/checkbox clicked or in selection mode
     document.querySelectorAll(".quiz-item.quiz-link").forEach(link => link.addEventListener("click", (e) => {
-      if (e.target.closest('.item-checkbox') || e.target.closest('.item-menu-btn')) { e.preventDefault(); return; }
+      if (e.target.closest('.item-star-btn') || e.target.closest('.item-checkbox')) { e.preventDefault(); return; }
       if (selectionActive) { e.preventDefault(); toggleItemSelect(link.dataset.path); }
     }));
 
-    // Checkboxes
+    // Checkboxes — only active in selection mode
     document.querySelectorAll(".item-checkbox").forEach(cb => cb.addEventListener("click", (e) => {
       e.stopPropagation();
+      e.preventDefault();
       toggleItemSelect(cb.dataset.path);
     }));
 
-    // Star buttons
+    // Star buttons — stopPropagation prevents opening folder/quiz
     document.querySelectorAll(".item-star-btn").forEach(btn => btn.addEventListener("click", (e) => {
       e.stopPropagation();
       e.preventDefault();
       toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type);
     }));
 
-    // Long-press to enter selection mode (touch)
+    // Long-press to enter selection mode (touch) — does NOT open item
     let lpTimer = null;
     document.querySelectorAll(".folder-card, .quiz-item").forEach(el => {
       el.addEventListener("touchstart", (e) => {
         lpTimer = setTimeout(() => {
+          lpTimer = null;
           toggleItemSelect(el.dataset.path);
-          el.querySelector('.item-checkbox')?.classList.add('visible');
           navigator.vibrate && navigator.vibrate(30);
-        }, 500);
+        }, 600);
       }, { passive: true });
-      el.addEventListener("touchend", () => clearTimeout(lpTimer));
-      el.addEventListener("touchmove", () => clearTimeout(lpTimer));
+      el.addEventListener("touchend", () => clearTimeout(lpTimer), { passive: true });
+      el.addEventListener("touchmove", () => clearTimeout(lpTimer), { passive: true });
     });
 
     document.querySelectorAll(".saved-item").forEach((el, idx) => el.addEventListener("click", () => {
@@ -3104,6 +3087,7 @@
   function clearSelection() {
     selectedPaths.clear();
     selectionActive = false;
+    contentDiv.classList.remove('selection-active');
     updateSelectionUI();
     renderNavigationView();
   }
@@ -3112,8 +3096,9 @@
     const count = selectedPaths.size;
     document.getElementById('selCountLabel').textContent = `${count} selected`;
     bar.classList.toggle('visible', count > 0);
+    // Drive checkbox visibility via CSS class on contentDiv
+    contentDiv.classList.toggle('selection-active', selectionActive);
 
-    // Show rename/favourite only for single selection
     const single = count === 1;
     const selFavBtn = document.getElementById('selFavBtn');
     const selRenameBtn = document.getElementById('selRenameBtn');
@@ -3121,19 +3106,18 @@
       selFavBtn.style.display = single ? '' : 'none';
       if (single) {
         const path = [...selectedPaths][0];
-        const starred = isFavourited(path);
-        selFavBtn.textContent = starred ? '⭐ Unstar' : '☆ Favourite';
+        selFavBtn.textContent = isFavourited(path) ? '⭐ Unstar' : '☆ Favourite';
       }
     }
     if (selRenameBtn) selRenameBtn.style.display = single ? '' : 'none';
 
-    // update checkbox states
     document.querySelectorAll('.item-checkbox').forEach(cb => {
       cb.classList.toggle('checked', selectedPaths.has(cb.dataset.path));
-      cb.classList.toggle('visible', selectionActive);
     });
+    // Hide stars during selection so they don't conflict
     document.querySelectorAll('.item-star-btn').forEach(btn => {
-      btn.style.display = selectionActive ? 'none' : '';
+      btn.style.opacity = selectionActive ? '0' : '';
+      btn.style.pointerEvents = selectionActive ? 'none' : '';
     });
   }
 
