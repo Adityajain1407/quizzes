@@ -2043,6 +2043,8 @@
 
   let rootTree = null, currentPath = [];
   let savedMode = false, savedTree = null;
+  let favourites = {}; // populated by loadFavourites() in init
+  let recents = {};    // populated by loadRecents() in init
   let savedListeners = [];
   function detachSavedListeners() {
     for (const { ref, cb } of savedListeners) { try { ref.off('value', cb); } catch(e) {} }
@@ -3419,7 +3421,6 @@
   // FAVOURITES SYSTEM (Firebase, cross-device)
   // =====================================================================
   const FAV_KEY = 'quiz_portal_favourites';
-  let favourites = {}; // { path: { name, type, path } }
 
   async function loadFavourites() {
     if (!db) return;
@@ -3430,6 +3431,7 @@
   }
 
   function isFavourited(path) {
+    if (!path || !favourites) return false;
     return !!favourites[btoa(path).replace(/=/g,'')];
   }
 
@@ -3589,7 +3591,6 @@
   // RECENTS SYSTEM (Firebase, cross-device)
   // =====================================================================
   const RECENTS_KEY = 'quiz_portal_recents';
-  let recents = {}; // { path: { path, name, folder, ts } }
 
   async function loadRecents() {
     if (!db) return;
@@ -3876,28 +3877,34 @@
   }
 
   async function init() {
-    initTheme();
-    fetchWeatherInteractive();
-    await Promise.all([loadFavourites(), loadRecents()]);
-    
-    const files = await loadFiles();
-    if (!files || !files.length) {
-      contentDiv.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div>Could not load quizzes from GitHub.<br>Make sure the repository is public.</div>`;
-      document.getElementById('splashScreen')?.classList.add('hide');
-      return;
-    }
-    rootTree = buildTree(files);
-    let restoredPath = [];
     try {
-      const saved = sessionStorage.getItem('quiz_current_path');
-      if (saved) restoredPath = JSON.parse(saved);
-    } catch(e) {}
-    currentPath = (Array.isArray(restoredPath) && getNodeFromPath(rootTree, restoredPath)) ? restoredPath : [];
-    renderNavigationView();
-    loadHistory();
-    attachRecentLogging();
-    setTimeout(() => document.getElementById('splashScreen')?.classList.add('hide'), 350);
-    initFMSyncListener();
+      initTheme();
+      fetchWeatherInteractive();
+      await Promise.all([loadFavourites(), loadRecents()]);
+      
+      const files = await loadFiles();
+      if (!files || !files.length) {
+        contentDiv.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div>Could not load quizzes from GitHub.<br>Make sure the repository is public.</div>`;
+        document.getElementById('splashScreen')?.classList.add('hide');
+        return;
+      }
+      rootTree = buildTree(files);
+      let restoredPath = [];
+      try {
+        const saved = sessionStorage.getItem('quiz_current_path');
+        if (saved) restoredPath = JSON.parse(saved);
+      } catch(e) {}
+      currentPath = (Array.isArray(restoredPath) && getNodeFromPath(rootTree, restoredPath)) ? restoredPath : [];
+      renderNavigationView();
+      loadHistory();
+      attachRecentLogging();
+      initFMSyncListener();
+    } catch(e) {
+      console.error('Portal init error:', e);
+      contentDiv.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div>Something went wrong loading the portal.<br><small>${e.message}</small></div>`;
+    } finally {
+      setTimeout(() => document.getElementById('splashScreen')?.classList.add('hide'), 300);
+    }
   }
   
   // ----- Pull-to-refresh (mobile) -----
