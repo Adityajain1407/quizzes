@@ -2254,6 +2254,9 @@
       e.preventDefault();
       toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type);
     }));
+
+    // Three-dot menus
+    document.querySelectorAll(".item-menu-btn").forEach(btn => btn.addEventListener("click", (e) => {
       e.stopPropagation();
       e.preventDefault();
       showCtxMenu(e, btn.dataset.path, btn.dataset.type, btn.dataset.name);
