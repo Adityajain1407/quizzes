@@ -3704,14 +3704,21 @@
   }
 
   async function ghDelete(path) {
+    const token = getPAT();
+    if (!token) { showToast('⚠️ No GitHub token — open ⚙️ Settings → GitHub Token'); return; }
     showToast('⏳ Deleting...');
     try {
       const isFolder = !path.split('/').pop().includes('.');
       const files = isFolder ? getAllFilesUnder(rootTree, path) : [path];
+      if (!files.length) { showToast('❌ No files found at: ' + path); return; }
+      let deleted = 0;
       for (const filePath of files) {
         const data = await ghApiGet(filePath);
-        if (!data) continue;
-        await ghDeleteFile(filePath, data.sha);
+        if (!data) { showToast(`❌ Could not fetch: ${filePath}`); return; }
+        if (!data.sha) { showToast(`❌ No SHA for: ${filePath}`); return; }
+        const ok = await ghDeleteFile(filePath, data.sha);
+        if (!ok) { showToast(`❌ GitHub rejected delete for: ${filePath}`); return; }
+        deleted++;
         // Cascade: delete Firebase logs for this quiz
         if (db) {
           const safe = cleanName(filePath.split('/').pop()).toLowerCase().replace(/[^a-z0-9]+/g,'_');
@@ -3720,7 +3727,7 @@
           try { await db.ref(`quiz_saved_questions_${safe}`).remove(); } catch(e) {}
         }
       }
-      showToast('✅ Deleted!');
+      showToast(`✅ Deleted ${deleted} file${deleted!==1?'s':''}!`);
       clearSelection();
       await refreshFilesAndSync({
         type: 'delete',
@@ -3728,7 +3735,7 @@
         oldPath: path,
         displayName: cleanName(path.split('/').pop())
       });
-    } catch(e) { showToast('❌ Error: ' + e.message); }
+    } catch(e) { showToast('❌ Error: ' + e.message); console.error('ghDelete error:', e); }
   }
 
   // --- Refresh + Firebase broadcast ---
@@ -4148,7 +4155,9 @@
   function showToast(msg) {
     const t = document.getElementById("toast");
     t.textContent = msg; t.classList.add("show");
-    setTimeout(() => t.classList.remove("show"), 1500);
+    const duration = msg.startsWith('❌') ? 4000 : 1800;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), duration);
   }
   function escapeHtml(str) { return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
 
