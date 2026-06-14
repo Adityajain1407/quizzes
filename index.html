@@ -1741,14 +1741,14 @@
     background: rgba(0,0,0,0.35);
     z-index: 2000;
     display: none;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 70px 0 0 0;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
   }
   .library-backdrop.open { display: flex; }
   .library-panel {
     background: var(--surface);
-    border-radius: 0 0 var(--radius-card) var(--radius-card);
+    border-radius: var(--radius-card);
     border: 1px solid var(--border-2);
     box-shadow: var(--shadow-lg);
     width: 100%;
@@ -1757,8 +1757,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    animation: fadeInDown 0.2s ease;
-    margin-left: max(16px, env(safe-area-inset-left));
+    animation: fadeInDown 0.25s cubic-bezier(.34,1.56,.64,1);
   }
   .library-tabs {
     display: flex;
