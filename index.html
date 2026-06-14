@@ -3409,6 +3409,13 @@
     updateSelectionUI();
     renderNavigationView();
   }
+
+  // Close selection by clicking any empty area (not on a card/item/button)
+  document.addEventListener('click', (e) => {
+    if (!selectionActive) return;
+    if (e.target.closest('.folder-card, .quiz-item, .quiz-row, .selection-bar, .item-checkbox, .quiz-checkbox, .item-star-btn')) return;
+    clearSelection();
+  });
   function updateSelectionUI() {
     const bar = document.getElementById('selectionBar');
     const count = selectedPaths.size;
