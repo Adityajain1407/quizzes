@@ -2215,19 +2215,26 @@
       const res = await fetch(API_URL);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      return (data.tree || []).filter(f =>
+      const allFiles = data.tree || [];
+      const quizFiles = allFiles.filter(f =>
         f.type === "blob" && (f.path.endsWith(".html") || f.path.endsWith(".md")) &&
         f.path !== "index.html" && !f.path.endsWith("README.md") &&
         !f.path.startsWith("icons/") &&
         f.path !== "manifest.json" && f.path !== "service-worker.js" &&
         !f.path.toLowerCase().includes("quiz_master_prompt")
       );
+      // Also include .gitkeep files so newly-created empty folders appear in the tree
+      const folderMarkers = allFiles.filter(f =>
+        f.type === "blob" && f.path.endsWith(".gitkeep")
+      );
+      return [...quizFiles, ...folderMarkers];
     } catch(e) { return null; }
   }
   function buildTree(files) {
     const root = { __files__: [], __folders__: {} };
     for (const f of files) {
       const isQuiz = f.path.endsWith(".html");
+      const isMarker = f.path.endsWith(".gitkeep");
       const parts = f.path.split("/");
       let node = root;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -2236,6 +2243,7 @@
         node = node.__folders__[part];
       }
       if (isQuiz) node.__files__.push(f);
+      // .gitkeep: folder already created above, don't add to __files__
     }
     return root;
   }
@@ -2566,11 +2574,13 @@
     }
     html += `</div>
       <div class="view-toggle-group">
+        <button class="view-toggle-btn" id="newFolderBtn" title="New Folder">📁+</button>
         <button class="view-toggle-btn${viewMode==='grid'?' active':''}" id="gridViewBtn" title="Grid view">▦</button>
         <button class="view-toggle-btn${viewMode==='list'?' active':''}" id="listViewBtn" title="List view">☰</button>
       </div>
     </div>`;
     breadcrumbContainer.innerHTML = html;
+    document.getElementById('newFolderBtn').addEventListener('click', openNewFolderModal);
     document.getElementById('gridViewBtn').addEventListener('click', () => setViewMode('grid'));
     document.getElementById('listViewBtn').addEventListener('click', () => setViewMode('list'));
     document.querySelectorAll(".breadcrumb-item").forEach(el=>{
@@ -3601,8 +3611,58 @@
   function closeFMModal() { document.getElementById('fmModalBackdrop')?.remove(); }
 
   // --- GitHub API helpers ---
+  function openNewFolderModal() {
+    const parentLabel = currentPath.length ? currentPath.join(' / ') : 'Root';
+    showFMModal({
+      title: '📁 New Folder',
+      body: `<p>Creating inside: <strong>${escapeHtml(parentLabel)}</strong></p>
+             <input type="text" id="newFolderInput" placeholder="Folder name" autofocus>`,
+      buttons: [
+        { label: '✓ Create', cls: 'fm-btn-primary', action: async () => {
+          const name = document.getElementById('newFolderInput')?.value?.trim();
+          if (!name) { showToast('⚠️ Enter a folder name'); return; }
+          if (/[\\/:*?"<>|]/.test(name)) { showToast('⚠️ Invalid characters in name'); return; }
+          await ghCreateFolder(name);
+        }},
+        { label: 'Cancel', cls: 'fm-btn-cancel' }
+      ]
+    });
+    // Focus the input after modal renders
+    setTimeout(() => document.getElementById('newFolderInput')?.focus(), 50);
+  }
+
+  async function ghCreateFolder(folderName) {
+    const token = getPAT();
+    if (!token) { showToast('⚠️ No GitHub token — open ⚙️ Settings → GitHub Token'); return; }
+    // GitHub doesn't support empty folders — create a .gitkeep placeholder file inside
+    const filePath = currentPath.length
+      ? [...currentPath, folderName, '.gitkeep'].join('/')
+      : `${folderName}/.gitkeep`;
+    showToast('⏳ Creating folder...');
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(filePath)}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `Portal: create folder ${folderName}`,
+            content: btoa(''), // empty file, base64 encoded
+            branch: GITHUB_BRANCH
+          })
+        }
+      );
+      if (res.ok) {
+        showToast(`✅ Folder "${folderName}" created!`);
+        await refreshFilesAndSync(null);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`❌ Error ${res.status}: ${err.message || 'Could not create folder'}`);
+      }
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+  }
+
   function ghEncodePath(path) {
-    // Encode each segment individually so slashes stay as / in the URL
     return path.split('/').map(seg => encodeURIComponent(seg)).join('/');
   }
 
