@@ -698,21 +698,30 @@
         .confirm-yes, .confirm-no {
             color: #ffffff;
             border: none;
-            padding: 10px 24px;
+            padding: 11px 28px;
             margin: 6px;
             border-radius: 40px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: transform 0.15s, box-shadow 0.15s;
         }
-        .confirm-yes { background: #1f9d55; }
-        .confirm-no { background: #d9453d; }
-        .confirm-yes:hover { background: #188244; }
-        .confirm-no:hover { background: #bd3a33; }
+        .confirm-yes {
+            background: #1f9d55;
+            box-shadow: 0 4px 14px rgba(31,157,85,0.45);
+        }
+        .confirm-no {
+            background: #d9453d;
+            box-shadow: 0 4px 14px rgba(217,69,61,0.45);
+        }
+        .confirm-yes:hover { background: #188244; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(31,157,85,0.55); }
+        .confirm-no:hover  { background: #bd3a33; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(217,69,61,0.55); }
+        .confirm-yes:active, .confirm-no:active { transform: scale(0.97); }
 
-        /* Close-quiz button: small theme-matching icon, top-right corner, out of the way */
+        /* Close-quiz button: positioned below stats bar, not overlapping timer */
         .close-quiz-fab {
             position: fixed;
-            top: max(14px, env(safe-area-inset-top));
+            top: max(80px, calc(env(safe-area-inset-top) + 60px));
             right: 14px;
             width: 36px;
             height: 36px;
@@ -720,8 +729,8 @@
             background: var(--surface);
             color: var(--text-2);
             border: 1.5px solid var(--border-2);
-            box-shadow: var(--shadow-sm, 0 2px 6px rgba(0,0,0,0.12));
-            font-size: 1.1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-size: 1rem;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -731,14 +740,14 @@
             transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
         }
         .close-quiz-fab:hover {
-            background: var(--wrong-bg);
-            color: var(--wrong-text);
-            border-color: var(--wrong-border);
+            background: #d9453d;
+            color: #ffffff;
+            border-color: #d9453d;
             transform: scale(1.08);
         }
         .close-quiz-fab:active { transform: scale(0.94); }
         @media (max-width: 650px) {
-            .close-quiz-fab { width: 32px; height: 32px; font-size: 1rem; top: max(10px, env(safe-area-inset-top)); right: 10px; }
+            .close-quiz-fab { width: 32px; height: 32px; font-size: 0.9rem; top: max(72px, calc(env(safe-area-inset-top) + 56px)); right: 10px; }
         }
         button { background: var(--accent-dark); border: none; padding: 10px 20px; margin: 6px; border-radius: 40px; color: white; cursor: pointer; font-weight: bold; }
         
@@ -894,485 +903,265 @@
     const FULL_QUIZ = [
         {
             text: "Which of the following is NOT a defining characteristic of a tribe according to the Imperial Gazetteer?",
-            opts: [
-                "A. A common name shared by members of the community",
-                "B. An integrated social organisation that governs daily life",
-                "C. A common dialect spoken by members",
-                "D. A shared (common) territory"
-            ],
+            opts: ["A. A common name shared by members of the community", "B. An integrated social organisation that governs daily life", "C. A common dialect spoken by members", "D. A shared (common) territory"],
             ans: "B",
             exp: "(a) Incorrect -- A common name is explicitly cited by the Imperial Gazetteer as one of the defining features of a tribe.\n(b) Correct -- An integrated social organisation is part of the general anthropological definition of a tribe (associated with the broader academic definition), not the Imperial Gazetteer’s definition.\n(c) Incorrect -- A common dialect is another characteristic the Imperial Gazetteer attributes to a tribe.\n(d) Incorrect -- A shared (common) territory is the third characteristic listed by the Imperial Gazetteer as a feature of tribal communities."
         },
         {
             text: "Article 342(1) of the Indian Constitution is primarily concerned with which of the following?",
-            opts: [
-                "A. Defining tribal communities in the Constitution",
-                "B. Granting habitat rights to PVTGs under the Forest Rights Act",
-                "C. Specifying the five criteria for inclusion in the Scheduled Tribes list",
-                "D. Recognising communities notified under this Article as Scheduled Tribes"
-            ],
+            opts: ["A. Defining tribal communities in the Constitution", "B. Granting habitat rights to PVTGs under the Forest Rights Act", "C. Specifying the five criteria for inclusion in the Scheduled Tribes list", "D. Recognising communities notified under this Article as Scheduled Tribes"],
             ans: "D",
             exp: "(a) Incorrect -- Defining tribal communities in the Indian Constitution is the function of Article 366(25), not Article 342(1).\n(b) Incorrect -- Habitat rights for PVTGs under Forest Rights Laws were granted as a result of later policy developments, not specifically under Article 342(1).\n(c) Incorrect -- The five criteria for inclusion in the Scheduled Tribes list were established by the Chanda Committee (1960), not through any constitutional article.\n(d) Correct -- Article 342(1) specifies that communities officially notified under this Article are recognised as Scheduled Tribes (ST) in India."
         },
         {
             text: "The Chanda Committee, which established the criteria for inclusion in the Scheduled Tribes list, was constituted in which year?",
-            opts: [
-                "A. 1950",
-                "B. 1973",
-                "C. 1960",
-                "D. 2003"
-            ],
+            opts: ["A. 1950", "B. 1973", "C. 1960", "D. 2003"],
             ans: "C",
             exp: "(a) Incorrect -- 1950 is the year in which 212 tribes were officially listed/scheduled in India, not the year the Chanda Committee was formed.\n(b) Incorrect -- 1973 is the year the Dhebar Commission created the category of ‘Primitive Tribe’ (PTG), which later evolved into PVTGs.\n(c) Correct -- The Chanda Committee was constituted in 1960 and laid down five standards or criteria for including a community in the Scheduled Tribes list.\n(d) Incorrect -- 2003 is the year in which three tribes (Kir, Meena, and Pardhi) were de-notified from the MP Scheduled Tribes list, not a year associated with the Chanda Committee."
         },
         {
             text: "Which of the following is one of the five criteria established by the Chanda Committee (1960) for classifying a community as a Scheduled Tribe?",
-            opts: [
-                "A. Characteristics of a Primitive Race (Aadim Jati ke Lakshan)",
-                "B. A hereditary occupational specialisation",
-                "C. Matrilineal descent and clan-based kinship organisation",
-                "D. Dependence on shifting cultivation as a primary livelihood"
-            ],
+            opts: ["A. Characteristics of a Primitive Race (Aadim Jati ke Lakshan)", "B. A hereditary occupational specialisation", "C. Matrilineal descent and clan-based kinship organisation", "D. Dependence on shifting cultivation as a primary livelihood"],
             ans: "A",
             exp: "(a) Correct -- Characteristics of a Primitive Race (Aadim Jati ke Lakshan) is one of the five criteria laid down by the Chanda Committee (1960) for including a community in the Scheduled Tribes list, alongside Geographical Isolation, Shy Nature, Backwardness, and Specific Culture.\n(b) Incorrect -- Hereditary occupational specialisation is a characteristic more commonly associated with caste groups in the Hindu social system, not a criterion for ST classification under the Chanda Committee.\n(c) Incorrect -- Matrilineal descent is a feature found in some tribal communities but is not among the five standardised criteria established by the Chanda Committee.\n(d) Incorrect -- While some tribes do practise forms of shifting cultivation, this is not explicitly one of the five Chanda Committee criteria; the relevant criteria are Geographical Isolation and Backwardness."
         },
         {
             text: "Which of the following scholars or figures used the term ‘Girijan’ to refer to tribal communities in India?",
-            opts: [
-                "A. Verrier Elwin",
-                "B. Herbert Risley",
-                "C. Kaka Kalelkar",
-                "D. Mahatma Gandhi"
-            ],
+            opts: ["A. Verrier Elwin", "B. Herbert Risley", "C. Kaka Kalelkar", "D. Mahatma Gandhi"],
             ans: "D",
             exp: "(a) Incorrect -- Verrier Elwin, along with Kaka Kalelkar, Thakkar Bapa, and Herbert Risley, used the term ‘Aadivasi’ (Indigenous/Tribal) to refer to tribal communities, not ‘Girijan’.\n(b) Incorrect -- Herbert Risley also used the term ‘Aadivasi’ and is associated with that classification, not ‘Girijan’.\n(c) Incorrect -- Kaka Kalelkar used the term ‘Aadivasi’ to describe tribal peoples, not ‘Girijan’.\n(d) Correct -- Mahatma Gandhi coined and used the term ‘Girijan’ (meaning ‘hill people’) to refer to India’s tribal communities."
         },
         {
             text: "Which of the following books, authored by Verrier Elwin, was published in 1947 and focused on a specific tribal community and their traditional institution?",
-            opts: [
-                "A. The Baiga",
-                "B. Muria Aur Unka Ghotul",
-                "C. Tribes of India",
-                "D. The Tribes and Castes of the Central Provinces"
-            ],
+            opts: ["A. The Baiga", "B. Muria Aur Unka Ghotul", "C. Tribes of India", "D. The Tribes and Castes of the Central Provinces"],
             ans: "B",
             exp: "(a) Incorrect -- The Baiga was authored by Verrier Elwin but published in 1939, not 1947.\n(b) Correct -- Muria Aur Unka Ghotul was published in 1947 by Verrier Elwin and focused on the Muria tribal community and their traditional youth house institution, the Ghotul.\n(c) Incorrect -- Tribes of India was authored by Thakkar Bapa and published in 1950, not by Verrier Elwin.\n(d) Incorrect -- The Tribes and Castes of the Central Provinces was the first official collection on MP tribes, authored by Hiralal and Russell in 1931, not by Verrier Elwin."
         },
         {
             text: "According to the 2011 Census, what percentage of Madhya Pradesh’s total population consists of Scheduled Tribes?",
-            opts: [
-                "A. 21.09%",
-                "B. 25.63%",
-                "C. 18.47%",
-                "D. 29.12%"
-            ],
+            opts: ["A. 21.09%", "B. 25.63%", "C. 18.47%", "D. 29.12%"],
             ans: "A",
             exp: "(a) Correct -- As per the 2011 Census, Scheduled Tribes constitute 21.09% of Madhya Pradesh’s total population, amounting to approximately 1.53 crore persons.\n(b) Incorrect -- 25.63% does not correspond to the actual ST percentage in Madhya Pradesh as recorded in the 2011 Census.\n(c) Incorrect -- 18.47% is an underestimation of the actual tribal share of Madhya Pradesh’s total population.\n(d) Incorrect -- 29.12% significantly overstates the share of Scheduled Tribes in MP’s total population as per the 2011 Census data."
         },
         {
             text: "In which rank does Madhya Pradesh stand in India with respect to the absolute number of Scheduled Tribe population, as per the 2011 Census?",
-            opts: [
-                "A. 2nd",
-                "B. 5th",
-                "C. 1st",
-                "D. 3rd"
-            ],
+            opts: ["A. 2nd", "B. 5th", "C. 1st", "D. 3rd"],
             ans: "C",
             exp: "(a) Incorrect -- Madhya Pradesh does not rank second in India for absolute Scheduled Tribe population; it holds the top position.\n(b) Incorrect -- The 5th rank significantly underestimates MP’s standing in terms of its absolute Scheduled Tribe population count.\n(c) Correct -- Madhya Pradesh ranks 1st in India in terms of absolute Scheduled Tribe population, with approximately 1.53 crore tribal persons as per the 2011 Census.\n(d) Incorrect -- MP does not rank third; its tribal population is the largest in absolute numbers among all states in India."
         },
         {
             text: "Which district of Madhya Pradesh has the highest Scheduled Tribe population in absolute numbers, as per the 2011 Census?",
-            opts: [
-                "A. Alirajpur",
-                "B. Jhabua",
-                "C. Barwani",
-                "D. Dhar"
-            ],
+            opts: ["A. Alirajpur", "B. Jhabua", "C. Barwani", "D. Dhar"],
             ans: "D",
             exp: "(a) Incorrect -- Alirajpur has the highest Scheduled Tribe percentage (89.0%) among all districts in MP, but its absolute tribal population is not the highest.\n(b) Incorrect -- Jhabua ranks 3rd in absolute ST population (8,91,818) and 2nd in ST percentage (87.0%).\n(c) Incorrect -- Barwani ranks 2nd in absolute ST population (9,62,145) and 3rd in ST percentage (69.4%).\n(d) Correct -- Dhar has the highest absolute Scheduled Tribe population in MP at 12,22,814 persons, ranking number one in absolute terms. It also holds the highest Tribal Concentration Index at 7.98%."
         },
         {
             text: "Which district of Madhya Pradesh has the lowest percentage of Scheduled Tribe population according to the 2011 Census?",
-            opts: [
-                "A. Bhind",
-                "B. Datia",
-                "C. Morena",
-                "D. Bhopal"
-            ],
+            opts: ["A. Bhind", "B. Datia", "C. Morena", "D. Bhopal"],
             ans: "A",
             exp: "(a) Correct -- Bhind has the lowest ST percentage in MP at just 0.4%, and also has the lowest absolute tribal population (6,131 persons), making it the extreme low on both metrics.\n(b) Incorrect -- Datia ranks 3rd in lowest ST percentage (1.9%) and 2nd in lowest absolute ST population (15,061 persons).\n(c) Incorrect -- Morena ranks 2nd in lowest ST percentage (0.9%) and 3rd in lowest absolute ST population (17,030 persons).\n(d) Incorrect -- Bhopal ranks 4th in lowest absolute ST population but does not have the overall lowest percentage."
         },
         {
             text: "Which district of Madhya Pradesh records the highest Scheduled Tribe sex ratio, and what is that ratio?",
-            opts: [
-                "A. Alirajpur, with 1020 females per 1000 males",
-                "B. Balaghat, with 1050 females per 1000 males",
-                "C. Dindori, with 1040 females per 1000 males",
-                "D. Mandla, with 1030 females per 1000 males"
-            ],
+            opts: ["A. Alirajpur, with 1020 females per 1000 males", "B. Balaghat, with 1050 females per 1000 males", "C. Dindori, with 1040 females per 1000 males", "D. Mandla, with 1030 females per 1000 males"],
             ans: "B",
             exp: "(a) Incorrect -- Alirajpur is notable for having the highest ST percentage (89.0%) in MP, not the highest tribal sex ratio.\n(b) Correct -- Balaghat holds the distinction of recording the highest Scheduled Tribe sex ratio in MP at 1050 females per 1000 males, which stands out in both the child sex ratio and the general male‑female sex ratio categories.\n(c) Incorrect -- Dindori is notable for having the lowest urban tribal percentage (1.6%) in MP, not for its sex ratio.\n(d) Incorrect -- Mandla is part of the Central/Southern tribal region and is not associated with the highest tribal sex ratio in MP."
         },
         {
             text: "What is the overall Scheduled Tribe sex ratio in Madhya Pradesh as recorded in the 2011 Census?",
-            opts: [
-                "A. 931 females per 1000 males",
-                "B. 1050 females per 1000 males",
-                "C. 984 females per 1000 males",
-                "D. 975 females per 1000 males"
-            ],
+            opts: ["A. 931 females per 1000 males", "B. 1050 females per 1000 males", "C. 984 females per 1000 males", "D. 975 females per 1000 males"],
             ans: "C",
             exp: "(a) Incorrect -- 931 females per 1000 males is the national average sex ratio for the general population in Madhya Pradesh, not the sex ratio specifically for Scheduled Tribes.\n(b) Incorrect -- 1050:1000 is the sex ratio recorded for Balaghat district’s tribal population, which is the highest district‑level ST sex ratio in MP, not the state‑level average.\n(c) Correct -- The overall Scheduled Tribe sex ratio in Madhya Pradesh is 984 females per 1000 males as per the 2011 Census.\n(d) Incorrect -- 975 females per 1000 males does not correspond to any published tribal sex ratio figure for Madhya Pradesh in the 2011 Census."
         },
         {
             text: "What is the total tribal literacy rate in Madhya Pradesh as per the 2011 Census, and how does it compare with the national tribal literacy average?",
-            opts: [
-                "A. 59.0%, which is at par with the national average",
-                "B. 50.6%, which is significantly lower than the national average of 59.0%",
-                "C. 59.6%, which exceeds the national tribal literacy average",
-                "D. 41.5%, which is the female‑specific tribal literacy rate across India"
-            ],
+            opts: ["A. 59.0%, which is at par with the national average", "B. 50.6%, which is significantly lower than the national average of 59.0%", "C. 59.6%, which exceeds the national tribal literacy average", "D. 41.5%, which is the female‑specific tribal literacy rate across India"],
             ans: "B",
             exp: "(a) Incorrect -- 59.0% is the All India tribal literacy rate, not the Madhya Pradesh figure. MP’s tribal literacy falls short of this national benchmark.\n(b) Correct -- The total tribal literacy rate in Madhya Pradesh is 50.6%, which is notably lower than the national tribal literacy average of 59.0%.\n(c) Incorrect -- 59.6% is the male tribal literacy rate in Madhya Pradesh, not the overall state figure.\n(d) Incorrect -- 41.5% is the female tribal literacy rate specifically for Madhya Pradesh; the All India female tribal literacy rate is 49.4%."
         },
         {
             text: "According to D.N. Majumdar’s definition, which of the following is NOT a characteristic he identifies as defining a tribe?",
-            opts: [
-                "A. A fixed territory shared by the community",
-                "B. A common language spoken by all members",
-                "C. Certain prohibitions in marriage, such as exogamy rules",
-                "D. Cultural uniformity maintained across all sub‑groups"
-            ],
+            opts: ["A. A fixed territory shared by the community", "B. A common language spoken by all members", "C. Certain prohibitions in marriage, such as exogamy rules", "D. Cultural uniformity maintained across all sub‑groups"],
             ans: "D",
             exp: "(a) Incorrect -- A fixed (shared) territory is explicitly one of the elements in D.N. Majumdar’s definition of a tribe.\n(b) Incorrect -- A common language is also part of Majumdar’s definition, as tribes are characterised by a shared linguistic identity.\n(c) Incorrect -- Certain prohibitions in marriage (such as rules of exogamy) are specifically mentioned by D.N. Majumdar as a defining feature of tribes.\n(d) Correct -- Cultural uniformity is a feature found in the general anthropological definition of a tribe, not in D.N. Majumdar’s specific definition. Majumdar’s definition focuses on territory, language, marriage prohibitions, and prohibitions in business/occupation."
         },
         {
             text: "Which group of scholars is credited with using the term ‘Aadivasi’ (Indigenous/Tribal) to describe tribal communities in India?",
-            opts: [
-                "A. Kaka Kalelkar, Thakkar Bapa, Herbert Risley, and Verrier Elwin",
-                "B. Grierson, Dr. Ghurye Govind Sadashiv, Dr. Das, and Mahatma Gandhi",
-                "C. The British colonial administration, the Imperial Gazetteer, and D.N. Majumdar",
-                "D. Ancient Sanskrit text scholars, the Indian Constitution, and Thakkar Bapa"
-            ],
+            opts: ["A. Kaka Kalelkar, Thakkar Bapa, Herbert Risley, and Verrier Elwin", "B. Grierson, Dr. Ghurye Govind Sadashiv, Dr. Das, and Mahatma Gandhi", "C. The British colonial administration, the Imperial Gazetteer, and D.N. Majumdar", "D. Ancient Sanskrit text scholars, the Indian Constitution, and Thakkar Bapa"],
             ans: "A",
             exp: "(a) Correct -- Kaka Kalelkar, Thakkar Bapa, Herbert Risley, and Verrier Elwin collectively used the term ‘Aadivasi’ (meaning ‘original inhabitant’ or ‘indigenous’) to refer to tribal communities.\n(b) Incorrect -- Grierson referred to tribes as ‘Pahadi Janjati’ (Hill Tribe); Dr. Ghurye Govind Sadashiv called them ‘Pichde Hindu’ (Backward Hindu); and Mahatma Gandhi used the term ‘Girijan’. None of these scholars used ‘Aadivasi’.\n(c) Incorrect -- The British colonial administration used the term ‘Dalit Varg’ for tribal groups; the Imperial Gazetteer focused on definitional characteristics rather than naming conventions.\n(d) Incorrect -- Ancient Sanskrit texts used ‘Vanvasi/Attvikas’, while the Indian Constitution uses ‘Anusuchit Janjati’. These are not associated with the ‘Aadivasi’ terminology."
         },
         {
             text: "Which of the following is the correct description of the 1931 book authored by Hiralal and Russell?",
-            opts: [
-                "A. A study of the Baiga tribe and their forest‑based culture",
-                "B. A compilation of tribal folklore and oral traditions of Central India",
-                "C. The first official collection on Madhya Pradesh tribes, titled ‘The Tribes and Castes of the Central Provinces’",
-                "D. A field study of the Muria tribe and the Ghotul institution"
-            ],
+            opts: ["A. A study of the Baiga tribe and their forest‑based culture", "B. A compilation of tribal folklore and oral traditions of Central India", "C. The first official collection on Madhya Pradesh tribes, titled ‘The Tribes and Castes of the Central Provinces’", "D. A field study of the Muria tribe and the Ghotul institution"],
             ans: "C",
             exp: "(a) Incorrect -- A study of the Baiga tribe is the subject of Verrier Elwin’s 1939 book The Baiga, not the Hiralal and Russell publication.\n(b) Incorrect -- The Hiralal and Russell work was a systematic official catalogue of tribes and castes, not a compilation of folklore or oral traditions.\n(c) Correct -- The Tribes and Castes of the Central Provinces (1931) by Hiralal and Russell is recognised as the first official collection documenting the tribes of the region that is now Madhya Pradesh.\n(d) Incorrect -- Muria Aur Unka Ghotul, focused on the Muria tribe and the Ghotul institution, was authored solely by Verrier Elwin in 1947."
         },
         {
             text: "The category of ‘Primitive Tribal Group’ (PTG) was first created in India following the recommendations of which body, and in which year?",
-            opts: [
-                "A. Chanda Committee, 1960",
-                "B. Dhebar Commission, 1973",
-                "C. Prof. Virginius Xaxa Committee, 2003",
-                "D. National Commission for Scheduled Tribes, 2006"
-            ],
+            opts: ["A. Chanda Committee, 1960", "B. Dhebar Commission, 1973", "C. Prof. Virginius Xaxa Committee, 2003", "D. National Commission for Scheduled Tribes, 2006"],
             ans: "B",
             exp: "(a) Incorrect -- The Chanda Committee (1960) established the five criteria for classifying communities as Scheduled Tribes, not the category of Primitive Tribal Groups.\n(b) Correct -- The Dhebar Commission, constituted in 1973, created the category of ‘Primitive Tribe’ (Aadim Janjati), which was later called PTG and ultimately renamed PVTG in 2006.\n(c) Incorrect -- Prof. Virginius Xaxa Committee (2003) advocated for habitat area rights for tribal groups and recommended policy changes, but did not originate the PTG category.\n(d) Incorrect -- 2006 is the year PTGs were renamed to PVTGs; this renaming was a terminological change, not the creation of the original category."
         },
         {
             text: "In which year were Primitive Tribal Groups (PTGs) officially renamed as ‘Particularly Vulnerable Tribal Groups’ (PVTGs)?",
-            opts: [
-                "A. 2006",
-                "B. 2003",
-                "C. 1973",
-                "D. 2013"
-            ],
+            opts: ["A. 2006", "B. 2003", "C. 1973", "D. 2013"],
             ans: "A",
             exp: "(a) Correct -- PTGs were officially renamed as Particularly Vulnerable Tribal Groups (PVTGs) in 2006, reflecting a shift in terminology that emphasised vulnerability rather than primitiveness.\n(b) Incorrect -- 2003 is the year the Prof. Virginius Xaxa Committee advocated for habitat rights for tribal groups, and also the year three tribes were de‑notified from the MP ST list.\n(c) Incorrect -- 1973 is the year the Dhebar Commission created the original PTG category, not the year of its renaming.\n(d) Incorrect -- 2013 has no significant association with the PVTG classification timeline."
         },
         {
             text: "How many tribal groups across India are notified as Particularly Vulnerable Tribal Groups (PVTGs) by the Government of India?",
-            opts: [
-                "A. 43",
-                "B. 46",
-                "C. 76",
-                "D. 212"
-            ],
+            opts: ["A. 43", "B. 46", "C. 76", "D. 212"],
             ans: "C",
             exp: "(a) Incorrect -- 43 is the current number of Scheduled Tribes notified in Madhya Pradesh, not the count of PVTGs across India.\n(b) Incorrect -- 46 was the original number of notified tribal groups in Madhya Pradesh before three were de‑notified in 2003.\n(c) Correct -- A total of 76 tribal groups across India are notified as Particularly Vulnerable Tribal Groups (PVTGs) by the Government of India, based on criteria such as vulnerability, declining population, and dependence on forests.\n(d) Incorrect -- 212 refers to the number of tribes that were officially scheduled in India in 1950, not the count of PVTGs."
         },
         {
             text: "The PVTG known as the Baiga tribe has a designated area called ‘Baigachak.’ In which district of Madhya Pradesh is this area located?",
-            opts: [
-                "A. Mandla",
-                "B. Chhindwara",
-                "C. Umaria",
-                "D. Dindori"
-            ],
+            opts: ["A. Mandla", "B. Chhindwara", "C. Umaria", "D. Dindori"],
             ans: "D",
             exp: "(a) Incorrect -- Mandla is one of the districts served by a Baiga Development Agency, but ‘Baigachak’ as a specifically designated area is located in Dindori district.\n(b) Incorrect -- Chhindwara is the district associated with the Bharia PVTG and its Patalkot area, not with the Baiga’s Baigachak.\n(c) Incorrect -- Umaria has a Baiga Development Agency and is part of the broader Baiga habitat, but the specific area called ‘Baigachak’ refers to blocks within Dindori.\n(d) Correct -- The Baigachak is the designated regional name for the Baiga PVTG, encompassing the Karanjia, Bajada, and Samnapur development blocks of Dindori district."
         },
         {
             text: "In which development block of Madhya Pradesh is the Bharia PVTG primarily settled, and in which district is this block located?",
-            opts: [
-                "A. Tamia block of Chhindwara district",
-                "B. Samnapur block of Dindori district",
-                "C. Karanjia block of Mandla district",
-                "D. Baihar block of Balaghat district"
-            ],
+            opts: ["A. Tamia block of Chhindwara district", "B. Samnapur block of Dindori district", "C. Karanjia block of Mandla district", "D. Baihar block of Balaghat district"],
             ans: "A",
             exp: "(a) Correct -- The Bharia PVTG is primarily settled in the Tamia development block of Chhindwara district, in the area known as Patalkot, which is a geographically isolated valley.\n(b) Incorrect -- Samnapur block is one of the blocks within Dindori district associated with the Baiga PVTG’s Baigachak area, not the Bharia.\n(c) Incorrect -- Karanjia block in Dindori district is one of the Baigachak blocks for the Baiga PVTG, not a settlement area of the Bharia.\n(d) Incorrect -- Baihar in Balaghat is associated with the Baiga tribe’s Development Agency, not the Bharia PVTG’s designated settlement zone."
         },
         {
             text: "Which district of Madhya Pradesh has the highest Tribal Concentration Index, and what is the value of this index?",
-            opts: [
-                "A. Alirajpur, with 8.45%",
-                "B. Jhabua, with 7.25%",
-                "C. Dhar, with 7.98%",
-                "D. Barwani, with 6.89%"
-            ],
+            opts: ["A. Alirajpur, with 8.45%", "B. Jhabua, with 7.25%", "C. Dhar, with 7.98%", "D. Barwani, with 6.89%"],
             ans: "C",
             exp: "(a) Incorrect -- Alirajpur has the highest ST percentage (89.0%) meaning tribes form the largest share of its own district’s population, but its Tribal Concentration Index (its contribution to the state’s total ST population) is not the highest.\n(b) Incorrect -- Jhabua ranks 3rd in absolute ST numbers and 2nd in ST percentage but does not hold the highest Tribal Concentration Index value.\n(c) Correct -- Dhar has the highest Tribal Concentration Index in Madhya Pradesh at 7.98%, meaning it contributes 7.98% of the entire state’s Scheduled Tribe population.\n(d) Incorrect -- Barwani ranks 2nd in absolute ST population but does not hold the top Tribal Concentration Index value."
         },
         {
             text: "How many Scheduled Tribe (ST) districts are there in Madhya Pradesh, and which administrative division has the maximum number of such districts?",
-            opts: [
-                "A. 18 districts; Bhopal Division",
-                "B. 21 districts; Indore Division",
-                "C. 25 districts; Jabalpur Division",
-                "D. 17 districts; Rewa Division"
-            ],
+            opts: ["A. 18 districts; Bhopal Division", "B. 21 districts; Indore Division", "C. 25 districts; Jabalpur Division", "D. 17 districts; Rewa Division"],
             ans: "B",
             exp: "(a) Incorrect -- There are not 18 Scheduled Tribe districts in MP, and Bhopal Division does not hold the record for the most ST‑designated districts.\n(b) Correct -- Madhya Pradesh has a total of 21 Scheduled Tribe districts, and Indore Division has the maximum number with 7 such districts.\n(c) Incorrect -- 25 districts and Jabalpur Division do not correspond to the actual figures for Scheduled Tribe districts in MP.\n(d) Incorrect -- Rewa Division is part of the Eastern tribal region but is not associated with the highest count of Scheduled Tribe districts."
         },
         {
             text: "The ‘Ghotul’ is a traditional youth house associated with which tribal group of Madhya Pradesh?",
-            opts: [
-                "A. Bharia",
-                "B. Urav",
-                "C. Bhuiya",
-                "D. Mudia and Gond"
-            ],
+            opts: ["A. Bharia", "B. Urav", "C. Bhuiya", "D. Mudia and Gond"],
             ans: "D",
             exp: "(a) Incorrect -- The Bharia tribe’s traditional youth house is called ‘Rang‑Bang’, not Ghotul.\n(b) Incorrect -- The Urav tribe’s traditional youth house is called ‘Dhumkoriya’, not Ghotul.\n(c) Incorrect -- The Bhuiya tribe’s traditional youth house is called ‘Dhangarbansa’, not Ghotul.\n(d) Correct -- The Ghotul is the traditional youth house associated with the Mudia and Gond tribes. It is a well‑known institution studied by Verrier Elwin and documented in his 1947 work Muria Aur Unka Ghotul."
         },
         {
             text: "The traditional youth house known as ‘Dhumkoriya’ belongs to which tribe?",
-            opts: [
-                "A. Munda",
-                "B. Bharia",
-                "C. Urav",
-                "D. Bhuiya"
-            ],
+            opts: ["A. Munda", "B. Bharia", "C. Urav", "D. Bhuiya"],
             ans: "C",
             exp: "(a) Incorrect -- The Munda tribe’s traditional youth house is called ‘Gatiora’, not Dhumkoriya.\n(b) Incorrect -- The Bharia tribe’s traditional youth house is called ‘Rang‑Bang’, not Dhumkoriya.\n(c) Correct -- The Urav tribe’s traditional youth house is called ‘Dhumkoriya’, serving as a residential institution for socialisation and cultural transmission among young tribal members.\n(d) Incorrect -- The Bhuiya tribe’s traditional youth house is called ‘Dhangarbansa’, not Dhumkoriya."
         },
         {
             text: "Based on the Chanda Committee’s criteria, out of the 461 total tribes in India, how many were included in the Scheduled Tribes list?",
-            opts: [
-                "A. 424",
-                "B. 461",
-                "C. 376",
-                "D. 212"
-            ],
+            opts: ["A. 424", "B. 461", "C. 376", "D. 212"],
             ans: "A",
             exp: "(a) Correct -- Based on the five standards established by the Chanda Committee, 424 out of 461 total tribes in India were included in the Scheduled Tribes list.\n(b) Incorrect -- 461 represents the total number of tribal communities evaluated by the Chanda Committee, not the number ultimately included in the Scheduled Tribes list.\n(c) Incorrect -- 376 does not correspond to any published figure related to the Chanda Committee’s ST classification exercise.\n(d) Incorrect -- 212 is the number of tribes that were officially scheduled in India in 1950, prior to the Chanda Committee’s work in 1960."
         },
         {
             text: "Three tribes were de‑notified from the Scheduled Tribes list of Madhya Pradesh on 8 January 2003. Which combination correctly names all three?",
-            opts: [
-                "A. Kol, Korku, and Pardhi",
-                "B. Mawasi, Kir, and Saur",
-                "C. Meena, Baiga, and Bharia",
-                "D. Kir, Meena, and Pardhi"
-            ],
+            opts: ["A. Kol, Korku, and Pardhi", "B. Mawasi, Kir, and Saur", "C. Meena, Baiga, and Bharia", "D. Kir, Meena, and Pardhi"],
             ans: "D",
             exp: "(a) Incorrect -- Kol and Korku are currently active Scheduled Tribes of Madhya Pradesh, not removed tribes; while Pardhi was removed, Kol and Korku were not.\n(b) Incorrect -- Mawasi and Saur remain among the Scheduled Tribes of MP; Kir was indeed removed, but Mawasi and Saur were not de‑notified.\n(c) Incorrect -- Baiga and Bharia are Scheduled Tribes of MP and are even classified as PVTGs; they were certainly not de‑notified.\n(d) Correct -- Kir, Meena, and Pardhi (KMP) were the three tribes de‑notified from the Scheduled Tribes list of Madhya Pradesh on 8 January 2003, reducing the total count from 46 to 43."
         },
         {
             text: "The de‑notified tribe ‘Kir’ was associated with which districts of Madhya Pradesh at the time of its de‑notification?",
-            opts: [
-                "A. Vidisha and Sironj",
-                "B. Bhopal, Raisen, and Sihore",
-                "C. Gwalior, Datia, and Shivpuri",
-                "D. Mandla, Dindori, and Umaria"
-            ],
+            opts: ["A. Vidisha and Sironj", "B. Bhopal, Raisen, and Sihore", "C. Gwalior, Datia, and Shivpuri", "D. Mandla, Dindori, and Umaria"],
             ans: "B",
             exp: "(a) Incorrect -- Vidisha and Sironj are the districts associated with the de‑notified tribe Meena, not Kir.\n(b) Correct -- The Kir tribe was associated with the districts of Bhopal, Raisen, and Sihore. Notably, the Pardhi tribe was also associated with the same three districts.\n(c) Incorrect -- Gwalior, Datia, and Shivpuri are districts in the Northern tribal region primarily associated with the Sahariya tribe, not with the de‑notified Kir tribe.\n(d) Incorrect -- Mandla, Dindori, and Umaria are districts in the Central/Southern and Eastern tribal regions associated with Baiga and Gond communities, not the Kir tribe."
         },
         {
             text: "What is the commonly used mnemonic to remember the three Particularly Vulnerable Tribal Groups (PVTGs) of Madhya Pradesh?",
-            opts: [
-                "A. BBS (Baiga, Bharia, Sahariya)",
-                "B. GBK (Gond, Baiga, Kol)",
-                "C. BBK (Bhil, Bhilala, Korku)",
-                "D. KMP (Kir, Meena, Pardhi)"
-            ],
+            opts: ["A. BBS (Baiga, Bharia, Sahariya)", "B. GBK (Gond, Baiga, Kol)", "C. BBK (Bhil, Bhilala, Korku)", "D. KMP (Kir, Meena, Pardhi)"],
             ans: "A",
             exp: "(a) Correct -- BBS stands for Baiga, Bharia, and Sahariya, which are the three Particularly Vulnerable Tribal Groups (PVTGs) of Madhya Pradesh – each settled in a distinct regional zone of the state.\n(b) Incorrect -- GBK (Gond, Baiga, Kol) refers to the primary tribes of the Eastern tribal region of MP, not the mnemonic for PVTGs.\n(c) Incorrect -- BBK (Bhil, Bhilala, Korku) is the mnemonic for the main tribes of the Western tribal region of MP, not the three PVTGs.\n(d) Incorrect -- KMP (Kir, Meena, Pardhi) is the mnemonic for the three tribes de‑notified from the Scheduled Tribes list of MP in 2003, not the PVTGs."
         },
         {
             text: "Which district of Madhya Pradesh recorded the highest decadal growth in Scheduled Tribe population between 2001 and 2011?",
-            opts: [
-                "A. Dhar",
-                "B. Mandsaur",
-                "C. Chhatarpur",
-                "D. Alirajpur"
-            ],
+            opts: ["A. Dhar", "B. Mandsaur", "C. Chhatarpur", "D. Alirajpur"],
             ans: "C",
             exp: "(a) Incorrect -- Dhar has the highest absolute tribal population in MP, but it did not record the highest decadal growth rate in ST population between 2001 and 2011.\n(b) Incorrect -- Mandsaur recorded a negative decadal growth of -11.8% among its tribal population between 2001 and 2011, making it the district with the steepest tribal population decline.\n(c) Correct -- Chhatarpur recorded the highest decadal growth in Scheduled Tribe population in MP between 2001 and 2011, at +42.6%.\n(d) Incorrect -- Alirajpur is notable for having the highest ST percentage but did not register the highest decadal growth rate in tribal population during this period."
         },
         {
             text: "What is the rate of decadal change in Scheduled Tribe population recorded for Mandsaur district between 2001 and 2011?",
-            opts: [
-                "A. +42.6%",
-                "B. -8.5%",
-                "C. -8.9%",
-                "D. -11.8%"
-            ],
+            opts: ["A. +42.6%", "B. -8.5%", "C. -8.9%", "D. -11.8%"],
             ans: "D",
             exp: "(a) Incorrect -- +42.6% is the highest positive decadal growth in ST population, recorded for Chhatarpur district, not Mandsaur.\n(b) Incorrect -- -8.5% is the decadal decline in ST population recorded for Ujjain district, not Mandsaur.\n(c) Incorrect -- -8.9% is the decadal decline in ST population recorded for Bhind district, not Mandsaur.\n(d) Correct -- Mandsaur recorded the most severe decline in Scheduled Tribe population, with a negative growth rate of -11.8% between 2001 and 2011."
         },
         {
             text: "The Western tribal region of Madhya Pradesh is characterised by which tribal groups, and what percentage of the state’s total tribal population does it account for?",
-            opts: [
-                "A. Gond, Baiga, and Kol; 23.28%",
-                "B. Bhil, Bhilala, and Korku; 36.27%",
-                "C. Sahariya and Khairwar; 14.0%",
-                "D. Baiga, Korku, and Pardhan; 21.09%"
-            ],
+            opts: ["A. Gond, Baiga, and Kol; 23.28%", "B. Bhil, Bhilala, and Korku; 36.27%", "C. Sahariya and Khairwar; 14.0%", "D. Baiga, Korku, and Pardhan; 21.09%"],
             ans: "B",
             exp: "(a) Incorrect -- Gond, Baiga, and Kol are primarily associated with the Central/Southern and Eastern tribal regions of MP, not the Western region; 23.28% is the Central/Southern region’s share.\n(b) Correct -- The Western tribal region is predominantly inhabited by Bhil, Bhilala, and Korku tribes (BBK) and accounts for 36.27% – approximately one‑third – of the state’s total tribal population, making it the largest tribal region by population share.\n(c) Incorrect -- Sahariya and Khairwar are tribes of the Northern tribal region, not the Western region; 14.0% is the Eastern region’s population share.\n(d) Incorrect -- 21.09% represents the proportion of Scheduled Tribes in Madhya Pradesh’s total population, not the Western region’s share of the state’s tribal population."
         },
         {
             text: "In the Eastern tribal region of Madhya Pradesh, which tribe is identified as predominant in the Rewa Plateau sub‑region?",
-            opts: [
-                "A. Kol",
-                "B. Baiga",
-                "C. Gond",
-                "D. Sahariya"
-            ],
+            opts: ["A. Kol", "B. Baiga", "C. Gond", "D. Sahariya"],
             ans: "A",
             exp: "(a) Correct -- The Kol tribe is identified as the predominant tribal community in the Rewa Plateau sub‑region within the Eastern tribal region of Madhya Pradesh.\n(b) Incorrect -- The Baiga tribe is present in the Eastern region, particularly in the ‘Baiga Chak’ (a special tribal area in parts of Mandla, Dindori, Umaria, and Balaghat), but it is not the predominant tribe specifically in the Rewa Plateau sub‑region.\n(c) Incorrect -- The Gond tribe is also found in the Eastern region but is not the specifically predominant group in the Rewa Plateau sub‑region.\n(d) Incorrect -- The Sahariya tribe is characteristic of the Northern tribal region, concentrated in the Bundelkhand Plateau and Gwalior Division, not the Rewa Plateau."
         },
         {
             text: "Which tribe is identified as the primary tribal group in the Northern tribal region of Madhya Pradesh, which includes the Bundelkhand Plateau?",
-            opts: [
-                "A. Korku",
-                "B. Pardhan",
-                "C. Sahariya",
-                "D. Bharia"
-            ],
+            opts: ["A. Korku", "B. Pardhan", "C. Sahariya", "D. Bharia"],
             ans: "C",
             exp: "(a) Incorrect -- Korku is primarily associated with the Western and Central/Southern tribal regions of MP, particularly in districts like Khandwa and Betul.\n(b) Incorrect -- Pardhan is found in the Central/Southern tribal region and is associated with Gond communities in that belt, not with the Northern region.\n(c) Correct -- The Sahariya is the primary tribe of the Northern tribal region, encompassing the Bundelkhand Plateau and districts such as Sheopur, Gwalior, Shivpuri, Morena, Bhind, and Guna. The Sahariya is also one of MP’s three PVTGs.\n(d) Incorrect -- Bharia is associated with the Central/Southern tribal region, specifically in the Tamia block of Chhindwara district (Patalkot), and is one of MP’s three PVTGs."
         },
         {
             text: "As per the 2011 Census, what is the combined population of the Bhil and Bhilala tribal community in Madhya Pradesh, and what share do they represent of the state’s total Scheduled Tribe population?",
-            opts: [
-                "A. 39.9 Lakh, representing 25.1% of ST population",
-                "B. 59.9 Lakh, representing 39.1% of ST population",
-                "C. 49.9 Lakh, representing 32.6% of ST population",
-                "D. 69.9 Lakh, representing 45.5% of ST population"
-            ],
+            opts: ["A. 39.9 Lakh, representing 25.1% of ST population", "B. 59.9 Lakh, representing 39.1% of ST population", "C. 49.9 Lakh, representing 32.6% of ST population", "D. 69.9 Lakh, representing 45.5% of ST population"],
             ans: "B",
             exp: "(a) Incorrect -- 39.9 Lakh and 25.1% do not correspond to the actual population or share of the Bhil and Bhilala community in MP.\n(b) Correct -- Bhil and Bhilala together constitute a population of 59.9 Lakh in Madhya Pradesh, representing 39.1% of the state’s total Scheduled Tribe population, ranking them first among all tribes in MP.\n(c) Incorrect -- 49.9 Lakh and 32.6% are not the correct figures for the Bhil‑Bhilala population in Madhya Pradesh.\n(d) Incorrect -- 69.9 Lakh overstates the Bhil‑Bhilala population in MP; their combined population is approximately 59.9 Lakh persons."
         },
         {
             text: "Which tribal community holds the distinction of being the largest tribe in India by population?",
-            opts: [
-                "A. Gond",
-                "B. Kol",
-                "C. Sahariya",
-                "D. Bhil"
-            ],
+            opts: ["A. Gond", "B. Kol", "C. Sahariya", "D. Bhil"],
             ans: "D",
             exp: "(a) Incorrect -- Gond was historically the largest tribe in Madhya Pradesh (holding the top rank until 2001) but at the national level it does not hold the position of India’s largest tribe.\n(b) Incorrect -- Kol is the third largest tribe in Madhya Pradesh and is prominent in the Eastern and Northern regions, but is not India’s largest tribe.\n(c) Incorrect -- Sahariya is one of MP’s three PVTGs and is concentrated in the Northern region; it is not India’s largest tribe.\n(d) Correct -- The Bhil tribe holds the distinction of being the largest tribe in India by population. In Madhya Pradesh, Bhil and Bhilala combined rank first with 59.9 Lakh persons."
         },
         {
             text: "Article 366(25) of the Indian Constitution is primarily associated with which of the following?",
-            opts: [
-                "A. Defining tribal communities in the Indian Constitution",
-                "B. Recognising and notifying communities as Scheduled Tribes",
-                "C. Granting forest rights to Particularly Vulnerable Tribal Groups",
-                "D. Establishing reservation provisions for Scheduled Tribes in the legislature"
-            ],
+            opts: ["A. Defining tribal communities in the Indian Constitution", "B. Recognising and notifying communities as Scheduled Tribes", "C. Granting forest rights to Particularly Vulnerable Tribal Groups", "D. Establishing reservation provisions for Scheduled Tribes in the legislature"],
             ans: "A",
             exp: "(a) Correct -- Article 366(25) provides the constitutional definition of ‘tribal communities’, forming the foundational legal basis for identifying tribal groups in India.\n(b) Incorrect -- The recognition and notification of communities as Scheduled Tribes is handled under Article 342(1), which empowers the President to specify communities as STs.\n(c) Incorrect -- Forest rights for PVTGs were established through the Scheduled Tribes and Other Traditional Forest Dwellers (Recognition of Forest Rights) Act, not directly through Article 366(25).\n(d) Incorrect -- Reservation provisions for Scheduled Tribes in legislatures are covered under separate articles in Part XVI of the Constitution (e.g., Articles 330 and 332), not Article 366(25)."
         },
         {
             text: "How many tribes were officially listed and scheduled in India in 1950?",
-            opts: [
-                "A. 424",
-                "B. 461",
-                "C. 212",
-                "D. 76"
-            ],
+            opts: ["A. 424", "B. 461", "C. 212", "D. 76"],
             ans: "C",
             exp: "(a) Incorrect -- 424 is the number of tribes included in the Scheduled Tribes list based on the Chanda Committee’s criteria (out of 461 total tribes evaluated), not the number scheduled in 1950.\n(b) Incorrect -- 461 is the total number of tribal communities evaluated by the Chanda Committee in 1960, not the count of tribes scheduled in 1950.\n(c) Correct -- In 1950, a total of 212 tribes were officially listed (scheduled) in India. The term ‘Scheduled’ literally means ‘listed’, reflecting this initial cataloguing of tribal communities.\n(d) Incorrect -- 76 is the total number of tribal groups notified as Particularly Vulnerable Tribal Groups (PVTGs) by the Government of India, not the 1950 scheduling figure."
         },
         {
             text: "Which of the following terms used to refer to tribal communities originates from ancient Sanskrit texts?",
-            opts: [
-                "A. Aadivasi",
-                "B. Girijan",
-                "C. Anusuchit Janjati",
-                "D. Vanvasi and Attvikas"
-            ],
+            opts: ["A. Aadivasi", "B. Girijan", "C. Anusuchit Janjati", "D. Vanvasi and Attvikas"],
             ans: "D",
             exp: "(a) Incorrect -- ‘Aadivasi’ (meaning ‘original inhabitant’) is a modern term used by scholars such as Kaka Kalelkar, Thakkar Bapa, Herbert Risley, and Verrier Elwin, not from ancient Sanskrit texts.\n(b) Incorrect -- ‘Girijan’ (meaning ‘hill people’) was coined and used by Mahatma Gandhi, not derived from ancient Sanskrit literature.\n(c) Incorrect -- ‘Anusuchit Janjati’ (Scheduled Tribe) is a term used by the Indian Constitution, a modern legal document, not from ancient texts.\n(d) Correct -- ‘Vanvasi’ (forest dweller) and ‘Attvikas’ are the terms found in ancient Sanskrit texts to describe tribal communities who inhabited forest areas."
         },
         {
             text: "Which district in Madhya Pradesh has the highest Scheduled Tribe population as a percentage of its own total district population?",
-            opts: [
-                "A. Jhabua",
-                "B. Alirajpur",
-                "C. Dhar",
-                "D. Barwani"
-            ],
+            opts: ["A. Jhabua", "B. Alirajpur", "C. Dhar", "D. Barwani"],
             ans: "B",
             exp: "(a) Incorrect -- Jhabua ranks 2nd in ST percentage at 87.0% and 3rd in absolute ST population, but does not hold the top rank for the proportion of tribal persons in its own population.\n(b) Correct -- Alirajpur has the highest ST percentage at 89.0% (detailed figure 88.98%), meaning nearly 9 out of every 10 persons in Alirajpur belongs to a Scheduled Tribe.\n(c) Incorrect -- Dhar has the highest absolute ST population and the highest Tribal Concentration Index (7.98%), but its ST percentage (55.9%) is far below Alirajpur’s.\n(d) Incorrect -- Barwani ranks 3rd in ST percentage at 69.4% and 2nd in absolute ST population, trailing both Jhabua and Alirajpur in percentage terms."
         },
         {
             text: "In terms of the percentage of Scheduled Tribe population to total state population, what rank does Madhya Pradesh hold among all Indian states?",
-            opts: [
-                "A. 1st",
-                "B. 5th",
-                "C. 13th",
-                "D. 7th"
-            ],
+            opts: ["A. 1st", "B. 5th", "C. 13th", "D. 7th"],
             ans: "C",
             exp: "(a) Incorrect -- Madhya Pradesh ranks 1st in India for the absolute number of Scheduled Tribe persons, not for the percentage of its population that is tribal.\n(b) Incorrect -- The 5th rank does not correspond to Madhya Pradesh’s actual position among Indian states by tribal percentage.\n(c) Correct -- While MP leads India in absolute tribal numbers, it ranks only 13th in India in terms of the percentage of its total population that belongs to Scheduled Tribes (21.09%).\n(d) Incorrect -- The 7th rank by tribal percentage is not Madhya Pradesh’s correct standing; the state is ranked 13th by this measure."
         },
         {
             text: "As per the 2011 Census, what percentage of Madhya Pradesh’s Scheduled Tribe population lives in urban areas, and approximately how many persons does this represent?",
-            opts: [
-                "A. 12.4%; approximately 18 lakh persons",
-                "B. 9.6%; approximately 14 lakh persons",
-                "C. 4.2%; approximately 6 lakh persons",
-                "D. 6.8%; approximately 10.40 lakh persons"
-            ],
+            opts: ["A. 12.4%; approximately 18 lakh persons", "B. 9.6%; approximately 14 lakh persons", "C. 4.2%; approximately 6 lakh persons", "D. 6.8%; approximately 10.40 lakh persons"],
             ans: "D",
             exp: "(a) Incorrect -- 12.4% and 18 lakh significantly overstate the proportion of MP’s tribal population residing in urban areas.\n(b) Incorrect -- 9.6% and 14 lakh are not the correct figures for the urban tribal population share in Madhya Pradesh.\n(c) Incorrect -- 4.2% and 6 lakh understate the actual urban tribal population figure; the correct percentage is higher at 6.8%.\n(d) Correct -- Only 6.8% of Madhya Pradesh’s Scheduled Tribe population lives in urban areas, amounting to approximately 10.40 lakh people, highlighting the predominantly rural character of the state’s tribal communities."
         },
         {
             text: "What percentage of Madhya Pradesh’s total tribal population resides in the Central/Southern (Madhya/Dakshini) tribal region?",
-            opts: [
-                "A. 23.28%",
-                "B. 36.27%",
-                "C. 14.0%",
-                "D. 19.5%"
-            ],
+            opts: ["A. 23.28%", "B. 36.27%", "C. 14.0%", "D. 19.5%"],
             ans: "A",
             exp: "(a) Correct -- The Central/Southern tribal region of Madhya Pradesh, which encompasses the Maikal Range, Eastern Satpura, and Mahadev Mountain areas, is home to 23.28% of the state’s total tribal population.\n(b) Incorrect -- 36.27% is the population share of the Western tribal region, which is the largest regional bloc of tribal population in MP, covering districts such as Alirajpur, Jhabua, and Barwani.\n(c) Incorrect -- 14.0% is the population share of the Eastern tribal region, covering districts like Shahdol, Singrauli, and Anuppur.\n(d) Incorrect -- 19.5% does not correspond to any of the four officially recognised tribal regions’ population share in Madhya Pradesh."
         },
         {
             text: "The traditional youth house called ‘Gatiora’ is associated with which tribe?",
-            opts: [
-                "A. Bhuiya",
-                "B. Munda",
-                "C. Bharia",
-                "D. Urav"
-            ],
+            opts: ["A. Bhuiya", "B. Munda", "C. Bharia", "D. Urav"],
             ans: "B",
             exp: "(a) Incorrect -- The Bhuiya tribe’s traditional youth house is called ‘Dhangarbansa’, not Gatiora.\n(b) Correct -- The ‘Gatiora’ is the traditional youth house associated with the Munda tribe, serving as an institution for collective socialisation and cultural transmission among young tribal members.\n(c) Incorrect -- The Bharia tribe’s traditional youth house is called ‘Rang‑Bang’, not Gatiora.\n(d) Incorrect -- The Urav tribe’s traditional youth house is called ‘Dhumkoriya’, not Gatiora."
         }
@@ -1890,7 +1679,7 @@
     function promptCloseQuiz() {
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal';
-        modalDiv.innerHTML = `<div class="modal-content"><h3>❓ Close Quiz?</h3><p>Are you sure you want to exit this quiz?</p><button class="confirm-yes" id="closeYes">✅ Yes</button><button class="confirm-no" id="closeNo">❌ No</button></div>`;
+        modalDiv.innerHTML = `<div class="modal-content"><h3>❓ Close Quiz?</h3><p>Are you sure you want to exit this quiz?</p><button class="confirm-yes" id="closeYes">✓ Yes</button><button class="confirm-no" id="closeNo">✕ No</button></div>`;
         document.body.appendChild(modalDiv);
         document.getElementById('closeNo').onclick = () => modalDiv.remove();
         document.getElementById('closeYes').onclick = () => { modalDiv.remove(); promptSaveProgress(); };
@@ -1898,7 +1687,7 @@
     function promptSaveProgress() {
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal';
-        modalDiv.innerHTML = `<div class="modal-content"><h3>💾 Save Progress?</h3><p>Do you want to save your progress so you can resume this quiz later?</p><button class="confirm-yes" id="saveYes">✅ Yes, Save</button><button class="confirm-no" id="saveNo">❌ No, Discard</button></div>`;
+        modalDiv.innerHTML = `<div class="modal-content"><h3>💾 Save Progress?</h3><p>Do you want to save your progress so you can resume this quiz later?</p><button class="confirm-yes" id="saveYes">✓ Yes, Save</button><button class="confirm-no" id="saveNo">✕ No, Discard</button></div>`;
         document.body.appendChild(modalDiv);
         document.getElementById('saveYes').onclick = async () => {
             modalDiv.remove();
