@@ -2902,18 +2902,19 @@
         // s.path is an array like ['Muskan Quiz', 'History', 'Prehistory...']
         const pathStr = s.path.join('/');
         const folder = s.path.slice(0,-1).join(' › ') || 'Root';
-        html += `<div class="recent-item lib-saved-item" style="cursor:pointer;" data-savedpath="${escapeHtml(pathStr)}">
+        html += `<div class="recent-item lib-saved-item" style="cursor:pointer;" data-savedpath="${escapeHtml(pathStr)}" data-safename="${escapeHtml(getSafeTopicName(s.path.join('/')))}">
           <div class="recent-icon">🔖</div>
           <div class="recent-info">
             <div class="recent-name">${escapeHtml(s.name)}</div>
             <div class="recent-folder">📁 ${escapeHtml(folder)}</div>
             <div class="recent-time">${s.count} saved question${s.count!==1?'s':''}</div>
           </div>
-          <span class="quiz-arrow" style="color:var(--text-3);opacity:0.6;">→</span>
+          <button class="lib-saved-delete" data-safename="${escapeHtml(getSafeTopicName(s.path.join('/')))}" title="Delete saved questions" style="background:transparent;border:none;font-size:1.1rem;cursor:pointer;color:var(--text-3);padding:6px;border-radius:50%;flex-shrink:0;transition:color 0.15s;" onmouseover="this.style.color='#d9453d'" onmouseout="this.style.color='var(--text-3)'">🗑️</button>
         </div>`;
       }
       body.innerHTML = html;
-      body.querySelectorAll('.lib-saved-item').forEach(el => el.addEventListener('click', () => {
+      body.querySelectorAll('.lib-saved-item').forEach(el => el.addEventListener('click', (e) => {
+        if (e.target.closest('.lib-saved-delete')) return;
         const pathArr = el.dataset.savedpath.split('/');
         if (savedMode) { detachSavedListeners(); savedMode = false; }
         savedTree = tree;
@@ -2922,6 +2923,16 @@
         currentPath = pathArr;
         closeLibrary();
         renderNavigationView();
+      }));
+      body.querySelectorAll('.lib-saved-delete').forEach(btn => btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const safe = btn.dataset.safename;
+        if (!safe) return;
+        try {
+          if (db) await db.ref(`quiz_saved_questions_${safe}`).remove();
+          showToast('🗑️ Saved questions deleted');
+          renderLibSaved(body); // refresh the list
+        } catch(err) { showToast('❌ Error: ' + err.message); }
       }));
     }).catch(e => {
       body.innerHTML = `<div class="library-empty"><div class="lib-empty-icon">⚠️</div>Error loading saved questions.</div>`;
