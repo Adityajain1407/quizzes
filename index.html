@@ -3780,23 +3780,30 @@
     showToast('⏳ Deleting...');
     try {
       const isFolder = !path.split('/').pop().includes('.');
-      let files;
+      let filesWithSha; // array of {path, sha}
       if (isFolder) {
-        // Get all files recursively from GitHub directly (includes .gitkeep, catches empty folders)
-        files = await ghGetAllFilesRecursive(path);
+        filesWithSha = await ghGetAllFilesRecursive(path); // returns [{path, sha}]
       } else {
-        files = [path];
+        // Single file: get its sha
+        const res = await fetch(
+          `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(path)}`,
+          { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' } }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          showToast(`❌ ${res.status}: ${err.message || 'Cannot fetch file'}`);
+          return;
+        }
+        const data = await res.json();
+        filesWithSha = [{ path: data.path || path, sha: data.sha }];
       }
-      if (!files.length) { showToast('❌ Nothing found to delete at: ' + path); return; }
+      if (!filesWithSha.length) { showToast('❌ Nothing found at: ' + path); return; }
       let deleted = 0;
-      for (const filePath of files) {
-        const data = await ghApiGet(filePath);
-        if (!data) { showToast(`❌ Could not fetch: ${filePath}`); return; }
-        if (!data.sha) { showToast(`❌ No SHA for: ${filePath}`); return; }
-        const ok = await ghDeleteFile(filePath, data.sha);
-        if (!ok) { showToast(`❌ GitHub rejected delete for: ${filePath}`); return; }
+      for (const { path: filePath, sha } of filesWithSha) {
+        const ok = await ghDeleteFile(filePath, sha);
+        if (!ok) { showToast(`❌ Could not delete: ${filePath.split('/').pop()}`); return; }
         deleted++;
-        // Cascade: delete Firebase logs for quiz files
+        // Cascade Firebase logs for quiz files
         if (db && (filePath.endsWith('.html') || filePath.endsWith('.md'))) {
           const safe = cleanName(filePath.split('/').pop()).toLowerCase().replace(/[^a-z0-9]+/g,'_');
           try { await db.ref(`quiz_saved_state_${safe}`).remove(); } catch(e) {}
@@ -3804,7 +3811,7 @@
           try { await db.ref(`quiz_saved_questions_${safe}`).remove(); } catch(e) {}
         }
       }
-      showToast(`✅ Deleted ${deleted} file${deleted!==1?'s':''}!`);
+      showToast(`✅ Deleted!`);
       clearSelection();
       await refreshFilesAndSync({
         type: 'delete',
@@ -3812,26 +3819,26 @@
         oldPath: path,
         displayName: cleanName(path.split('/').pop())
       });
-    } catch(e) { showToast('❌ Error: ' + e.message); console.error('ghDelete error:', e); }
+    } catch(e) { showToast('❌ ' + e.message); console.error('ghDelete error:', e); }
   }
 
-  // Recursively fetch all file paths under a folder from GitHub API
+  // Recursively fetch all file paths+shas under a folder from GitHub API
   async function ghGetAllFilesRecursive(folderPath) {
     const token = getPAT();
     const results = [];
     async function fetchFolder(fp) {
-      const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(fp)}?ref=${GITHUB_BRANCH}`;
-      const res = await fetch(url, {
-        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' }
-      });
+      const res = await fetch(
+        `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${ghEncodePath(fp)}?ref=${GITHUB_BRANCH}`,
+        { headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github+json' } }
+      );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(`API ${res.status} for "${fp}": ${err.message || 'unknown'}`);
+        throw new Error(`${res.status}: ${err.message || 'Cannot fetch folder'} ("${fp}")`);
       }
       const items = await res.json();
-      if (!Array.isArray(items)) throw new Error(`Unexpected response for "${fp}": ${JSON.stringify(items).slice(0,100)}`);
+      if (!Array.isArray(items)) throw new Error(`Unexpected response for "${fp}"`);
       for (const item of items) {
-        if (item.type === 'file') results.push(item.path);
+        if (item.type === 'file') results.push({ path: item.path, sha: item.sha });
         else if (item.type === 'dir') await fetchFolder(item.path);
       }
     }
