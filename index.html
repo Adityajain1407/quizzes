@@ -590,11 +590,11 @@
   .quiz-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 14px 20px;
     text-decoration: none;
     border-bottom: 1px solid var(--border);
     transition: var(--transition);
+    gap: 10px;
   }
   .quiz-item:last-child {
     border-bottom: none;
@@ -627,6 +627,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 1;
+    min-width: 0;
   }
   .quiz-dot {
     width: 8px;
@@ -1838,9 +1840,10 @@
 <div id="selectionBar" class="selection-bar">
   <span class="selection-bar-count" id="selCountLabel">0 selected</span>
   <div class="sel-bar-divider"></div>
-  <button class="sel-bar-btn" id="selMoveBtn" onclick="openMoveModal()">📂 Move</button>
+  <button class="sel-bar-btn" id="selFavBtn" onclick="selFavAction()">☆ Favourite</button>
   <button class="sel-bar-btn" id="selRenameBtn" onclick="openRenameModal()">✏️ Rename</button>
-  <button class="sel-bar-btn danger" id="selDeleteBtn" onclick="openDeleteModal()">🗑️ Delete</button>
+  <button class="sel-bar-btn" onclick="openMoveModal()">📂 Move</button>
+  <button class="sel-bar-btn danger" onclick="openDeleteModal()">🗑️ Delete</button>
   <div class="sel-bar-divider"></div>
   <button class="sel-bar-btn" onclick="clearSelection()">✕</button>
 </div>
@@ -2223,7 +2226,6 @@
         const starred = isFavourited(itemPath);
         html += `<div class="folder-card" data-folder="${name.replace(/"/g,'&quot;')}" data-path="${escapeHtml(itemPath)}" data-type="folder">
           <div class="item-checkbox" data-path="${escapeHtml(itemPath)}"></div>
-          <button class="item-menu-btn" data-path="${escapeHtml(itemPath)}" data-type="folder" data-name="${escapeHtml(name)}">⋮</button>
           <button class="item-star-btn ${starred?'starred':''}" data-path="${escapeHtml(itemPath)}" data-name="${escapeHtml(name)}" data-type="folder">${starred?'⭐':'☆'}</button>
           <div class="folder-icon">${icon}</div>
           <div class="folder-name">${escapeHtml(name)}</div>
@@ -2240,9 +2242,7 @@
         html += `<a class="quiz-item quiz-link" href="${url}" target="_blank" data-path="${escapeHtml(f.path)}" data-type="quiz">
           <div class="item-checkbox" data-path="${escapeHtml(f.path)}"></div>
           <div class="quiz-info"><span class="quiz-dot"></span><span class="quiz-name">${escapeHtml(name)}</span></div>
-          <button class="item-menu-btn" data-path="${escapeHtml(f.path)}" data-type="quiz" data-name="${escapeHtml(f.path.split('/').pop())}">⋮</button>
           <button class="item-star-btn ${isFavourited(f.path)?'starred':''}" data-path="${escapeHtml(f.path)}" data-name="${escapeHtml(f.path.split('/').pop())}" data-type="quiz">${isFavourited(f.path)?'⭐':'☆'}</button>
-          <span class="quiz-arrow">→</span>
         </a>`;
       }
       html += `</div>`;
@@ -2287,13 +2287,6 @@
       e.stopPropagation();
       e.preventDefault();
       toggleFavourite(btn.dataset.path, btn.dataset.name, btn.dataset.type);
-    }));
-
-    // Three-dot menus
-    document.querySelectorAll(".item-menu-btn").forEach(btn => btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      showCtxMenu(e, btn.dataset.path, btn.dataset.type, btn.dataset.name);
     }));
 
     // Long-press to enter selection mode (touch)
@@ -3070,13 +3063,28 @@
     const count = selectedPaths.size;
     document.getElementById('selCountLabel').textContent = `${count} selected`;
     bar.classList.toggle('visible', count > 0);
-    // rename only works for single selection
-    document.getElementById('selRenameBtn').style.opacity = count === 1 ? '' : '0.4';
-    document.getElementById('selRenameBtn').disabled = count !== 1;
+
+    // Show rename/favourite only for single selection
+    const single = count === 1;
+    const selFavBtn = document.getElementById('selFavBtn');
+    const selRenameBtn = document.getElementById('selRenameBtn');
+    if (selFavBtn) {
+      selFavBtn.style.display = single ? '' : 'none';
+      if (single) {
+        const path = [...selectedPaths][0];
+        const starred = isFavourited(path);
+        selFavBtn.textContent = starred ? '⭐ Unstar' : '☆ Favourite';
+      }
+    }
+    if (selRenameBtn) selRenameBtn.style.display = single ? '' : 'none';
+
     // update checkbox states
     document.querySelectorAll('.item-checkbox').forEach(cb => {
       cb.classList.toggle('checked', selectedPaths.has(cb.dataset.path));
       cb.classList.toggle('visible', selectionActive);
+    });
+    document.querySelectorAll('.item-star-btn').forEach(btn => {
+      btn.style.display = selectionActive ? 'none' : '';
     });
   }
 
@@ -3503,9 +3511,15 @@
     renderNavigationView();
   }
 
-  async function ctxToggleFav(path, name, type) {
-    closeCtxMenu();
-    await toggleFavourite(path, name, type);
+  function selFavAction() {
+    if (selectedPaths.size !== 1) return;
+    const path = [...selectedPaths][0];
+    // find name and type from tree
+    const file = findFileInTree(rootTree, path);
+    const type = file ? 'quiz' : 'folder';
+    const name = path.split('/').pop();
+    toggleFavourite(path, name, type);
+    updateSelectionUI();
   }
 
   function openFavouritesView() {
