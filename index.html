@@ -1039,12 +1039,7 @@
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
-  .hub-header h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: 0.3px;
-  }
+
   .hub-scroll {
     overflow-y: auto;
     padding: 22px 26px 28px;
@@ -4979,7 +4974,7 @@
     removeAuthOverlay();
     startInactivityWatch();
     updateAdminUI();
-    showUserPill();
+    updateHubProfile();
     onSuccess?.();
   }
 
