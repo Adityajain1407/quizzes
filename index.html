@@ -5215,15 +5215,15 @@
     const adminRows = isAdmin() ? `
           <button style="${row}" onclick="closeFMModal();showPendingRequests()">
             <span style="font-size:1.4rem;flex-shrink:0;">🕐</span>
-            <span><strong style="color:var(--text);">Pending Requests</strong><br><span style="font-size:0.8rem;color:var(--text-3);">Review & approve new accounts</span></span>
+            <span><strong style=">Pending Requests</strong><br><span style="font-size:0.8rem;opacity:0.65;">Review & approve new accounts</span></span>
           </button>
           <button style="${row}" onclick="closeFMModal();showApprovedAccounts()">
             <span style="font-size:1.4rem;flex-shrink:0;">✅</span>
-            <span><strong style="color:var(--text);">Approved Accounts</strong><br><span style="font-size:0.8rem;color:var(--text-3);">Manage approved users</span></span>
+            <span><strong style=">Approved Accounts</strong><br><span style="font-size:0.8rem;opacity:0.65;">Manage approved users</span></span>
           </button>
           <button style="${row}border-color:rgba(217,69,61,0.4);" onclick="closeFMModal();dmAction('master')">
             <span style="font-size:1.4rem;flex-shrink:0;">💥</span>
-            <span><strong style="color:#d9453d;">Master Reset</strong><br><span style="font-size:0.8rem;color:var(--text-3);">Wipes ALL data from Firebase</span></span>
+            <span><strong style="color:#d9453d;">Master Reset</strong><br><span style="font-size:0.8rem;opacity:0.65;">Wipes ALL data from Firebase</span></span>
           </button>` : '';
     showFMModal({
       title: '🗂️ Data Management',
@@ -5232,11 +5232,11 @@
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button style="${row}" onclick="closeFMModal();dmAction('recents')">
             <span style="font-size:1.4rem;flex-shrink:0;">🕐</span>
-            <span><strong style="color:var(--text);">Clear My Recents</strong><br><span style="font-size:0.8rem;color:var(--text-3);">Removes your recent quiz history</span></span>
+            <span><strong style=">Clear My Recents</strong><br><span style="font-size:0.8rem;opacity:0.65;">Removes your recent quiz history</span></span>
           </button>
           <button style="${row}" onclick="closeFMModal();dmAction('saved')">
             <span style="font-size:1.4rem;flex-shrink:0;">🔖</span>
-            <span><strong style="color:var(--text);">Clear My Saved Questions</strong><br><span style="font-size:0.8rem;color:var(--text-3);">Removes your bookmarked questions</span></span>
+            <span><strong style=">Clear My Saved Questions</strong><br><span style="font-size:0.8rem;opacity:0.65;">Removes your bookmarked questions</span></span>
           </button>
           ${adminRows}
           <button style="${row}justify-content:center;margin-top:4px;border-color:var(--border-2);" onclick="closeFMModal()">
