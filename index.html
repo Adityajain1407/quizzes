@@ -3906,23 +3906,55 @@
   let selectedPaths = new Set();
   let selectionActive = false;
 
-  // --- PAT storage ---
+  // --- PAT storage (per-account, synced via Firebase) ---
   function getPAT() { return (localStorage.getItem(PAT_KEY) || '').trim(); }
-  function savePAT(token) { localStorage.setItem(PAT_KEY, token.trim()); }
+
+  async function savePAT(token) {
+    token = token.trim();
+    if (token) {
+      localStorage.setItem(PAT_KEY, token);
+      // Store in Firebase under this user's account so it loads on any device
+      if (db && currentUser) {
+        try { await db.ref(`${USERS_FB_KEY}/${currentUser}/pat`).set(token); } catch(e) {}
+      }
+    } else {
+      localStorage.removeItem(PAT_KEY);
+      if (db && currentUser) {
+        try { await db.ref(`${USERS_FB_KEY}/${currentUser}/pat`).remove(); } catch(e) {}
+      }
+    }
+    // Refresh admin UI immediately
+    updateAdminUI();
+    showUserPill();
+  }
+
+  // Called after login — loads PAT from Firebase into localStorage for this session
+  async function loadPATFromAccount(username) {
+    if (!db || !username) return;
+    try {
+      const snap = await db.ref(`${USERS_FB_KEY}/${username}/pat`).get();
+      if (snap.exists() && snap.val()) {
+        localStorage.setItem(PAT_KEY, snap.val());
+      } else {
+        // No PAT stored for this account — clear any leftover from another account
+        localStorage.removeItem(PAT_KEY);
+      }
+    } catch(e) { console.warn('Could not load PAT from account:', e); }
+  }
 
   // --- PAT modal ---
   function openPATModal() {
     const current = getPAT();
     showFMModal({
       title: '🔑 GitHub Access Token',
-      body: `<p>Required for rename, move and delete. <a href="https://github.com/settings/tokens/new?scopes=repo&description=AditPortalToken" target="_blank" style="color:var(--accent)">Generate a token</a> with <strong>repo</strong> scope (or <strong>public_repo</strong> for public repos).<br>Stored only on this device in localStorage.</p>
+      body: `<p>Required for rename, move and delete. <a href="https://github.com/settings/tokens/new?scopes=repo&description=AditPortalToken" target="_blank" style="color:var(--accent)">Generate a token</a> with <strong>repo</strong> scope (or <strong>public_repo</strong> for public repos).<br>Stored securely in your account — works across all your devices.</p>
              <input type="password" id="patInput" placeholder="ghp_xxxxxxxxxxxx" value="${escapeHtml(current)}">
              ${current ? '<span class="pat-status set">✅ Token saved</span>' : '<span class="pat-status unset">⚪ No token saved</span>'}`,
       buttons: [
-        { label: 'Save Token', cls: 'fm-btn-primary', action: () => {
+        { label: 'Save Token', cls: 'fm-btn-primary', action: async () => {
           const val = document.getElementById('patInput').value.trim();
-          if (val) { savePAT(val); showToast('Token saved!'); }
-          else { localStorage.removeItem(PAT_KEY); showToast('Token cleared.'); }
+          await savePAT(val);
+          showToast(val ? '✅ Token saved to your account!' : 'Token cleared.');
         }},
         { label: 'Cancel', cls: 'fm-btn-cancel' }
       ]
@@ -4928,23 +4960,27 @@
     });
   }
 
-  // ── Finish login: set session, start portal ──
-  function finishLogin(u, onSuccess) {
+  // ── Finish login: set session, load PAT, start portal ──
+  async function finishLogin(u, onSuccess) {
     currentUser = u;
     setSavedUser(u);
     const token = Math.random().toString(36).slice(2) + Date.now();
     setSessionToken(token);
     applyThemeObj(getUserTheme(u));
+    // Load this account's PAT from Firebase — determines admin status
+    await loadPATFromAccount(u);
     removeAuthOverlay();
     startInactivityWatch();
+    updateAdminUI();
     showUserPill();
     onSuccess?.();
   }
 
   // ── User pill in header ──
   function showUserPill() {
+    document.getElementById('userPill')?.remove(); // refresh on re-call
     const actions = document.querySelector('.header-actions');
-    if (!actions || document.getElementById('userPill')) return;
+    if (!actions) return;
     const pill = document.createElement('div');
     pill.id = 'userPill';
     pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:40px;padding:4px 12px 4px 8px;font-size:0.8rem;font-weight:600;color:var(--text-2);cursor:pointer;transition:background 0.15s;flex-shrink:0;';
