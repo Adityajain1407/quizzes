@@ -4751,7 +4751,11 @@
     currentUser = u;
     applyThemeObj(getUserTheme(u));
 
-    // Admin (PAT set) → auto-approve pending account and go straight in, no PIN required
+    // Load this account's PAT from Firebase — determines admin status
+    if (data.pat) localStorage.setItem(PAT_KEY, data.pat);
+    else localStorage.removeItem(PAT_KEY);
+
+    // Admin (has PAT in their account) → auto-approve if pending, skip PIN
     if (getPAT()) {
       if (data.status !== 'approved') {
         await db.ref(`${USERS_FB_KEY}/${u}/status`).set('approved').catch(() => {});
@@ -5470,22 +5474,7 @@
 
     const hideSplash = () => document.getElementById('splashScreen')?.classList.add('hide');
 
-    // ── AUTH GATE ──
-    // PAT = admin bypass: if token stored, use saved username or show login once
-    if (getPAT()) {
-      const adminUser = getSavedUser();
-      if (adminUser) {
-        currentUser = adminUser;
-        hideSplash();
-        finishLogin(adminUser, () => initPortal());
-        return;
-      }
-      hideSplash();
-      showLoginScreen(() => initPortal());
-      return;
-    }
-
-    const savedUser = getSavedUser();
+    const savedUser  = getSavedUser();
     const savedToken = getSessionToken();
 
     if (savedUser && savedToken) {
@@ -5493,28 +5482,33 @@
       try { applyThemeObj(getUserTheme(savedUser)); } catch(e) {}
       hideSplash();
 
-      // Verify account still valid in Firebase
       if (db) {
         try {
           const snap = await db.ref(`${USERS_FB_KEY}/${savedUser}`).get();
           if (!snap.exists() || snap.val()?.status === 'denied') {
             setSavedUser(null); setSessionToken(null); currentUser = null;
+            localStorage.removeItem(PAT_KEY); // clear any stale PAT
             showLoginScreen(() => initPortal());
             return;
           }
           const data = snap.val();
-          if (!getPAT() && data?.status !== 'approved') {
+
+          // Load THIS account's PAT from Firebase into localStorage
+          if (data.pat) localStorage.setItem(PAT_KEY, data.pat);
+          else localStorage.removeItem(PAT_KEY);
+
+          // Check approval (admins with PAT skip this)
+          if (!getPAT() && data.status !== 'approved') {
             showPendingScreen(savedUser, () => initPortal());
             return;
           }
-          // Check PIN
-          if (data?.pin) {
+          // Show PIN if set (non-admins always; admins skip PIN)
+          if (data.pin && !getPAT()) {
             showPinScreen(savedUser, false, () => initPortal());
             return;
           }
         } catch(e) {
           console.warn('Firebase session check failed, continuing:', e);
-          // Fall through — allow cached session if Firebase unavailable
         }
       }
 
@@ -5522,7 +5516,7 @@
       return;
     }
 
-    // No session — show login screen
+    // No session — show login
     hideSplash();
     showLoginScreen(() => initPortal());
   }
