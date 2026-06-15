@@ -4974,7 +4974,10 @@
           if (isLeft  && sqPrev && !sqPrev.disabled) fireNoBubble(sqPrev);
           if (isRight && sqNext && !sqNext.disabled) fireNoBubble(sqNext);
         }
-        // Up/Down: let browser scroll the panel
+        if (isUp || isDown) {
+          const scroller = document.getElementById('libraryBody');
+          if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 80 : -80, behavior: 'smooth' }); }
+        }
         return;
       }
       // Library tabs: Left/Right switch tabs
@@ -4985,7 +4988,11 @@
         const newTab = tabs[activeTabIdx + (isRight ? 1 : -1)];
         if (newTab) switchLibTab(newTab);
       }
-      // Up/Down: scroll panel naturally
+      // Up/Down: scroll the library body
+      if (isUp || isDown) {
+        const scroller = document.getElementById('libraryBody');
+        if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 80 : -80, behavior: 'smooth' }); }
+      }
       return;
     }
 
@@ -5000,13 +5007,48 @@
 
     // ── Choice modal (⚙️ Quick Access hub) ──
     if (document.getElementById('choiceModal')?.classList.contains('active')) {
-      // Up/Down scroll the hub panel; Escape closes (handled above)
+      if (isUp || isDown) {
+        const scroller = document.querySelector('#choiceModal .hub-scroll');
+        if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 80 : -80, behavior: 'smooth' }); }
+      }
+      return;
+    }
+
+    // ── Clock & Calendar modal ──
+    if (document.getElementById('clockModal')?.classList.contains('active')) {
+      if (isLeft)  { e.preventDefault(); document.getElementById('calPrevBtn')?.click(); }
+      if (isRight) { e.preventDefault(); document.getElementById('calNextBtn')?.click(); }
+      if (isUp || isDown) {
+        const scroller = document.querySelector('#clockModal .hub-scroll');
+        if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 80 : -80, behavior: 'smooth' }); }
+      }
+      return;
+    }
+
+    // ── Weather modal ──
+    if (document.getElementById('weatherModal')?.classList.contains('active')) {
+      if (isUp || isDown) {
+        const scroller = document.querySelector('#weatherModal .hub-scroll');
+        if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 80 : -80, behavior: 'smooth' }); }
+      }
+      return;
+    }
+
+    // ── FM modals (rename, delete, token, new folder, data mgmt) ──
+    if (document.getElementById('fmModalBackdrop')) {
+      if (isUp || isDown) {
+        const scroller = document.querySelector('.fm-modal');
+        if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 60 : -60, behavior: 'smooth' }); }
+      }
+      if (key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('fmBtn0')?.click();
+      }
       return;
     }
 
     // ── Search overlay ──
     if (document.getElementById('searchOverlay')?.classList.contains('active')) {
-      // Up/Down navigate results
       if (isUp || isDown) {
         const results = [...document.querySelectorAll('#searchResultsPanel .search-result-item, #searchResultsPanel .recent-item')];
         if (!results.length) return;
