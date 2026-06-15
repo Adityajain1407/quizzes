@@ -2256,8 +2256,19 @@
     color: var(--text); font-size: 0.95rem; outline: none; box-sizing: border-box;
     transition: border-color 0.15s;
     -webkit-text-fill-color: var(--text);
+    caret-color: var(--text);
   }
   .auth-field input:focus { border-color: var(--accent); }
+  /* Kill browser autofill white background */
+  .auth-field input:-webkit-autofill,
+  .auth-field input:-webkit-autofill:hover,
+  .auth-field input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--surface-2) inset !important;
+    -webkit-text-fill-color: var(--text) !important;
+    caret-color: var(--text) !important;
+    border-color: var(--accent) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
   .auth-submit {
     width: 100%; padding: 13px; border: none; border-radius: 40px;
     background: var(--accent); color: #fff; font-weight: 700; font-size: 1rem;
