@@ -1552,36 +1552,47 @@
     box-shadow: var(--shadow-sm);
   }
 
+  /* ── TABLET (≤1024px): hide logo text, collapse search to icon ── */
   @media (max-width: 1024px) {
     .header-inner { gap: 8px; }
     .header-actions { gap: 8px; }
     .logo-text { display: none; }
-    /* All header icons collapse to consistent 40px circles */
-    .search-compact, .weather-btn, .live-clock, .theme-toggle {
-      width: 40px; height: 40px;
-      min-width: 40px;
-      padding: 0;
-      flex: 0 0 40px;
-      justify-content: center;
-      border-radius: 50%;
-      gap: 0;
+    /* Search collapses to icon circle */
+    .search-compact {
+      width: 40px; height: 40px; min-width: 40px;
+      padding: 0; flex: 0 0 40px;
+      justify-content: center; border-radius: 50%; gap: 0;
     }
-    .search-compact-text, .saved-btn-text, .wx-text, .clock-text { display: none; }
+    .search-compact-text { display: none; }
+    /* Clock and weather: show abbreviated text on tablet */
+    .weather-btn, .live-clock, .theme-toggle {
+      height: 40px; min-width: 40px;
+      padding: 0 10px; border-radius: 40px; gap: 4px;
+    }
+    .wx-text { display: inline; font-size: 0.78rem; }
+    .clock-text { display: inline; font-size: 0.78rem; white-space: nowrap; }
     .live-clock { display: flex; align-items: center; }
-    .wbtn-icon { font-size: 1.1rem; }
-    /* Grid: max 2 columns on tablets */
+    .wbtn-icon { font-size: 1rem; }
     .folders-grid { grid-template-columns: repeat(2, 1fr); }
     .quizzes-grid { grid-template-columns: repeat(2, 1fr); }
-    /* Breadcrumb: single scrollable line, toggles stay right */
     .breadcrumb { overflow-x: auto; white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .breadcrumb::-webkit-scrollbar { display: none; }
-    /* Selection bar: scrollable on mobile */
     .selection-bar { max-width: calc(100vw - 32px); overflow-x: auto; border-radius: 20px; }
     .selection-bar::-webkit-scrollbar { display: none; }
     .sel-bar-btn { padding: 7px 10px; font-size: 0.78rem; white-space: nowrap; }
   }
-  @media (max-width: 680px) {
+  /* ── MOBILE (≤600px): clock shows time only, weather shows temp only ── */
+  @media (max-width: 600px) {
     .header-inner { gap: 6px; }
+    .header-actions { gap: 6px; }
+    .weather-btn, .live-clock {
+      padding: 0 8px; height: 36px; min-width: 36px;
+    }
+    .wx-text { font-size: 0.75rem; }
+    .clock-text { font-size: 0.75rem; }
+    .wbtn-icon { font-size: 0.95rem; }
+    .search-compact { width: 36px; height: 36px; min-width: 36px; }
+    .theme-toggle { width: 36px; height: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
     .folders-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .quizzes-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .weather-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 6px; }
@@ -1590,15 +1601,15 @@
     .breathing-text { font-size: 1.5rem; }
     .timer-text { font-size: 1.2rem; }
     .dino-card { padding: 15px; }
-    /* Selection bar more compact */
     .selection-bar { padding: 6px 10px; gap: 4px; }
     .selection-bar-count { padding: 0 4px; font-size: 0.82rem; }
     .sel-bar-divider { display: none; }
   }
+  /* ── SMALL MOBILE (≤430px): everything tight ── */
   @media (max-width: 430px) {
     .header-inner { gap: 5px; }
     .header-actions { gap: 5px; }
-    .search-compact, .weather-btn, .live-clock, .theme-toggle { width: 36px; height: 36px; min-width: 36px; }
+    .weather-btn, .live-clock { padding: 0 6px; height: 34px; }
     .logo-icon { font-size: 1.4rem; }
     .folders-grid, .quizzes-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   }
@@ -3613,7 +3624,8 @@
     const now = new Date();
     let h = now.getHours(), m = now.getMinutes().toString().padStart(2,'0'), s = now.getSeconds(), ap = h>=12?'PM':'AM';
     h = h%12||12;
-    const day = now.toLocaleDateString(undefined, {weekday:'long'});
+    const isMobile = window.innerWidth <= 600;
+    const day = now.toLocaleDateString(undefined, { weekday: isMobile ? 'short' : 'long' });
     document.getElementById("liveClockText").textContent = `${h}:${m} ${ap} • ${day}`;
     updateAnalogClock(now, h, parseInt(m), s);
   }
