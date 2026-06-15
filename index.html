@@ -2455,31 +2455,71 @@
   async function loadFiles(bustCache = false, retries = 5) {
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
-        const url = API_URL + `&_=${Date.now()}`; // always bust cache
+        const url = API_URL + `&_=${Date.now()}`;
+        console.log(`[Portal] loadFiles attempt ${attempt + 1}: ${url}`);
         const res = await fetch(url, { cache: 'no-store' });
+        console.log(`[Portal] response status: ${res.status}`);
         if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          console.warn(`[Portal] API error ${res.status}:`, errText);
           if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); continue; }
           return null;
         }
         const data = await res.json();
-        const allFiles = data.tree || [];
+        console.log(`[Portal] tree items: ${data.tree?.length ?? 0}, truncated: ${data.truncated}`);
+        // If truncated, GitHub only returned partial tree — fetch each folder individually
+        let allFiles = data.tree || [];
+        if (data.truncated) {
+          console.warn('[Portal] Tree truncated — falling back to flat contents API');
+          allFiles = await fetchAllFilesFlat('');
+          if (!allFiles) { if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); continue; } return null; }
+        }
         const quizFiles = allFiles.filter(f =>
-          f.type === "blob" && (f.path.endsWith(".html") || f.path.endsWith(".md")) &&
-          f.path !== "index.html" && !f.path.endsWith("README.md") &&
-          !f.path.startsWith("icons/") &&
-          f.path !== "manifest.json" && f.path !== "service-worker.js" &&
-          !f.path.toLowerCase().includes("quiz_master_prompt")
+          (f.type === 'blob' || f.type === 'file') &&
+          (f.path.endsWith('.html') || f.path.endsWith('.md')) &&
+          f.path !== 'index.html' && !f.path.endsWith('README.md') &&
+          !f.path.startsWith('icons/') &&
+          f.path !== 'manifest.json' && f.path !== 'service-worker.js' &&
+          !f.path.toLowerCase().includes('quiz_master_prompt')
         );
         const folderMarkers = allFiles.filter(f =>
-          f.type === "blob" && f.path.endsWith(".gitkeep")
+          (f.type === 'blob' || f.type === 'file') && f.path.endsWith('.gitkeep')
         );
         return [...quizFiles, ...folderMarkers];
       } catch(e) {
+        console.error(`[Portal] loadFiles attempt ${attempt + 1} threw:`, e);
         if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); continue; }
         return null;
       }
     }
     return null;
+  }
+
+  // Fallback: recursively fetch contents when tree API is truncated
+  async function fetchAllFilesFlat(path) {
+    try {
+      const token = getPAT();
+      const headers = { Accept: 'application/vnd.github+json' };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${path}?ref=${GITHUB_BRANCH}&_=${Date.now()}`;
+      const res = await fetch(url, { headers, cache: 'no-store' });
+      if (!res.ok) return null;
+      const items = await res.json();
+      if (!Array.isArray(items)) return null;
+      let results = [];
+      for (const item of items) {
+        if (item.type === 'file') {
+          results.push({ type: 'file', path: item.path });
+        } else if (item.type === 'dir') {
+          const sub = await fetchAllFilesFlat(item.path);
+          if (sub) results = results.concat(sub);
+        }
+      }
+      return results;
+    } catch(e) {
+      console.error('[Portal] fetchAllFilesFlat error:', e);
+      return null;
+    }
   }
   function buildTree(files) {
     const root = { __files__: [], __folders__: {} };
@@ -4741,20 +4781,26 @@
 
   function showLoadError(detail) {
     let retryCount = 0;
+    const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
     const render = () => {
       contentDiv.innerHTML = `
         <div class="state-msg" style="padding: 40px 20px;">
           <div class="icon">⚠️</div>
-          <div style="font-weight:700; font-size:1.1rem; margin-bottom:8px; color:var(--text);">Could not reach GitHub</div>
-          <div style="color:var(--text-3); font-size:0.88rem; margin-bottom:24px; max-width:320px; margin-left:auto; margin-right:auto; line-height:1.5;">
+          <div style="font-weight:700; font-size:1.1rem; margin-bottom:8px; color:var(--text);">Could not load quizzes</div>
+          <div style="color:var(--text-3); font-size:0.88rem; margin-bottom:20px; max-width:340px; margin-left:auto; margin-right:auto; line-height:1.6;">
             ${retryCount === 0
-              ? 'This is usually a temporary GitHub API hiccup. Hit Retry — it almost always works.'
-              : `Attempt ${retryCount} failed. GitHub may be rate-limiting. Try again in a moment.`}
-            ${detail ? `<br><small style="opacity:0.6">${detail}</small>` : ''}
+              ? 'GitHub API is not responding. This is usually temporary — try Retry.'
+              : `Retry ${retryCount} also failed. You may be rate-limited (60 req/hr without a token) or offline.`}
+            ${detail ? `<br><small style="opacity:0.55; font-size:0.78rem;">${detail}</small>` : ''}
           </div>
-          <button id="retryLoadBtn" style="background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:40px;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 40%,transparent);">
-            🔄 Retry
-          </button>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button id="retryLoadBtn" style="background:var(--accent);color:#fff;border:none;padding:11px 28px;border-radius:40px;font-weight:700;font-size:0.95rem;cursor:pointer;">
+              🔄 Retry
+            </button>
+            <a href="${apiUrl}" target="_blank" style="background:var(--surface-2);color:var(--text);border:1px solid var(--border-2);padding:11px 20px;border-radius:40px;font-weight:600;font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;">
+              🔗 Test API
+            </a>
+          </div>
         </div>`;
       document.getElementById('retryLoadBtn').onclick = async () => {
         retryCount++;
