@@ -2294,7 +2294,7 @@
   const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
 
   function cleanName(filename) {
-    return filename.replace(/\.html$/i, "").replace(/^\d+[.\-\s]+/, "").trim();
+    return filename.replace(/\.html$/i, "").replace(/^\d+(__|\.|-|\s)+/, "").trim();
   }
   async function loadFiles(bustCache = false, retries = 3) {
     for (let attempt = 0; attempt < retries; attempt++) {
