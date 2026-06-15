@@ -2361,7 +2361,10 @@
 <div id="choiceModal" class="choice-modal">
   <div class="hub-panel">
     <div class="hub-header">
-      <h3>✨ Quick Access</h3>
+      <div id="hubProfileCapsule" style="display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:40px;padding:6px 14px 6px 8px;cursor:pointer;transition:background 0.15s;" onclick="showHubProfileMenu()">
+        <span style="font-size:1.1rem;line-height:1;">🛡️</span>
+        <span id="hubProfileName" style="font-weight:700;font-size:0.9rem;color:var(--text);">...</span>
+      </div>
       <span class="close-choice" id="closeChoiceBtn" style="position: static; font-size: 1.6rem;">&times;</span>
     </div>
     <div class="hub-scroll">
@@ -3175,7 +3178,7 @@
   const choiceModal = document.getElementById("choiceModal");
   const choiceTrigger = document.getElementById("choiceTrigger");
   
-  function openChoiceModal() { choiceModal.classList.add("active"); }
+  function openChoiceModal() { choiceModal.classList.add("active"); updateHubProfile(); }
   choiceTrigger.addEventListener("click", openChoiceModal);
   document.getElementById("closeChoiceBtn").addEventListener("click", () => choiceModal.classList.remove("active"));
 
@@ -4980,28 +4983,34 @@
     onSuccess?.();
   }
 
-  // ── User pill in header ──
+  // ── Profile in hub header ──
   function showUserPill() {
-    document.getElementById('userPill')?.remove(); // refresh on re-call
-    const actions = document.querySelector('.header-actions');
-    if (!actions) return;
-    const pill = document.createElement('div');
-    pill.id = 'userPill';
-    pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-2);border-radius:40px;padding:4px 12px 4px 8px;font-size:0.8rem;font-weight:600;color:var(--text-2);cursor:pointer;transition:background 0.15s;flex-shrink:0;';
-    pill.title = `Logged in as ${currentUser}${isAdmin()?' (Admin)':''}`;
-    pill.innerHTML = `<span>${isAdmin()?'🛡️':'👤'}</span><span>${currentUser}</span>`;
-    pill.onclick = () => {
-      showFMModal({ title: `👤 ${currentUser}`, body:
-        `<p style="color:var(--text-3);font-size:0.88rem;">${isAdmin()?'🛡️ Admin account':'Standard account'}</p>`,
-        buttons: [
-          { label: 'Log Out', cls: 'fm-btn-danger', action: () => {
-            setSavedUser(null); setSessionToken(null); currentUser = null;
-            stopInactivityWatch(); location.reload();
-          }},
-          { label: 'Cancel', cls: 'fm-btn-cancel' }
-        ]});
-    };
-    actions.insertBefore(pill, actions.firstChild);
+    // Update hub profile capsule instead of adding pill to header
+    updateHubProfile();
+  }
+
+  function updateHubProfile() {
+    const nameEl = document.getElementById('hubProfileName');
+    const capsule = document.getElementById('hubProfileCapsule');
+    if (!nameEl || !capsule) return;
+    nameEl.textContent = currentUser || '…';
+    capsule.querySelector('span:first-child').textContent = isAdmin() ? '🛡️' : '👤';
+    capsule.title = `${currentUser} — ${isAdmin() ? 'Admin' : 'Standard account'}`;
+  }
+
+  function showHubProfileMenu() {
+    showFMModal({
+      title: `${isAdmin() ? '🛡️' : '👤'} ${currentUser}`,
+      body: `<p style="color:var(--text-2);font-size:0.88rem;margin-bottom:4px;">${isAdmin() ? 'Admin account' : 'Standard account'}</p>`,
+      buttons: [
+        { label: 'Log Out', cls: 'fm-btn-danger', action: () => {
+          setSavedUser(null); setSessionToken(null); currentUser = null;
+          localStorage.removeItem(PAT_KEY);
+          stopInactivityWatch(); location.reload();
+        }},
+        { label: 'Cancel', cls: 'fm-btn-cancel' }
+      ]
+    });
   }
 
   // ── Admin: Pending Requests panel ──
