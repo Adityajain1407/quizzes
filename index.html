@@ -322,10 +322,11 @@
     margin: 0 auto;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 12px 20px;
     min-height: 70px;
     padding: 10px 0;
+    overflow: hidden;
   }
   .logo {
     display: flex;
@@ -1564,13 +1565,16 @@
       justify-content: center; border-radius: 50%; gap: 0;
     }
     .search-compact-text { display: none; }
-    /* Clock and weather: show abbreviated text on tablet */
-    .weather-btn, .live-clock, .theme-toggle {
-      height: 40px; min-width: 40px;
+    /* Clock and weather: always show text on all screens */
+    .weather-btn, .live-clock {
+      height: 40px;
       padding: 0 10px; border-radius: 40px; gap: 4px;
+      flex-shrink: 0;
+      width: auto !important;
     }
-    .wx-text { display: inline; font-size: 0.78rem; }
-    .clock-text { display: inline; font-size: 0.78rem; white-space: nowrap; }
+    .theme-toggle { height: 40px; }
+    .wx-text { display: inline !important; font-size: 0.78rem; }
+    .clock-text { display: inline !important; font-size: 0.78rem; white-space: nowrap; }
     .live-clock { display: flex; align-items: center; }
     .wbtn-icon { font-size: 1rem; }
     .folders-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1586,10 +1590,11 @@
     .header-inner { gap: 6px; }
     .header-actions { gap: 6px; }
     .weather-btn, .live-clock {
-      padding: 0 8px; height: 36px; min-width: 36px;
+      padding: 0 7px; height: 36px;
+      width: auto !important;
     }
-    .wx-text { font-size: 0.75rem; }
-    .clock-text { font-size: 0.75rem; }
+    .wx-text { display: inline !important; font-size: 0.72rem; }
+    .clock-text { display: inline !important; font-size: 0.72rem; }
     .wbtn-icon { font-size: 0.95rem; }
     .search-compact { width: 36px; height: 36px; min-width: 36px; }
     .theme-toggle { width: 36px; height: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
