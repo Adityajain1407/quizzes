@@ -4778,41 +4778,44 @@
     // Skip if user is typing in an input/textarea
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
     const key = e.key;
+    const isArrow = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(key);
+    if (!isArrow) return;
 
-    // Saved popup navigation (left/right/up/down between chips, prev/next question)
-    const sqPrev = document.getElementById('sqPrev');
-    const sqNext = document.getElementById('sqNext');
-    if (sqPrev || sqNext) {
-      if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    // Saved popup navigation — must check libOpen so arrows don't leak to main nav
+    if (libOpen) {
+      const sqPrev = document.getElementById('sqPrev');
+      const sqNext = document.getElementById('sqNext');
+      if (sqPrev || sqNext) {
         e.preventDefault();
-        if (sqPrev && !sqPrev.disabled) sqPrev.click();
-        return;
+        e.stopPropagation();
+        if ((key === 'ArrowLeft' || key === 'ArrowUp') && sqPrev && !sqPrev.disabled) sqPrev.click();
+        if ((key === 'ArrowRight' || key === 'ArrowDown') && sqNext && !sqNext.disabled) sqNext.click();
       }
-      if (key === 'ArrowRight' || key === 'ArrowDown') {
+      // Old saved detail arrows (legacy)
+      const navPrev = document.getElementById('savedNavPrev');
+      const navNext = document.getElementById('savedNavNext');
+      if (navPrev || navNext) {
         e.preventDefault();
-        if (sqNext && !sqNext.disabled) sqNext.click();
-        return;
+        e.stopPropagation();
+        if (key === 'ArrowLeft' || key === 'ArrowUp') navPrev?.click();
+        if (key === 'ArrowRight' || key === 'ArrowDown') navNext?.click();
       }
+      return; // never fall through to main nav when popup is open
     }
 
-    // Old saved detail view (savedNavPrev/Next — legacy, kept for safety)
-    const navPrev = document.getElementById('savedNavPrev');
-    const navNext = document.getElementById('savedNavNext');
-    if (navPrev || navNext) {
-      if (key === 'ArrowLeft' || key === 'ArrowUp') { e.preventDefault(); navPrev?.click(); return; }
-      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); navNext?.click(); return; }
-    }
-
-    // Main quiz navigation (nextAfterAnswerBtn, reviewPrev/Next)
+    // Main quiz: next after answer
     const nextBtn = document.getElementById('nextAfterAnswerBtn');
+    if (nextBtn && (key === 'ArrowRight' || key === 'ArrowDown')) {
+      e.preventDefault(); nextBtn.click(); return;
+    }
+
+    // Main quiz: post-finish review
     const reviewNext = document.getElementById('reviewNext');
     const reviewPrev = document.getElementById('reviewPrev');
-    if (nextBtn) {
-      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); nextBtn.click(); return; }
-    }
     if (reviewNext || reviewPrev) {
-      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); if (reviewNext && !reviewNext.disabled) reviewNext.click(); return; }
-      if (key === 'ArrowLeft' || key === 'ArrowUp') { e.preventDefault(); if (reviewPrev && !reviewPrev.disabled) reviewPrev.click(); return; }
+      e.preventDefault();
+      if ((key === 'ArrowRight' || key === 'ArrowDown') && reviewNext && !reviewNext.disabled) reviewNext.click();
+      if ((key === 'ArrowLeft' || key === 'ArrowUp') && reviewPrev && !reviewPrev.disabled) reviewPrev.click();
     }
   });
 
