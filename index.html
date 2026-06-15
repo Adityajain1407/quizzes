@@ -3924,9 +3924,27 @@
   async function ghDelete(path) {
     const token = getPAT();
     if (!token) { showToast('⚠️ No GitHub token — open ⚙️ Settings → GitHub Token'); return; }
-    showToast('⏳ Deleting...');
+    const isFolder = !path.split('/').pop().includes('.');
+
+    // 1. Optimistic UI: remove from local tree IMMEDIATELY before any API calls
+    const parts = path.split('/');
+    const itemName = parts[parts.length - 1];
+    const parentParts = parts.slice(0, -1);
+    let parent = rootTree;
+    for (const p of parentParts) parent = parent.__folders__[p] || parent;
+    const snapFolders = isFolder ? { ...parent.__folders__ } : null;
+    const snapFiles = !isFolder ? [...parent.__files__] : null;
+    if (isFolder) {
+      delete parent.__folders__[itemName];
+    } else {
+      parent.__files__ = parent.__files__.filter(f => f.path !== path);
+    }
+    clearSelection();
+    renderNavigationView();
+    showToast('✅ Deleted!');
+
+    // 2. Background: fetch SHAs and delete from GitHub
     try {
-      const isFolder = !path.split('/').pop().includes('.');
       let filesWithSha;
       if (isFolder) {
         filesWithSha = await ghGetAllFilesRecursive(path);
@@ -3936,6 +3954,10 @@
           { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } }
         );
         if (!res.ok) {
+          // Rollback optimistic UI
+          if (isFolder) parent.__folders__[itemName] = snapFolders[itemName];
+          else parent.__files__ = snapFiles;
+          renderNavigationView();
           const err = await res.json().catch(() => ({}));
           showToast(`❌ ${res.status}: ${err.message || 'Cannot fetch file'}`);
           return;
@@ -3947,7 +3969,7 @@
 
       for (const { path: filePath, sha } of filesWithSha) {
         const ok = await ghDeleteFile(filePath, sha);
-        if (!ok) { showToast(`❌ Could not delete: ${filePath.split('/').pop()}`); return; }
+        if (!ok) { showToast(`⚠️ GitHub sync issue — refresh to verify`); return; }
         // Cascade Firebase logs
         if (db && (filePath.endsWith('.html') || filePath.endsWith('.md'))) {
           const safe = cleanName(filePath.split('/').pop()).toLowerCase().replace(/[^a-z0-9]+/g,'_');
@@ -3957,29 +3979,14 @@
         }
       }
 
-      // Optimistic UI: remove from local tree immediately
-      const parts = path.split('/');
-      const folderName = parts[parts.length - 1];
-      const parentParts = parts.slice(0, -1);
-      let parent = rootTree;
-      for (const p of parentParts) parent = parent.__folders__[p] || parent;
-      if (isFolder) {
-        delete parent.__folders__[folderName];
-      } else {
-        parent.__files__ = parent.__files__.filter(f => f.path !== path);
-      }
-      clearSelection();
-      renderNavigationView();
-      showToast(`✅ Deleted!`);
-
-      // Background sync
+      // Background sync + Firebase broadcast
       refreshFilesAndSync({
         type: 'delete',
         itemType: isFolder ? 'folder' : 'quiz',
         oldPath: path,
         displayName: cleanName(path.split('/').pop())
       });
-    } catch(e) { showToast('❌ ' + e.message); console.error('ghDelete error:', e); }
+    } catch(e) { showToast('⚠️ ' + e.message); console.error('ghDelete error:', e); }
   }
 
   // Recursively fetch all file paths+shas under a folder from GitHub API
