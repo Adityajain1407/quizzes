@@ -4593,8 +4593,9 @@
   function saveUserTheme(u, t, d) { localStorage.setItem(`portal_theme_${u}`, JSON.stringify({ theme:t, dark:d })); }
 
   // ── Apply theme immediately (for auth screens) ──
-  function applyThemeObj({ theme, dark }) {
-    document.body.setAttribute('data-theme', theme || 'default');
+  function applyThemeObj(obj) {
+    const { theme = 'default', dark = false } = obj || {};
+    document.body.setAttribute('data-theme', theme);
     document.body.classList.toggle('dark-theme', !!dark);
   }
 
@@ -4622,7 +4623,7 @@
     removeAuthOverlay();
     const el = document.createElement('div');
     el.id = 'authOverlay';
-    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;';
+    el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:var(--bg,#f4f6fa);display:flex;align-items:center;justify-content:center;padding:20px;min-height:100dvh;';
     el.innerHTML = html;
     document.body.appendChild(el);
     onReady?.(el);
@@ -5028,7 +5029,7 @@
     }
   }
 
-  const _FAV_KEY_BASE  const _FAV_KEY_BASE = 'quiz_portal_favourites';
+  const _FAV_KEY_BASE = 'quiz_portal_favourites';
   const getFavKey = () => `${_FAV_KEY_BASE}_${getUserPrefix()}`;
 
   async function loadFavourites() {
@@ -5406,47 +5407,53 @@
   }
 
   async function init() {
-    initTheme();
+    // Always hide splash after 3s max — safety net
+    setTimeout(() => document.getElementById('splashScreen')?.classList.add('hide'), 3000);
+
+    try { initTheme(); } catch(e) {}
+
+    const hideSplash = () => document.getElementById('splashScreen')?.classList.add('hide');
 
     // ── AUTH GATE — always required ──
     const savedUser = getSavedUser();
     const savedToken = getSessionToken();
 
     if (savedUser && savedToken) {
-      // Session exists — apply user theme, then show PIN screen
       currentUser = savedUser;
-      applyThemeObj(getUserTheme(savedUser));
-      document.getElementById('splashScreen')?.classList.add('hide');
-      // Verify account still approved in Firebase
-      try {
-        const snap = await db?.ref(`${USERS_FB_KEY}/${savedUser}`).get();
-        if (!snap?.exists() || snap.val()?.status === 'denied') {
-          setSavedUser(null); setSessionToken(null); currentUser = null;
-          showLoginScreen(() => initPortal());
-          return;
-        }
-        const data = snap.val();
-        if (!getPAT() && data?.status !== 'approved') {
-          showPendingScreen(savedUser, () => initPortal());
-          return;
-        }
-      } catch(e) { /* firebase error — allow cached session */ }
+      try { applyThemeObj(getUserTheme(savedUser)); } catch(e) {}
+      hideSplash();
 
-      // Check if user has PIN set
-      try {
-        const psnap = await db?.ref(`${USERS_FB_KEY}/${savedUser}/pin`).get();
-        if (psnap?.exists()) {
-          showPinScreen(savedUser, false, () => initPortal());
-          return;
+      // Verify account still valid in Firebase
+      if (db) {
+        try {
+          const snap = await db.ref(`${USERS_FB_KEY}/${savedUser}`).get();
+          if (!snap.exists() || snap.val()?.status === 'denied') {
+            setSavedUser(null); setSessionToken(null); currentUser = null;
+            showLoginScreen(() => initPortal());
+            return;
+          }
+          const data = snap.val();
+          if (!getPAT() && data?.status !== 'approved') {
+            showPendingScreen(savedUser, () => initPortal());
+            return;
+          }
+          // Check PIN
+          if (data?.pin) {
+            showPinScreen(savedUser, false, () => initPortal());
+            return;
+          }
+        } catch(e) {
+          console.warn('Firebase session check failed, continuing:', e);
+          // Fall through — allow cached session if Firebase unavailable
         }
-      } catch(e) {}
-      // No PIN yet (admin fresh account) — go straight in
+      }
+
       finishLogin(savedUser, () => initPortal());
       return;
     }
 
-    // No session — show login
-    document.getElementById('splashScreen')?.classList.add('hide');
+    // No session — show login screen
+    hideSplash();
     showLoginScreen(() => initPortal());
   }
 
