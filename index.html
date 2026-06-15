@@ -3801,7 +3801,7 @@
       let startIdx = data.hourly.time.findIndex(t => new Date(t) >= nowIso);
       if (startIdx === -1) startIdx = 0;
       let hourlyHtml = '';
-      for (let i = startIdx; i < startIdx + 24 && i < data.hourly.time.length; i += 2) {
+      for (let i = startIdx; i < startIdx + 24 && i < data.hourly.time.length; i++) {
         const date = new Date(data.hourly.time[i]);
         const hourLabel = date.toLocaleTimeString('en-US', {hour: 'numeric'});
         const hEmoji = weatherCodes[data.hourly.weather_code[i]] || '☀️';
