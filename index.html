@@ -288,10 +288,10 @@
       min-height: 40px;
     }
     .view-toggle-btn {
-      min-width: 36px !important;
-      min-height: 36px !important;
-      width: 36px !important;
-      height: 36px !important;
+      min-width: unset !important;
+      min-height: 28px !important;
+      width: auto !important;
+      height: 28px !important;
     }
   }
 
@@ -529,27 +529,42 @@
     padding: 4px;
     box-shadow: var(--shadow-sm);
     flex-shrink: 0;
-    height: 44px;
+    height: 36px;
     box-sizing: border-box;
   }
   .view-toggle-btn {
     border: none;
     background: transparent;
     color: var(--text-3);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    height: 28px !important;
+    min-height: 28px !important;
+    min-width: unset !important;
+    width: auto !important;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
+    font-size: 0.82rem;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition);
     flex-shrink: 0;
-    padding: 0;
+    padding: 0 12px;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    line-height: 1;
   }
   .view-toggle-btn:hover { color: var(--accent); }
   .view-toggle-btn.active { background: var(--accent); color: #fff; }
+  .view-toggle-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--border-2);
+    opacity: 0.6;
+    flex-shrink: 0;
+    margin: 0 2px;
+    align-self: center;
+  }
   /* List view */
   .folders-grid.list-view {
     display: flex;
@@ -2660,10 +2675,10 @@
     html += `</div>
       <div class="breadcrumb-controls">
         <div class="view-toggle-group">
-          <button class="view-toggle-btn${viewMode==='grid'?' active':''}" id="gridViewBtn" title="Grid view">▦</button>
-          <button class="view-toggle-btn${viewMode==='list'?' active':''}" id="listViewBtn" title="List view">☰</button>
-          <div style="width:1px;height:18px;background:var(--border-2);margin:0 2px;opacity:0.5;flex-shrink:0;align-self:center;"></div>
-          <button class="view-toggle-btn" id="newFolderBtn" title="New Folder">+</button>
+          <button class="view-toggle-btn${viewMode==='grid'?' active':''}" id="gridViewBtn">Grid</button>
+          <button class="view-toggle-btn${viewMode==='list'?' active':''}" id="listViewBtn">List</button>
+          <div class="view-toggle-divider"></div>
+          <button class="view-toggle-btn" id="newFolderBtn">New Folder</button>
         </div>
       </div>
     </div>`;
