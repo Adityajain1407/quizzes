@@ -2452,13 +2452,13 @@
   function cleanName(filename) {
     return filename.replace(/\.html$/i, "").replace(/^\d+(__|\.|-|\s)+/, "").trim();
   }
-  async function loadFiles(bustCache = false, retries = 3) {
+  async function loadFiles(bustCache = false, retries = 5) {
     for (let attempt = 0; attempt < retries; attempt++) {
       try {
-        const url = API_URL + (bustCache ? `&_=${Date.now()}` : '');
+        const url = API_URL + `&_=${Date.now()}`; // always bust cache
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) {
-          if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 800 * (attempt + 1))); continue; }
+          if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); continue; }
           return null;
         }
         const data = await res.json();
@@ -2470,13 +2470,12 @@
           f.path !== "manifest.json" && f.path !== "service-worker.js" &&
           !f.path.toLowerCase().includes("quiz_master_prompt")
         );
-        // Also include .gitkeep files so newly-created empty folders appear in the tree
         const folderMarkers = allFiles.filter(f =>
           f.type === "blob" && f.path.endsWith(".gitkeep")
         );
-        return [...quizFiles, ...folderMarkers]; // may be empty array — that's valid
+        return [...quizFiles, ...folderMarkers];
       } catch(e) {
-        if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 800 * (attempt + 1))); continue; }
+        if (attempt < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (attempt + 1))); continue; }
         return null;
       }
     }
@@ -4740,6 +4739,41 @@
     }, { passive: true });
   }
 
+  function showLoadError(detail) {
+    let retryCount = 0;
+    const render = () => {
+      contentDiv.innerHTML = `
+        <div class="state-msg" style="padding: 40px 20px;">
+          <div class="icon">⚠️</div>
+          <div style="font-weight:700; font-size:1.1rem; margin-bottom:8px; color:var(--text);">Could not reach GitHub</div>
+          <div style="color:var(--text-3); font-size:0.88rem; margin-bottom:24px; max-width:320px; margin-left:auto; margin-right:auto; line-height:1.5;">
+            ${retryCount === 0
+              ? 'This is usually a temporary GitHub API hiccup. Hit Retry — it almost always works.'
+              : `Attempt ${retryCount} failed. GitHub may be rate-limiting. Try again in a moment.`}
+            ${detail ? `<br><small style="opacity:0.6">${detail}</small>` : ''}
+          </div>
+          <button id="retryLoadBtn" style="background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:40px;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 40%,transparent);">
+            🔄 Retry
+          </button>
+        </div>`;
+      document.getElementById('retryLoadBtn').onclick = async () => {
+        retryCount++;
+        contentDiv.innerHTML = `<div class="state-msg"><div class="icon" style="font-size:2rem;">⏳</div><div style="margin-top:8px;color:var(--text-3);">Retrying… (attempt ${retryCount})</div></div>`;
+        const files = await loadFiles();
+        if (files === null) { render(); return; }
+        rootTree = buildTree(files);
+        let restoredPath = [];
+        try { const s = sessionStorage.getItem('quiz_current_path'); if (s) restoredPath = JSON.parse(s); } catch(e) {}
+        currentPath = (Array.isArray(restoredPath) && getNodeFromPath(rootTree, restoredPath)) ? restoredPath : [];
+        renderNavigationView();
+        loadHistory();
+        attachRecentLogging();
+        initFMSyncListener();
+      };
+    };
+    render();
+  }
+
   async function init() {
     try {
       initTheme();
@@ -4748,7 +4782,7 @@
       
       const files = await loadFiles();
       if (files === null) {
-        contentDiv.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div>Could not load quizzes from GitHub.<br>Make sure the repository is public.</div>`;
+        showLoadError();
         document.getElementById('splashScreen')?.classList.add('hide');
         return;
       }
@@ -4765,7 +4799,7 @@
       initFMSyncListener();
     } catch(e) {
       console.error('Portal init error:', e);
-      contentDiv.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div>Something went wrong loading the portal.<br><small>${e.message}</small></div>`;
+      showLoadError(e.message);
     } finally {
       setTimeout(() => document.getElementById('splashScreen')?.classList.add('hide'), 300);
     }
