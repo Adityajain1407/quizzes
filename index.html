@@ -1935,22 +1935,34 @@
     text-overflow: ellipsis;
   }
   .saved-q-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-    gap: 8px;
-    margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-2) transparent;
+    -webkit-overflow-scrolling: touch;
   }
+  .saved-q-grid::-webkit-scrollbar { height: 4px; }
+  .saved-q-grid::-webkit-scrollbar-track { background: transparent; }
+  .saved-q-grid::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 4px; }
   .saved-q-chip {
     background: var(--surface-2);
     border: 1.5px solid var(--border-2);
-    border-radius: 12px;
-    padding: 12px 4px;
+    border-radius: 10px;
+    padding: 7px 0;
+    width: 40px;
+    min-width: 40px;
     text-align: center;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--accent);
     cursor: pointer;
     transition: background 0.15s, transform 0.1s, border-color 0.15s;
+    flex-shrink: 0;
   }
   .saved-q-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); transform: scale(1.06); }
   .saved-q-chip.active { background: var(--accent); color: #fff; border-color: var(--accent-dark); }
@@ -3181,7 +3193,7 @@
 
   function showSavedQuestionGrid(body, questions, quizName, allSaved) {
     let chips = questions.map((q, i) =>
-      `<div class="saved-q-chip" data-idx="${i}">Q${q.id}</div>`
+      `<div class="saved-q-chip" data-idx="${i}">${q.id}</div>`
     ).join('');
     body.innerHTML = `
       <div class="saved-hub-header">
@@ -4760,6 +4772,49 @@
   })();
 
   init();
+
+  // ----- Global keyboard navigation -----
+  document.addEventListener('keydown', (e) => {
+    // Skip if user is typing in an input/textarea
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+    const key = e.key;
+
+    // Saved popup navigation (left/right/up/down between chips, prev/next question)
+    const sqPrev = document.getElementById('sqPrev');
+    const sqNext = document.getElementById('sqNext');
+    if (sqPrev || sqNext) {
+      if (key === 'ArrowLeft' || key === 'ArrowUp') {
+        e.preventDefault();
+        if (sqPrev && !sqPrev.disabled) sqPrev.click();
+        return;
+      }
+      if (key === 'ArrowRight' || key === 'ArrowDown') {
+        e.preventDefault();
+        if (sqNext && !sqNext.disabled) sqNext.click();
+        return;
+      }
+    }
+
+    // Old saved detail view (savedNavPrev/Next — legacy, kept for safety)
+    const navPrev = document.getElementById('savedNavPrev');
+    const navNext = document.getElementById('savedNavNext');
+    if (navPrev || navNext) {
+      if (key === 'ArrowLeft' || key === 'ArrowUp') { e.preventDefault(); navPrev?.click(); return; }
+      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); navNext?.click(); return; }
+    }
+
+    // Main quiz navigation (nextAfterAnswerBtn, reviewPrev/Next)
+    const nextBtn = document.getElementById('nextAfterAnswerBtn');
+    const reviewNext = document.getElementById('reviewNext');
+    const reviewPrev = document.getElementById('reviewPrev');
+    if (nextBtn) {
+      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); nextBtn.click(); return; }
+    }
+    if (reviewNext || reviewPrev) {
+      if (key === 'ArrowRight' || key === 'ArrowDown') { e.preventDefault(); if (reviewNext && !reviewNext.disabled) reviewNext.click(); return; }
+      if (key === 'ArrowLeft' || key === 'ArrowUp') { e.preventDefault(); if (reviewPrev && !reviewPrev.disabled) reviewPrev.click(); return; }
+    }
+  });
 
   // ----- PWA: service worker registration -----
   if ('serviceWorker' in navigator) {
