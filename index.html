@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f97316" id="themeColorMeta">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<!-- Android / Chrome: standalone-capable hint (modern replacement for apple-only tag) -->
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS Safari: "Add to Home Screen" support — iOS only honors standalone, not true fullscreen -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Aditya's Portal">
@@ -2658,7 +2661,32 @@
   // (webapp mode — feels like a native app, no tab-juggling).
   function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches
+      || window.matchMedia('(display-mode: fullscreen)').matches
       || window.navigator.standalone === true; // iOS Safari "Add to Home Screen"
+  }
+
+  // ── True fullscreen across platforms ──
+  // manifest.json's display:"fullscreen" handles this automatically on Android
+  // when launched from the home screen icon. Windows/Mac/desktop PWA windows and
+  // some Android browsers need an explicit Fullscreen API call. The API requires
+  // a user gesture, so we request it on the first tap/click after launch when
+  // running standalone, and silently no-op everywhere else (regular browser tabs).
+  let _fullscreenRequested = false;
+  function requestAppFullscreen() {
+    if (_fullscreenRequested || !isStandaloneMode()) return;
+    if (document.fullscreenElement) { _fullscreenRequested = true; return; }
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) {
+      req.call(el).then(() => { _fullscreenRequested = true; }).catch(() => {});
+    }
+  }
+  if (isStandaloneMode()) {
+    // Try immediately (works on some desktop PWA shells without a gesture)
+    document.addEventListener('DOMContentLoaded', requestAppFullscreen, { once: true });
+    // Fallback: first user interaction definitely satisfies the gesture requirement
+    ['click', 'touchend', 'keydown'].forEach(ev =>
+      document.addEventListener(ev, requestAppFullscreen, { once: true, passive: true }));
   }
 
   // Central quiz-opening logic — branches on webapp (standalone) vs website (browser tab) mode.
