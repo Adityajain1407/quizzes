@@ -4688,7 +4688,10 @@
   function applyThemeObj(obj) {
     const { theme = 'default', dark = false } = obj || {};
     document.body.setAttribute('data-theme', theme);
-    document.body.classList.toggle('dark-theme', !!dark);
+    document.body.classList.toggle('dark', !!dark);
+    localStorage.setItem('quiz_theme', theme);
+    localStorage.setItem('quiz_dark', !!dark);
+    updateThemeColorMeta?.();
   }
 
   // ── Inactivity lock (timestamp-based, survives backgrounding/throttled timers) ──
@@ -5169,7 +5172,7 @@
   function onThemeChanged() {
     if (currentUser) {
       const theme = document.body.getAttribute('data-theme') || 'default';
-      const dark  = document.body.classList.contains('dark-theme');
+      const dark  = document.body.classList.contains('dark');
       saveUserTheme(currentUser, theme, dark);
       currentTheme = { theme, dark };
     }
