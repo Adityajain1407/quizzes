@@ -1790,13 +1790,15 @@
     justify-content: center;
     padding: 20px;
   }
-  /* Avoid stacked double-darkening when fm-modal opens on top of an already-open
-     choice/library/search overlay — only the outermost backdrop should dim */
+  /* When fm-modal opens on top of an already-open choice/library/search overlay,
+     the inner backdrop still needs to visually push back the level-1 panel
+     (dim + blur it) so there's clear depth separation — just lighter than a
+     fresh full-strength backdrop, to avoid the two layers compounding to near-black. */
   .choice-modal.active ~ .fm-modal-backdrop,
   .library-backdrop.open ~ .fm-modal-backdrop,
   .search-overlay.active ~ .fm-modal-backdrop {
-    background: transparent;
-    backdrop-filter: none;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(3px);
   }
   .fm-modal {
     background: var(--surface);
