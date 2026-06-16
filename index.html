@@ -4669,23 +4669,54 @@
     document.body.classList.toggle('dark-theme', !!dark);
   }
 
-  // ── Inactivity lock ──
+  // ── Inactivity lock (timestamp-based, survives backgrounding/throttled timers) ──
+  function touchLastActive() {
+    try { localStorage.setItem('portal_last_active', String(Date.now())); } catch(e) {}
+  }
+  function getLastActive() {
+    const v = localStorage.getItem('portal_last_active');
+    return v ? parseInt(v, 10) : 0;
+  }
   function resetInactivity() {
+    touchLastActive();
     clearTimeout(inactivityTimer);
     inactivityTimer = setTimeout(() => {
-      if (currentUser) showPinScreen(currentUser, true);
+      if (currentUser) lockNow();
     }, INACTIVITY_MS);
   }
+  function lockNow() {
+    if (!currentUser) return;
+    stopInactivityWatch();
+    showPinScreen(currentUser, true, () => initPortal());
+  }
   function startInactivityWatch() {
-    ['click','keydown','touchstart','mousemove'].forEach(ev =>
+    touchLastActive();
+    ['click','keydown','touchstart','mousemove','scroll'].forEach(ev =>
       document.addEventListener(ev, resetInactivity, { passive: true }));
     resetInactivity();
   }
   function stopInactivityWatch() {
     clearTimeout(inactivityTimer);
-    ['click','keydown','touchstart','mousemove'].forEach(ev =>
+    ['click','keydown','touchstart','mousemove','scroll'].forEach(ev =>
       document.removeEventListener(ev, resetInactivity));
   }
+  // Checks elapsed time since last activity whenever the tab/app becomes visible again
+  // (handles phone lock/unlock, app backgrounding — setTimeout is unreliable when backgrounded,
+  // so we always re-verify using the real wall-clock timestamp on resume)
+  function checkInactivityOnResume() {
+    if (!currentUser) return;
+    const elapsed = Date.now() - getLastActive();
+    if (elapsed >= INACTIVITY_MS) {
+      lockNow();
+    } else {
+      touchLastActive();
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkInactivityOnResume();
+  });
+  window.addEventListener('focus', checkInactivityOnResume);
+  window.addEventListener('pageshow', checkInactivityOnResume);
 
   // ── Auth overlay helpers ──
   function removeAuthOverlay() { document.getElementById('authOverlay')?.remove(); }
@@ -4779,14 +4810,16 @@
     if (data.pat) localStorage.setItem(PAT_KEY, data.pat);
     else localStorage.removeItem(PAT_KEY);
 
-    // Admin (has PAT in their account) → auto-approve if pending, skip PIN
+    // Admin (has PAT in their account) → auto-approve if pending
     if (getPAT()) {
       if (data.status !== 'approved') {
         await db.ref(`${USERS_FB_KEY}/${u}/status`).set('approved').catch(() => {});
         await db.ref(`${USERS_FB_KEY}/${u}/approvedAt`).set(Date.now()).catch(() => {});
         await db.ref(`${PENDING_FB_KEY}/${u}`).remove().catch(() => {});
       }
-      finishLogin(u, onSuccess);
+      // Admin still needs a PIN, same as standard accounts
+      if (data.pin) showPinScreen(u, false, onSuccess);
+      else showSetPinScreen(u, onSuccess);
       return;
     }
 
@@ -4796,7 +4829,7 @@
       return;
     }
 
-    // Approved non-admin: check PIN
+    // Approved: check PIN
     if (data.pin) {
       showPinScreen(u, false, onSuccess);
     } else {
@@ -5525,6 +5558,11 @@
 
     const hideSplash = () => document.getElementById('splashScreen')?.classList.add('hide');
 
+    // sessionStorage is cleared whenever the tab/app is FULLY closed (unlike localStorage).
+    // If this flag is missing, it's a true fresh launch → PIN is always required.
+    const isFreshLaunch = !sessionStorage.getItem('portal_app_session');
+    sessionStorage.setItem('portal_app_session', '1');
+
     const savedUser  = getSavedUser();
     const savedToken = getSessionToken();
 
@@ -5538,7 +5576,7 @@
           const snap = await db.ref(`${USERS_FB_KEY}/${savedUser}`).get();
           if (!snap.exists() || snap.val()?.status === 'denied') {
             setSavedUser(null); setSessionToken(null); currentUser = null;
-            localStorage.removeItem(PAT_KEY); // clear any stale PAT
+            localStorage.removeItem(PAT_KEY);
             showLoginScreen(() => initPortal());
             return;
           }
@@ -5548,13 +5586,23 @@
           if (data.pat) localStorage.setItem(PAT_KEY, data.pat);
           else localStorage.removeItem(PAT_KEY);
 
-          // Check approval (admins with PAT skip this)
+          // Approval check (admins with PAT auto-pass)
           if (!getPAT() && data.status !== 'approved') {
             showPendingScreen(savedUser, () => initPortal());
             return;
           }
-          // Show PIN if set (non-admins always; admins skip PIN)
-          if (data.pin && !getPAT()) {
+
+          // Admin has no PIN yet → must set one (same requirement as standard accounts)
+          if (!data.pin) {
+            showSetPinScreen(savedUser, () => initPortal());
+            return;
+          }
+
+          // PIN required on: fresh app launch (always) OR resuming after >5min inactivity.
+          // Within an active same-tab session under 5 min idle, skip straight in.
+          const elapsed = Date.now() - getLastActive();
+          const needsPin = isFreshLaunch || elapsed >= INACTIVITY_MS || !getLastActive();
+          if (needsPin) {
             showPinScreen(savedUser, false, () => initPortal());
             return;
           }
