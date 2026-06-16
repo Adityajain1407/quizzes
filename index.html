@@ -1119,9 +1119,31 @@
     box-shadow: var(--shadow-md);
     color: var(--accent);
   }
+  /* "Pressed" active state — currently selected theme or day/night mode */
+  .theme-swatch.active {
+    border-color: var(--accent);
+    border-width: 2px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.15), 0 0 0 3px var(--accent-bg);
+    transform: scale(0.97) translateY(1px);
+  }
+  .theme-swatch.active::after {
+    content: '✓';
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .theme-swatch { position: relative; }
   .daynight-row { display: flex; gap: 10px; }
   .daynight-row .theme-swatch { flex-direction: row; flex: 1; padding: 12px; font-size: 0.85rem; }
   .daynight-row .theme-swatch span:first-child { font-size: 1.2rem; }
+  .theme-panel-divider {
+    height: 1px;
+    background: var(--border-2);
+    margin: 14px 0;
+  }
   .settings-pill {
     display: inline-flex;
     align-items: center;
@@ -2510,9 +2532,6 @@
         <button class="settings-pill" id="themePillBtn" onclick="toggleSettingsPanel('themePanel', this)">
           <span>🎨</span><span>Themes</span><span class="chevron">▾</span>
         </button>
-        <button class="settings-pill" id="appearancePillBtn" onclick="toggleSettingsPanel('appearancePanel', this)">
-          <span>🌗</span><span>Appearance</span><span class="chevron">▾</span>
-        </button>
         <button class="settings-pill" id="installAppBtn" style="display:none;" onclick="triggerInstallApp()">
           <span>📲</span><span>Install App</span>
         </button>
@@ -2524,20 +2543,18 @@
         </button>
 
         <div class="collapsible" id="themePanel">
-          <div class="theme-swatch-grid">
-            <button class="theme-swatch" style="background:#fff7ed; border-color:#f97316; color:#c2410c;" onclick="setTheme('default')"><span>🟠</span><span>Default</span></button>
-            <button class="theme-swatch" style="background:#e0f2fe; border-color:#0284c7; color:#075985;" onclick="setTheme('ocean')"><span>🌊</span><span>Ocean</span></button>
-            <button class="theme-swatch" style="background:#dcfce7; border-color:#16a34a; color:#166534;" onclick="setTheme('forest')"><span>🌲</span><span>Forest</span></button>
-            <button class="theme-swatch" style="background:#ffe4e6; border-color:#e11d48; color:#9f1239;" onclick="setTheme('sunset')"><span>🌅</span><span>Sunset</span></button>
-            <button class="theme-swatch" style="background:#f3e8ff; border-color:#9333ea; color:#6b21a8;" onclick="setTheme('amethyst')"><span>🔮</span><span>Amethyst</span></button>
-            <button class="theme-swatch" style="background:#f4f4f5; border-color:#000000; color:#000000;" onclick="setTheme('monochrome')"><span>⬛</span><span>Monochrome</span></button>
-          </div>
-        </div>
-
-        <div class="collapsible" id="appearancePanel">
           <div class="daynight-row">
-            <button class="theme-swatch" onclick="setDarkMode(false)"><span>☀️</span><span>Day</span></button>
-            <button class="theme-swatch" onclick="setDarkMode(true)"><span>🌙</span><span>Night</span></button>
+            <button class="theme-swatch" id="daynightDay" onclick="setDarkMode(false)"><span>☀️</span><span>Day</span></button>
+            <button class="theme-swatch" id="daynightNight" onclick="setDarkMode(true)"><span>🌙</span><span>Night</span></button>
+          </div>
+          <div class="theme-panel-divider"></div>
+          <div class="theme-swatch-grid">
+            <button class="theme-swatch" data-theme-id="default" style="background:#fff7ed; border-color:#f97316; color:#c2410c;" onclick="setTheme('default')"><span>🟠</span><span>Default</span></button>
+            <button class="theme-swatch" data-theme-id="ocean" style="background:#e0f2fe; border-color:#0284c7; color:#075985;" onclick="setTheme('ocean')"><span>🌊</span><span>Ocean</span></button>
+            <button class="theme-swatch" data-theme-id="forest" style="background:#dcfce7; border-color:#16a34a; color:#166534;" onclick="setTheme('forest')"><span>🌲</span><span>Forest</span></button>
+            <button class="theme-swatch" data-theme-id="sunset" style="background:#ffe4e6; border-color:#e11d48; color:#9f1239;" onclick="setTheme('sunset')"><span>🌅</span><span>Sunset</span></button>
+            <button class="theme-swatch" data-theme-id="amethyst" style="background:#f3e8ff; border-color:#9333ea; color:#6b21a8;" onclick="setTheme('amethyst')"><span>🔮</span><span>Amethyst</span></button>
+            <button class="theme-swatch" data-theme-id="monochrome" style="background:#f4f4f5; border-color:#000000; color:#000000;" onclick="setTheme('monochrome')"><span>⬛</span><span>Monochrome</span></button>
           </div>
         </div>
       </div>
@@ -3926,21 +3943,30 @@
     document.body.setAttribute('data-theme', theme);
     localStorage.setItem('quiz_theme', theme);
     showToast(`Theme changed: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
-    document.getElementById('themePanel')?.classList.remove('open');
-    document.getElementById('themePillBtn')?.classList.remove('open');
     updateThemeColorMeta();
     onThemeChanged();
+    updateThemeActiveStates();
   }
 
   function setDarkMode(isDark) {
     if (isDark) document.body.classList.add('dark');
     else document.body.classList.remove('dark');
     localStorage.setItem('quiz_dark', isDark);
-    document.getElementById('appearancePanel')?.classList.remove('open');
-    document.getElementById('appearancePillBtn')?.classList.remove('open');
     updateThemeColorMeta();
     onThemeChanged();
+    updateThemeActiveStates();
 }
+
+  // Reflects current theme + day/night as a "pressed" active state on the swatches
+  function updateThemeActiveStates() {
+    const currentTheme = document.body.getAttribute('data-theme') || 'default';
+    const isDark = document.body.classList.contains('dark');
+    document.querySelectorAll('.theme-swatch[data-theme-id]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.themeId === currentTheme);
+    });
+    document.getElementById('daynightDay')?.classList.toggle('active', !isDark);
+    document.getElementById('daynightNight')?.classList.toggle('active', isDark);
+  }
 
   function initTheme() {
     // Load user-specific theme if logged in, else device theme
@@ -3957,6 +3983,7 @@
     document.body.setAttribute('data-theme', theme);
     document.body.classList.toggle('dark', dark);
     updateThemeColorMeta?.();
+    updateThemeActiveStates?.();
   }
 
   // ----- INTERACTIVE WEATHER (Open-Meteo High Res) -----
@@ -4852,6 +4879,7 @@
     localStorage.setItem('quiz_theme', theme);
     localStorage.setItem('quiz_dark', !!dark);
     updateThemeColorMeta?.();
+    updateThemeActiveStates?.();
   }
 
   // ── Inactivity lock (timestamp-based, survives backgrounding/throttled timers) ──
