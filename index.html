@@ -4755,9 +4755,7 @@
         // Cascade Firebase logs
         if (db && (filePath.endsWith('.html') || filePath.endsWith('.md'))) {
           const safe = cleanName(filePath.split('/').pop()).toLowerCase().replace(/[^a-z0-9]+/g,'_');
-          try { await db.ref(`quiz_saved_state_${safe}`).remove(); } catch(e) {}
-          try { await db.ref(`quiz_leaderboard_${safe}`).remove(); } catch(e) {}
-          try { await db.ref(`quiz_saved_questions_${getUserPrefix()}${safe}`).remove(); } catch(e) {}
+          await cascadeDeleteQuizFirebaseData(safe);
         }
       }
 
@@ -4948,6 +4946,25 @@
   function cleanUsername(u) { return (u||'').trim().toLowerCase().replace(/[^a-z0-9_]/g,''); }
   function getUserPrefix() { return currentUser ? `u_${currentUser}__` : 'u_guest__'; }
   function isAdmin() { return !!getPAT(); }
+
+  // Removes a quiz's saved state, leaderboard, and saved questions from Firebase
+  // for EVERY user who has ever attempted it (plus any pre-multi-user legacy
+  // entries) — not just the currently logged-in admin's own copy. Used whenever
+  // a quiz is deleted or its logs are manually reset, since the quiz no longer
+  // exists (or should be reset) for everyone, not just the person clicking the button.
+  async function cascadeDeleteQuizFirebaseData(safe) {
+    if (!db) return;
+    try {
+      const snap = await db.ref('/').get();
+      if (!snap.exists()) return;
+      const data = snap.val();
+      const prefixes = ['quiz_saved_state_', 'quiz_leaderboard_', 'quiz_saved_questions_'];
+      const toDelete = Object.keys(data).filter(k => prefixes.some(p =>
+        k === `${p}${safe}` || (k.startsWith(p) && k.endsWith(`__${safe}`))
+      ));
+      for (const k of toDelete) { try { await db.ref(k).remove(); } catch(e) {} }
+    } catch(e) {}
+  }
 
   function getSavedUser()   { return localStorage.getItem('portal_current_user') || null; }
   function setSavedUser(u)  { u ? localStorage.setItem('portal_current_user', u) : localStorage.removeItem('portal_current_user'); }
@@ -5781,9 +5798,7 @@
           if (!db) return;
           const safe = cleanName(name).toLowerCase().replace(/[^a-z0-9]+/g, '_');
           try {
-            await db.ref(`quiz_saved_state_${safe}`).remove();
-            await db.ref(`quiz_leaderboard_${safe}`).remove();
-            await db.ref(`quiz_saved_questions_${getUserPrefix()}${safe}`).remove();
+            await cascadeDeleteQuizFirebaseData(safe);
             showToast('✅ Quiz logs reset');
           } catch(e) { showToast('❌ Error: ' + e.message); }
         }},
