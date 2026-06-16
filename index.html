@@ -2255,20 +2255,44 @@
     border: 1px solid var(--border-2);
     border-radius: var(--radius-card);
     box-shadow: 0 8px 40px rgba(0,0,0,0.25);
-    padding: 36px 32px 28px;
+    padding: clamp(16px, 4vh, 36px) clamp(16px, 4vw, 32px) clamp(12px, 3vh, 28px);
     width: 100%; max-width: 380px;
-    position: relative; overflow: hidden;
+    max-height: 94vh; max-height: 94dvh;
+    overflow-y: auto;
+    position: relative;
     animation: cardFloat 0.4s cubic-bezier(.2,.9,.4,1.1);
     color: var(--text);
+    box-sizing: border-box;
   }
+  .auth-card::-webkit-scrollbar { width: 0; height: 0; }
   .auth-card::before {
     content: '';
     position: absolute; top: 0; left: 0; width: 100%; height: 5px;
     background: linear-gradient(90deg, var(--accent), var(--accent-dark));
   }
-  .auth-logo { text-align: center; font-size: 2.8rem; margin-bottom: 6px; }
-  .auth-title { text-align: center; font-size: 1.5rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-  .auth-sub { text-align: center; font-size: 0.82rem; color: var(--text-3); margin-bottom: 24px; }
+  .auth-logo { text-align: center; font-size: clamp(1.8rem, 6vh, 2.8rem); margin-bottom: clamp(2px, 1vh, 6px); }
+  .auth-title { text-align: center; font-size: clamp(1.1rem, 3.5vh, 1.5rem); font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .auth-sub { text-align: center; font-size: 0.82rem; color: var(--text-3); margin-bottom: clamp(10px, 3vh, 24px); }
+  .pin-dots {
+    display: flex; justify-content: center;
+    gap: clamp(8px, 2vh, 12px);
+    margin: clamp(10px, 3vh, 20px) 0 clamp(12px, 3vh, 24px);
+  }
+  .pin-dot {
+    width: clamp(12px, 3vh, 18px); height: clamp(12px, 3vh, 18px);
+    border-radius: 50%; border: 2px solid var(--border-2);
+    background: var(--surface-2); transition: all 0.15s;
+  }
+  .pin-pad {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: clamp(6px, 1.5vh, 10px);
+    max-width: 220px; margin: 0 auto clamp(8px, 2vh, 16px);
+  }
+  .pin-pad button {
+    width: 100%; aspect-ratio: 1;
+    font-size: clamp(1rem, 3vh, 1.4rem);
+    min-height: 0 !important;
+  }
   .auth-tabs {
     display: flex; border-radius: 40px; background: var(--surface-2);
     border: 1px solid var(--border-2); padding: 3px; margin-bottom: 22px; gap: 2px;
@@ -4948,10 +4972,10 @@
   function showSetPinScreen(u, onSuccess) {
     const html = authCard('Set Your PIN', 'Create a 4-digit PIN for quick login',
       `<div style="text-align:center;">
-        <div class="pin-dots" id="pinDots" style="display:flex;justify-content:center;gap:12px;margin:20px 0 24px;">
-          ${[0,1,2,3].map(i=>`<div class="pin-dot" data-i="${i}" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-2);background:var(--surface-2);transition:all 0.15s;"></div>`).join('')}
+        <div class="pin-dots" id="pinDots">
+          ${[0,1,2,3].map(i=>`<div class="pin-dot" data-i="${i}"></div>`).join('')}
         </div>
-        <div class="pin-pad" id="pinPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:220px;margin:0 auto 16px;"></div>
+        <div class="pin-pad" id="pinPad"></div>
         <div class="auth-error" id="pinErr" style="min-height:18px;"></div>
         <div class="auth-note" style="margin-top:8px;">This PIN will be used for quick access instead of your full password.</div>
       </div>`);
@@ -4991,10 +5015,10 @@
     const sub = isLock ? 'Session locked due to inactivity' : 'Enter your 4-digit PIN';
     const html = authCard(`Welcome back, ${u}`, sub,
       `<div style="text-align:center;">
-        <div class="pin-dots" id="pinDots" style="display:flex;justify-content:center;gap:12px;margin:20px 0 24px;">
-          ${[0,1,2,3].map(i=>`<div class="pin-dot" data-i="${i}" style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-2);background:var(--surface-2);transition:all 0.15s;"></div>`).join('')}
+        <div class="pin-dots" id="pinDots">
+          ${[0,1,2,3].map(i=>`<div class="pin-dot" data-i="${i}"></div>`).join('')}
         </div>
-        <div class="pin-pad" id="pinPad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:220px;margin:0 auto 16px;"></div>
+        <div class="pin-pad" id="pinPad"></div>
         <div class="auth-error" id="pinErr" style="min-height:18px;"></div>
         <button id="pinForgot" style="background:transparent;border:none;color:var(--text-3);font-size:0.8rem;cursor:pointer;margin-top:8px;">Use password instead</button>
       </div>`);
@@ -5030,7 +5054,7 @@
     const pad = el.querySelector('#pinPad');
     if (!pad) return;
     pad.innerHTML = '';
-    const btnStyle = 'width:100%;aspect-ratio:1;border:1.5px solid var(--border-2);background:var(--surface-2);border-radius:14px;font-size:1.4rem;font-weight:700;color:var(--text);cursor:pointer;transition:all 0.1s;';
+    const btnStyle = 'border:1.5px solid var(--border-2);background:var(--surface-2);border-radius:14px;font-weight:700;color:var(--text);cursor:pointer;transition:all 0.1s;';
     [1,2,3,4,5,6,7,8,9,'',0,'del'].forEach(k => {
       const b = document.createElement('button');
       b.style.cssText = btnStyle;
