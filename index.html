@@ -2073,6 +2073,23 @@
     color: var(--correct-text);
     font-weight: 700;
   }
+  .saved-q-detail .option.incorrect-highlight {
+    background: var(--wrong-bg);
+    border-color: var(--wrong-border);
+    color: var(--wrong-text);
+  }
+  .option-block { margin-bottom: 4px; }
+  .option-explanation {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    padding: 6px 12px 2px;
+    color: var(--text-2);
+  }
+  .option-explanation.exp-is-correct { color: var(--exp-correct-text); }
+  .option-explanation.exp-is-incorrect { color: var(--exp-incorrect-text); }
+  @media (min-width: 900px) {
+    .option-explanation { font-size: 0.9rem; padding: 8px 16px 2px; }
+  }
   .saved-q-detail .explanation-box {
     background: var(--exp-bg);
     border-left: 5px solid var(--exp-border);
@@ -3500,18 +3517,41 @@
     }
   }
 
+  // Parses "(a) Correct - text" / "(b) Incorrect - text" lines into a map: {a: {correct, text}, b: {...}, ...}
+  function parseExplanationByOption(expText) {
+    const lines = (expText || '').split(/\r?\n/);
+    const map = {};
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      const match = line.match(/^\(([a-d])\)\s*(Correct|Incorrect)\s*[-–—]+\s*(.*)$/i);
+      if (match) {
+        map[match[1].toLowerCase()] = { correct: match[2].toLowerCase() === 'correct', text: match[3] };
+      }
+    }
+    return map;
+  }
+
   function showSavedQuestionDetail(detail, questions, idx, body, allSaved) {
     const q = questions[idx];
+    const expMap = parseExplanationByOption(q.exp);
     let optsHtml = q.opts.map(opt => {
-      const letter = opt.charAt(0);
-      const cls = letter === q.ans ? 'correct-highlight' : '';
-      return `<div class="option ${cls}">${escapeHtml(opt)}</div>`;
+      const letter = opt.charAt(0).toLowerCase();
+      const isCorrect = opt.charAt(0) === q.ans;
+      const info = expMap[letter];
+      const optCls = isCorrect ? 'correct-highlight' : (info ? 'incorrect-highlight' : '');
+      const expHtml = info
+        ? `<div class="option-explanation ${info.correct ? 'exp-is-correct' : 'exp-is-incorrect'}">${escapeHtml(info.text)}</div>`
+        : '';
+      return `<div class="option-block">
+        <div class="option ${optCls}">${escapeHtml(opt)}</div>
+        ${expHtml}
+      </div>`;
     }).join('');
     detail.innerHTML = `
       <div class="saved-q-detail">
         <div class="question-text">${escapeHtml(q.text)}</div>
         <div class="options-list">${optsHtml}</div>
-        <div class="explanation-box">${formatExplanationRich(q.exp)}</div>
         <div class="saved-q-nav">
           <button class="saved-q-nav-btn" id="sqPrev" ${idx===0?'disabled':''}>← Prev</button>
           <span class="saved-q-counter">${idx+1} / ${questions.length}</span>
