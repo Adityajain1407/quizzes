@@ -1707,12 +1707,27 @@
     }
     function exitToFolder() {
         quizInProgress = false;
-        // Build the portal's root URL (works reliably in PWA/standalone mode, unlike history.back())
-        const pathParts = window.location.pathname.split('/').filter(Boolean);
-        // pathParts[0] is the repo name (e.g. "quizzes"); portal root is just that
-        const repoName = pathParts[0] || '';
-        const portalUrl = window.location.origin + '/' + repoName + '/';
-        window.location.href = portalUrl;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+        if (isStandalone) {
+            // Webapp mode: quiz replaced the portal in the same tab/window —
+            // navigate back to the portal root, which restores the exact folder
+            // via sessionStorage (set by the portal before opening this quiz).
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            const repoName = pathParts[0] || '';
+            const portalUrl = window.location.origin + '/' + repoName + '/';
+            window.location.href = portalUrl;
+        } else {
+            // Website mode: quiz opened in a new tab — just close this tab.
+            // Focus returns to the original portal tab automatically.
+            window.close();
+            // Fallback if the browser blocks the close (e.g. tab wasn't opened by script)
+            setTimeout(() => {
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const repoName = pathParts[0] || '';
+                window.location.href = window.location.origin + '/' + repoName + '/';
+            }, 300);
+        }
     }
 
     // --- Finish & Stats ---

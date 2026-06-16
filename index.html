@@ -2644,6 +2644,29 @@
   } catch(e) { console.warn("Firebase init failed:", e); }
 
   // ----- CORE QUIZ FETCH & NAVIGATION (unchanged) -----
+  // Detects whether the portal is running as an installed PWA/webapp (standalone)
+  // vs a regular browser tab. Used to decide whether quizzes open in a new tab
+  // (website mode — supports back/forward, multiple tabs) or navigate in-place
+  // (webapp mode — feels like a native app, no tab-juggling).
+  function isStandaloneMode() {
+    return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true; // iOS Safari "Add to Home Screen"
+  }
+
+  // Central quiz-opening logic — branches on webapp (standalone) vs website (browser tab) mode.
+  // Webapp: navigate in-place (same tab) for a seamless native-app feel; returning
+  //   from the quiz lands back on this exact folder via sessionStorage restore.
+  // Website: open in a new tab so the user keeps their place in the original tab,
+  //   with back/forward and multi-tab browsing working normally.
+  function openQuizLink(url) {
+    try { sessionStorage.setItem('quiz_current_path', JSON.stringify(currentPath)); } catch(e) {}
+    if (isStandaloneMode()) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
   const GITHUB_USER = "adityajain1407";
   const GITHUB_REPO = "quizzes";
   const GITHUB_BRANCH = "main";
@@ -2931,7 +2954,7 @@
         const starClass = isFavourited(f.path) ? 'starred' : '';
         const starIcon = isFavourited(f.path) ? '⭐' : '☆';
         if (viewMode === 'grid') {
-          html += `<a class="quiz-item quiz-link" href="${url}" target="_blank" data-path="${escapeHtml(f.path)}" data-type="quiz">
+          html += `<a class="quiz-item quiz-link" href="${url}" data-path="${escapeHtml(f.path)}" data-type="quiz">
             <div class="item-checkbox" data-path="${escapeHtml(f.path)}"></div>
             <div class="quiz-number">${num}</div>
             <div class="quiz-info"><span class="quiz-name">${escapeHtml(name)}</span></div>
@@ -2939,7 +2962,7 @@
           </a>`;
         } else {
           html += `<div class="quiz-row" data-path="${escapeHtml(f.path)}">
-            <a class="quiz-item quiz-link" href="${url}" target="_blank" data-path="${escapeHtml(f.path)}" data-type="quiz">
+            <a class="quiz-item quiz-link" href="${url}" data-path="${escapeHtml(f.path)}" data-type="quiz">
               <span class="quiz-number">${num}</span>
               <div class="quiz-info"><span class="quiz-name">${escapeHtml(name)}</span></div>
             </a>
@@ -2978,7 +3001,9 @@
     // Quiz link: prevent navigation if star/checkbox clicked or in selection mode
     document.querySelectorAll(".quiz-item.quiz-link").forEach(link => link.addEventListener("click", (e) => {
       if (e.target.closest('.item-star-btn') || e.target.closest('.item-checkbox')) { e.preventDefault(); return; }
-      if (selectionActive) { e.preventDefault(); toggleItemSelect(link.dataset.path); }
+      if (selectionActive) { e.preventDefault(); toggleItemSelect(link.dataset.path); return; }
+      e.preventDefault();
+      openQuizLink(link.href);
     }));
 
     // Checkboxes — only active in selection mode (folders + grid quiz)
@@ -3003,7 +3028,9 @@
     // Quiz links in selection mode: clicking the <a> selects instead of navigates
     document.querySelectorAll(".quiz-row .quiz-link").forEach(link => link.addEventListener("click", (e) => {
       if (e.target.closest('.item-star-btn')) { e.preventDefault(); return; }
-      if (selectionActive) { e.preventDefault(); toggleItemSelect(link.dataset.path); }
+      if (selectionActive) { e.preventDefault(); toggleItemSelect(link.dataset.path); return; }
+      e.preventDefault();
+      openQuizLink(link.href);
     }));
 
     // Long-press to enter selection mode (touch) — does NOT open item
@@ -3217,7 +3244,7 @@
     });
     document.querySelectorAll(".search-result-item[data-type='quiz']").forEach(el => {
       el.addEventListener("click", () => {
-        window.open(el.dataset.url, "_blank");
+        openQuizLink(el.dataset.url);
         closeOverlayFunc();
         showToast("Opening quiz...");
       });
@@ -3384,8 +3411,7 @@
     body.querySelectorAll('.lib-fav-quiz').forEach(el => el.addEventListener('click', (e) => {
       if (e.target.closest('.lib-unstar')) return;
       logRecent(el.dataset.path);
-      if (isStandalone) location.href = el.dataset.url;
-      else window.open(el.dataset.url, '_blank');
+      openQuizLink(el.dataset.url);
     }));
     body.querySelectorAll('.lib-unstar').forEach(btn => btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -3420,8 +3446,7 @@
     body.querySelectorAll('.lib-recent-item').forEach(el => el.addEventListener('click', (e) => {
       if (e.target.closest('.lib-recent-remove')) return;
       logRecent(el.dataset.path);
-      if (isStandalone) location.href = el.dataset.url;
-      else window.open(el.dataset.url, '_blank');
+      openQuizLink(el.dataset.url);
     }));
     body.querySelectorAll('.lib-recent-remove').forEach(btn => btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -6211,12 +6236,10 @@
   // ----- PWA: install prompt capture -----
   let deferredInstallPrompt = null;
   const installBtn = document.getElementById('installAppBtn');
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true; // iOS Safari
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredInstallPrompt = e;
-    if (!isStandalone && installBtn) installBtn.style.display = 'inline-flex';
+    if (!isStandaloneMode() && installBtn) installBtn.style.display = 'inline-flex';
   });
   window.addEventListener('appinstalled', () => {
     if (installBtn) installBtn.style.display = 'none';
@@ -6231,16 +6254,6 @@
     if (installBtn) installBtn.style.display = 'none';
   }
 
-  // ----- PWA: when running as an installed app, open quizzes in-app (same window) -----
-  if (isStandalone) {
-    document.addEventListener('click', (e) => {
-      const link = e.target.closest('.quiz-link');
-      if (link) {
-        e.preventDefault();
-        location.href = link.getAttribute('href');
-      }
-    });
-  }
 </script>
 </body>
 </html>
