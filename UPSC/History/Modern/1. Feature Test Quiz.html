@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Feature Test Quiz</title>
-    <!-- Firebase scripts below -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <style>
@@ -224,19 +223,19 @@
             padding: 0;
             transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s;
         }
-        html { font-size: 16px; }
-        html, body {
-            overflow-x: hidden;
-            max-width: 100%;
-            /* Stops the browser's own pull-to-refresh/overscroll glow and
-               rubber-band bounce at the page edges, for a more native-app feel. */
-            overscroll-behavior-y: contain;
+        html { 
+            font-size: 16px; 
+            scroll-behavior: smooth;
         }
         body {
+            overflow-x: hidden;
+            max-width: 100%;
             background: var(--bg);
             font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             padding: 20px;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         img, svg, video, iframe { max-width: 100%; }
         .question-text, .option, .explanation-box, .exp-text,
@@ -259,12 +258,16 @@
         }
         .quiz-container {
             max-width: 1100px;
+            width: 100%;
             margin: 0 auto;
             background: var(--surface);
             color: var(--text);
             border-radius: var(--radius-card);
             box-shadow: var(--shadow-lg);
             overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         body.dark-theme .dark-mode-btn {
@@ -341,7 +344,7 @@
         }
         .action-btn:hover { background: #ff8c42; transform: scale(0.97); }
         
-        .question-panel { padding: 2rem 2rem 1.8rem; }
+        .question-panel { padding: 2rem 2rem 1.8rem; flex: 1; }
         .question-text {
             font-size: 1.6rem;
             font-weight: 600;
@@ -826,122 +829,18 @@
         .close-quiz-fab:active { transform: scale(0.94); }
         @media (max-width: 650px) {
             .close-quiz-fab { width: 32px; height: 32px; font-size: 0.9rem; top: max(72px, calc(env(safe-area-inset-top) + 56px)); right: 10px; }
-        }
-        button { background: var(--accent-dark); border: none; padding: 10px 20px; margin: 6px; border-radius: 40px; color: white; cursor: pointer; font-weight: bold; }
-        
-        /* .saved-question-view: kept for portal reuse. Renders a saved question exactly as it appears
-           mid-quiz (correct option highlighted green, full colour-coded explanation). The portal's
-           "Saved" section reuses these classes/colours to display saved questions consistently. */
-        .saved-question-view {
-            background: white;
-            color: black;
-            padding: 30px;
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        body.dark-theme .saved-question-view { background: #1a1f2c; color: #eef4ff; }
-        .saved-question-view .question-block { margin-bottom: 30px; border-bottom: 2px solid #ffb347; padding-bottom: 20px; }
-        .saved-question-view .question-text { font-size: 1.3rem; font-weight: 600; margin-bottom: 1rem; border-left: 5px solid #ffb347; padding-left: 1rem; }
-        .saved-question-view .options-list { display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0; }
-        .saved-question-view .option { background: #f8fafd; border: 1.5px solid #cbdde9; border-radius: 1rem; padding: 0.7rem 1rem; font-size: 1rem; font-weight: 500; }
-        .saved-question-view .option.correct-highlight { background: #d3f0d9; border-color: #2b7e3a; color: #145c23; font-weight: bold; }
-        .saved-question-view .option.wrong-highlight { background: #ffe0e0; border-color: #c7362b; text-decoration: line-through; color: #a51b0f; }
-        .saved-question-view .explanation-box { background: #fef7e0; border-left: 6px solid #ffb347; border-radius: 1rem; padding: 1rem; margin: 1rem 0; font-size: 0.95rem; }
-        body.dark-theme .saved-question-view .option { background: #262d3d; border-color: #3f4a60; color: #e2e9ff; }
-        body.dark-theme .saved-question-view .option.correct-highlight { background: #1e5631; border-color: #5fad6e; color: #e2ffea; }
-        body.dark-theme .saved-question-view .option.wrong-highlight { background: #792e26; border-color: #cc6b5e; color: #ffe0dc; }
-        body.dark-theme .saved-question-view .explanation-box { background: #2b2f3e; border-left-color: #ffae42; color: #f0f3fc; }
-        .saved-question-view .exp-correct { color: #1f6e2f; font-weight: bold; background: #e0f3e3; padding: 0.2rem 0.6rem; border-radius: 24px; display: inline-block; font-size: 0.9rem; }
-        .saved-question-view .exp-incorrect { color: #bc3f2e; font-weight: bold; background: #ffe1dc; padding: 0.2rem 0.6rem; border-radius: 24px; display: inline-block; font-size: 0.9rem; }
-        .saved-question-view .exp-text { color: #2c3e4e; font-weight: 600; }
-        body.dark-theme .saved-question-view .exp-text { color: #e0e6f5; }
-        .saved-question-view .explanation-line { margin-bottom: 0.8rem; }
-        
-        /* Instructions modal */
-        .instructions-modal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1100;
-            animation: fadeIn 0.3s ease;
-        }
-        .instructions-card {
-            background: var(--surface);
-            color: var(--text);
-            max-width: 500px;
-            width: 90%;
-            max-height: 85vh;
-            border-radius: var(--radius-card);
-            padding: 1.5rem;
-            position: relative;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-        }
-        .instructions-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.2rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--accent);
-        }
-        .instructions-header h3 { font-size: 1.6rem; margin: 0; }
-        .close-instructions { background: none; border: none; font-size: 1.8rem; cursor: pointer; color: var(--accent); padding: 0; margin: 0; line-height: 1; }
-        .close-instructions:hover { transform: scale(1.1); }
-        .instructions-list { list-style: none; padding: 0; margin: 0; }
-        .instructions-list li { margin-bottom: 1rem; padding-left: 1.8rem; position: relative; line-height: 1.4; }
-        .instructions-list li:before { content: "✨"; position: absolute; left: 0; color: var(--bullet-color); }
-        .instructions-list strong { color: var(--strong-color); }
-        
-        /* Leaderboard */
-        .leaderboard-section {
-            margin-top: 2rem;
-            text-align: left;
-            border-top: 2px solid var(--accent);
-            padding-top: 1rem;
-        }
-        .leaderboard-section h3 {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            font-weight: 600;
-        }
-        .leaderboard-table-container { max-height: 400px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border-2); }
-        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-family: inherit; color: var(--text); }
-        .leaderboard-table th, .leaderboard-table td { padding: 12px 16px; text-align: center; border: 1px solid var(--border-2); }
-        .leaderboard-table th { background: var(--accent-dark); color: white; font-weight: 700; position: sticky; top: 0; z-index: 10; }
-        .leaderboard-table tbody tr { background-color: var(--surface); }
-        .leaderboard-table tbody tr:nth-child(even) { background-color: var(--surface-2); }
-        .leaderboard-table tbody tr:hover { background-color: var(--surface-3); transition: 0.1s; }
-        .reset-logs-btn { background: #dc2626; border: none; color: white; padding: 8px 18px; border-radius: 60px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .reset-logs-btn:hover { background: #b91c1c; transform: translateY(-1px); }
-        body.dark-theme .reset-logs-btn { background: #e11d48; }
-        body.dark-theme .reset-logs-btn:hover { background: #be123c; }
-        .leaderboard-empty { text-align: center; padding: 2rem; font-style: italic; color: var(--text-3); }
-        
-        @media (max-width: 650px) {
-            /* Keep stats + timer on one row (not stacked) — compact "✅ 1"
-               style labels free up enough width for the timer to sit inline
-               on the same line instead of wrapping to its own row. */
-            .stats-bar { flex-wrap: nowrap; gap: 8px; padding: 0.7rem 0.9rem; }
+            
+            /* Allow wrapping so elements stack gracefully instead of overlapping */
+            .stats-bar { flex-wrap: wrap; gap: 10px; padding: 0.7rem 0.9rem; justify-content: center; }
             .stats-group { gap: 0.6rem; padding: 0.35rem 0.7rem; flex-shrink: 1; min-width: 0; }
             .stat { font-size: 0.85rem; white-space: nowrap; }
             .timer { flex-shrink: 0; font-size: 1.1rem; padding: 0.35rem 0.7rem; }
             .label-full { display: none; }
-            /* Action row: Questions/Dark/Font become icon-only; Skip/Finish
-               keep their text since they're the two most-used actions. */
-            .action-buttons { justify-content: center; flex-wrap: nowrap; gap: 6px; overflow-x: auto; }
+            
+            /* Remove nowrap and overflow-x to eliminate the scrollbar */
+            .action-buttons { justify-content: center; flex-wrap: wrap; gap: 6px; width: 100%; }
             .action-btn { font-size: 0.85rem; padding: 6px 10px; white-space: nowrap; }
+            
             .font-slider-panel { justify-content: center; }
             .option { font-size: 1rem; }
             .explanation-box { font-size: 0.95rem; }
@@ -1047,11 +946,10 @@
             ans: "C",
             exp: "(a) Incorrect -- Leonardo da Vinci is famous for works such as the Mona Lisa, but he did not paint the Sistine Chapel ceiling.\n(b) Incorrect -- Raphael was a contemporary of Michelangelo known for works like The School of Athens, not the ceiling itself.\n(c) Correct -- Michelangelo painted the Sistine Chapel ceiling between 1508 and 1512, one of the most celebrated works of Renaissance art.\n(d) Incorrect -- Donatello was a renowned sculptor of an earlier generation, not the painter of the Sistine Chapel ceiling."
         }
-        // === REPLACE the two sample questions above with the full set of generated questions ===
     ];
 
-    const topicName = "Feature Test Quiz"; // MUST be set to exactly the Topic string the user provided in their "Title:" line — same words, same UPPER/lower casing, same spacing, verbatim. This is what keys the Saved-Questions/leaderboard/resume-state Firebase paths, so an exact match (including case) is required to avoid creating duplicate/conflicting entries in Firebase.
-
+    const topicName = "Feature Test Quiz"; 
+    
     // --------------------------------------------------------------
     // DO NOT EDIT ANYTHING BELOW THIS LINE
     // --------------------------------------------------------------
@@ -1084,12 +982,9 @@
         }
     } catch(e) { console.warn('Firebase unavailable, continuing without sync.', e); }
 
-    // Derive this quiz's GitHub path from the URL (e.g. "History/4__Gupta_Empire.html")
     const quizGHPath = decodeURIComponent(window.location.pathname.split('/').slice(2).join('/'));
     const FM_SYNC_KEY = 'quiz_portal_file_changed';
 
-    // Watch for rename/move/delete events broadcast by the portal on another device
-    // Track if user is currently actively interacting (answered/skipped/navigated)
     let quizHadRecentInteraction = false;
     function markInteraction() { quizHadRecentInteraction = true; }
 
@@ -1107,18 +1002,14 @@
 
             const { type, itemType, oldPath, newPath, displayName } = data;
             const myPath = quizGHPath;
-            // Quiz is affected if it IS the item, or if a parent folder was affected
             const affected = itemType === 'quiz'
                 ? myPath === oldPath
                 : myPath.startsWith(oldPath + '/');
             if (!affected) return;
 
-            // Only show popup if the user has recently interacted (answer/skip triggered this)
-            // Otherwise the refresh already happened silently
             if (!quizHadRecentInteraction) return;
             quizHadRecentInteraction = false;
 
-            // Detect moved+renamed
             const oldParent = oldPath.substring(0, oldPath.lastIndexOf('/'));
             const newParent = (newPath||'').substring(0, (newPath||'').lastIndexOf('/'));
             const oldBasename = oldPath.split('/').pop();
@@ -1127,7 +1018,6 @@
             const wasRenamed = oldBasename !== newBasename;
 
             if (type === 'delete') {
-                // Cascade delete Firebase logs before exiting
                 showQuizChangePopup(
                     '🗑️ This quiz was deleted',
                     `"${displayName || topicName}" has been deleted. All your progress for this quiz has been removed.`,
@@ -1142,7 +1032,6 @@
                     }
                 );
             } else {
-                // rename, move, or both
                 let title, message;
                 if (wasMoved && wasRenamed) {
                     const newName = newBasename.replace(/\.html$/i,'').replace(/^\d+__/,'').replace(/_/g,' ');
@@ -1259,7 +1148,6 @@
         for (let i = startPos; i < order.length; i++) if (answersState[order[i]] === 'unanswered') return i;
         return -1;
     }
-    // Parses "(a) Correct - text" / "(b) Incorrect - text" lines into a map: {a: {correct, text}, b: {...}, ...}
     function parseExplanationByOption(expText) {
         const lines = (expText || '').split(/\r?\n/);
         const map = {};
@@ -1349,7 +1237,6 @@
         try {
             await db.ref(STORAGE_KEY).set(state);
         } catch(e) {
-            // Fallback to localStorage if Firebase fails
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         }
     }
@@ -1361,7 +1248,6 @@
                 if (state && state.order && state.answersState && state.userSelections && state.mode) return state;
             }
         } catch(e) {}
-        // Fallback to localStorage
         try {
             const state = JSON.parse(localStorage.getItem(STORAGE_KEY));
             if (state && state.order && state.answersState && state.userSelections && state.mode) return state;
@@ -1412,7 +1298,7 @@
         if (el) { el.style.opacity = '1'; el.title = 'Running - Click to pause'; }
     }
 
-    // --- Save question for later review (real-time) ---
+    // --- Save question for later review ---
     let savedQuestionsListenerAttached = false;
     function attachSavedQuestionsListener() {
         if (savedQuestionsListenerAttached || !db) return;
@@ -1443,9 +1329,6 @@
             } else {
                 await db.ref(`${SAVED_KEY}/${canonicalId}`).set({ text: q.text, opts: q.opts, ans: q.ans, exp: q.exp });
             }
-            // savedQuestions / button UI update is handled automatically by the
-            // real-time listener (attachSavedQuestionsListener) when this write
-            // is reflected back from Firebase.
         } catch(e) { console.error(e); alert("Could not update saved questions. Check your connection."); }
     }
 
@@ -1575,7 +1458,7 @@
     }
     function endSkipReviewSession() { skipReviewMode = false; skipReviewList = []; promptFinishOrReview(); }
 
-    // --- Close quiz: two-step themed confirmation ---
+    // --- Close quiz ---
     function promptCloseQuiz() {
         const modalDiv = document.createElement('div');
         modalDiv.className = 'modal';
@@ -1608,18 +1491,12 @@
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches
             || window.navigator.standalone === true;
         if (isStandalone) {
-            // Webapp mode: quiz replaced the portal in the same tab/window —
-            // navigate back to the portal root, which restores the exact folder
-            // via sessionStorage (set by the portal before opening this quiz).
             const pathParts = window.location.pathname.split('/').filter(Boolean);
             const repoName = pathParts[0] || '';
             const portalUrl = window.location.origin + '/' + repoName + '/';
             window.location.href = portalUrl;
         } else {
-            // Website mode: quiz opened in a new tab — just close this tab.
-            // Focus returns to the original portal tab automatically.
             window.close();
-            // Fallback if the browser blocks the close (e.g. tab wasn't opened by script)
             setTimeout(() => {
                 const pathParts = window.location.pathname.split('/').filter(Boolean);
                 const repoName = pathParts[0] || '';
@@ -1691,16 +1568,10 @@
         for (let i = 0; i < q.opts.length; i++) {
             const optLetter = String.fromCharCode(65 + i);
             if (!isAnswered) {
-                // Before answering: plain clickable pill, no explanation yet.
                 optionsHtml += `<div class="option-capsule unanswered-capsule" onclick="handleAnswer('${optLetter}')">
                     <div class="option-text">${q.opts[i]}</div>
                 </div>`;
             } else {
-                // After answering: three distinct states —
-                //   correct answer -> green; the option YOU picked if wrong -> red;
-                //   any other unselected wrong option -> neutral/default (no green/red).
-                // Each capsule still shows its own explanation, with text colour
-                // matched to that capsule's background for readable contrast.
                 const isCorrectOpt = optLetter === q.ans;
                 const isMyWrongPick = (userChoice === optLetter && userChoice !== q.ans);
                 const capsuleCls = isCorrectOpt ? 'correct-highlight' : (isMyWrongPick ? 'wrong-highlight' : 'neutral-answered');
@@ -1726,7 +1597,6 @@
         }
     }
 
-    // Double-tap (or double-click) anywhere on the question to toggle 🔖 Save
     function attachDoubleTapBookmark(el, getOrigIdx) {
         if (!el) return;
         let lastTap = 0;
@@ -1738,10 +1608,6 @@
             showQuizToast(wasSaved ? '🔖 Removed from Saved' : '🔖 Saved!');
             playBookmarkAnim(!wasSaved);
         };
-        // Belt-and-suspenders: user-select:none (CSS) already blocks selection,
-        // but some mobile browsers still flash a selection/magnifier on the
-        // second tap before CSS fully applies — preventDefault on touchstart
-        // for what looks like the second tap stops that gesture before it starts.
         el.addEventListener('touchstart', (e) => {
             const now = Date.now();
             if (now - lastTap < 350) e.preventDefault();
@@ -1770,7 +1636,6 @@
         });
     }
 
-    // Beautiful fill/empty ribbon animation for save/unsave, themed via --accent
     function playBookmarkAnim(filling) {
         const anim = document.getElementById('bookmarkAnim');
         const clipRect = document.getElementById('bmClipRect');
@@ -1804,7 +1669,6 @@
         t._hideTimer = setTimeout(() => { t.style.opacity = '0'; }, 1300);
     }
 
-    // Generic left/right swipe detection for touch navigation
     function attachSwipeNav(el, onSwipeLeft, onSwipeRight) {
         if (!el) return;
         let startX = 0, startY = 0;
@@ -1822,51 +1686,12 @@
         }, { passive: true });
     }
 
-    // --- Circle gesture to skip ---
-    // Draws a live trail following the finger; if the completed path's total
-    // accumulated rotation is close to a full revolution (a real circle, not
-    // a swipe/scroll/scribble), triggers skipCurrent(). This avoids every
-    // false-positive scenario swipe-based skip had (reading-scroll, pull-to-
-    // refresh, partial drags) since a closed loop is geometrically distinct
-    // from any of those — verified against simulated swipe/scribble/partial-
-    // circle paths, all of which fall far short of the rotation threshold.
+    // --- Circle gesture to skip (Invisible Trace Version) ---
     function attachCircleGesture(el, onCircle) {
         if (!el) return;
         let points = [];
         let tracking = false;
-        let trailSvg = null;
 
-        function ensureTrailSvg() {
-            if (trailSvg) return trailSvg;
-            trailSvg = document.createElement('div');
-            trailSvg.id = 'circleGestureTrail';
-            trailSvg.style.position = 'fixed';
-            trailSvg.style.top = '0';
-            trailSvg.style.left = '0';
-            trailSvg.style.width = '100%';
-            trailSvg.style.height = '100%';
-            trailSvg.style.pointerEvents = 'none';
-            trailSvg.style.zIndex = '5000';
-            trailSvg.innerHTML = '<svg width="100%" height="100%" style="position:absolute;top:0;left:0;"><polyline id="circleGesturePolyline" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/></svg>';
-            document.body.appendChild(trailSvg);
-            return trailSvg;
-        }
-        function updateTrail() {
-            const poly = document.getElementById('circleGesturePolyline');
-            if (poly) poly.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
-        }
-        function clearTrail(flashValid) {
-            if (!trailSvg) return;
-            const poly = document.getElementById('circleGesturePolyline');
-            if (poly && flashValid) {
-                poly.setAttribute('stroke', '#22c55e');
-                poly.setAttribute('opacity', '1');
-                setTimeout(() => { if (trailSvg) { trailSvg.remove(); trailSvg = null; } }, 220);
-            } else {
-                trailSvg.remove();
-                trailSvg = null;
-            }
-        }
         function totalRotationDegrees(pts) {
             if (pts.length < 4) return 0;
             let total = 0, prevAngle = null;
@@ -1892,14 +1717,7 @@
         el.addEventListener('touchmove', (e) => {
             if (!tracking) return;
             points.push({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-            // Cap the tracked path length — a circle gesture only needs the
-            // last second or so of motion; an unbounded array during a long
-            // scroll session would otherwise grow indefinitely.
             if (points.length > 120) points.splice(0, points.length - 120);
-            // Only render the trail once the gesture has covered enough
-            // distance to look deliberate — avoids drawing a faint line on
-            // every ordinary scroll touch before we know if it's a circle.
-            if (points.length > 6) { ensureTrailSvg(); updateTrail(); }
         }, { passive: true });
         el.addEventListener('touchend', () => {
             if (!tracking) return;
@@ -1911,25 +1729,15 @@
                 const bigEnough = boxW > 45 && boxH > 45;
                 const rotation = totalRotationDegrees(points);
                 if (bigEnough && rotation > 300) {
-                    clearTrail(true);
                     onCircle && onCircle();
                     points = [];
                     return;
                 }
             }
-            clearTrail(false);
             points = [];
         }, { passive: true });
     }
 
-
-    // --- Font slider ---
-    // --- Keyboard navigation shortcuts ---
-    // ArrowLeft/Right: move between questions. S: skip. 1-4: select option A-D.
-    // Guarded against firing while typing in an input/textarea, and while any
-    // modal/overlay (instructions, close-quiz confirm, question-grid nav pane)
-    // is open on top of the quiz, so a shortcut never silently answers/skips
-    // the question hidden underneath.
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         if (!quizActive) return;
@@ -1980,7 +1788,6 @@
         fontBtn.addEventListener('click', () => { visible = !visible; panel.style.display = visible ? 'flex' : 'none'; });
     }
 
-    // --- Dark mode toggle ---
     function initDarkModeToggle() {
         const btn = document.getElementById('darkModeToggle');
         if (!btn) return;
@@ -1993,7 +1800,6 @@
         update();
     }
 
-    // --- Resume saved quiz ---
     async function resumeSavedQuiz(savedState) {
         mode = savedState.mode; order = savedState.order; currentPos = savedState.currentPos;
         answersState = savedState.answersState; userSelections = savedState.userSelections;
@@ -2018,7 +1824,6 @@
         leaderboardLoggedForThisSession = false;
     }
 
-    // --- Init quiz ---
     async function initializeQuiz(selectedMode) {
         mode = selectedMode;
         let indices = [...Array(TOTAL_QS).keys()];
@@ -2040,7 +1845,6 @@
         startTimer(); renderMainUI(); initDarkModeToggle(); initFontSlider();
     }
 
-    // --- Render main quiz UI ---
     function renderMainUI() {
         const root = document.getElementById('root');
         root.innerHTML = `<button id="closeQuizBtn" class="close-quiz-fab" title="Close quiz">✕</button><div class="quiz-container"><div class="stats-bar"><div class="stats-group"><div class="stat"><span>✅ <span class="label-full">Correct</span></span> <span id="statCorrect">0</span></div><div class="stat"><span>❌ <span class="label-full">Wrong</span></span> <span id="statWrong">0</span></div><div class="stat"><span>⏭️ <span class="label-full">Skip</span></span> <span id="statSkip">0</span></div></div><div class="timer" id="timerContainer">⏱️ <span id="timerDisplay">00:00</span></div><div class="action-buttons"><button class="action-btn" id="toggleNavBtn" title="Questions">☰ <span class="label-full">Questions</span></button><button class="action-btn" id="skipBtn" title="Skip">⏭️ Skip</button><button class="action-btn" id="finishQuizBtn" title="Finish">🏁 Finish</button><button class="action-btn dark-mode-btn" id="darkModeToggle" title="Dark mode">🌙 <span class="label-full">Dark</span></button><button class="action-btn" id="fontToggleBtn" title="Font size">🔤 A</button></div></div><div id="navPane" class="nav-pane"><div id="navGrid" class="nav-grid"></div></div><div id="quizMainContent" class="question-panel"></div></div>`;
@@ -2055,7 +1859,6 @@
         buildNavPane(); renderCurrent(); updateTopStats();
     }
 
-    // --- beforeunload exit warning ---
     function setupBeforeUnload() {
         window.addEventListener('beforeunload', (e) => {
             if (quizInProgress) {
@@ -2074,7 +1877,6 @@
     }
     setupBeforeUnload();
 
-    // --- Instructions modal ---
     function showInstructions() {
         const modal = document.createElement('div');
         modal.className = 'instructions-modal';
@@ -2084,7 +1886,6 @@
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
     }
 
-    // --- Welcome screen ---
     async function showWelcome() {
         const root = document.getElementById('root');
         root.innerHTML = `<div class="welcome-overlay"><div class="welcome-card" style="text-align:center;"><p style="font-size:1.2rem;">⏳ Loading...</p></div></div>`;
