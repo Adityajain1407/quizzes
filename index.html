@@ -2569,7 +2569,7 @@
   let _cachedFilesTs = 0;
 
   async function loadFiles(bustCache = false, retries = 5) {
-    const token = getPAT();
+    const token = getReadToken();
     const headers = { Accept: 'application/vnd.github+json' };
     if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -3938,6 +3938,20 @@
   // --- PAT storage (per-account, synced via Firebase) ---
   function getPAT() { return (localStorage.getItem(PAT_KEY) || '').trim(); }
 
+  // Shared read-only token: any logged-in user (admin or standard) can use this
+  // for read-only GitHub API calls (loading the quiz list), avoiding the 60/hr
+  // unauthenticated rate limit. Only write operations check isAdmin()/getPAT().
+  const SHARED_READ_TOKEN_KEY = 'portal_shared_read_token';
+  let _sharedReadToken = '';
+  function getReadToken() { return getPAT() || _sharedReadToken || ''; }
+  async function loadSharedReadToken() {
+    if (!db) return;
+    try {
+      const snap = await db.ref(SHARED_READ_TOKEN_KEY).get();
+      if (snap.exists() && snap.val()) _sharedReadToken = snap.val();
+    } catch(e) {}
+  }
+
   async function savePAT(token) {
     token = token.trim();
     if (token) {
@@ -3945,6 +3959,8 @@
       // Store in Firebase under this user's account so it loads on any device
       if (db && currentUser) {
         try { await db.ref(`${USERS_FB_KEY}/${currentUser}/pat`).set(token); } catch(e) {}
+        // Also publish as the shared read token so standard accounts can read without rate limits
+        try { await db.ref(SHARED_READ_TOKEN_KEY).set(token); _sharedReadToken = token; } catch(e) {}
       }
     } else {
       localStorage.removeItem(PAT_KEY);
@@ -3969,6 +3985,7 @@
         localStorage.removeItem(PAT_KEY);
       }
     } catch(e) { console.warn('Could not load PAT from account:', e); }
+    await loadSharedReadToken();
   }
 
   // --- PAT modal ---
@@ -5561,6 +5578,7 @@
     setTimeout(() => document.getElementById('splashScreen')?.classList.add('hide'), 3000);
 
     try { initTheme(); } catch(e) {}
+    await loadSharedReadToken();
 
     const hideSplash = () => document.getElementById('splashScreen')?.classList.add('hide');
 
