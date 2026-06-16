@@ -2535,9 +2535,6 @@
         <button class="settings-pill" id="installAppBtn" style="display:none;" onclick="triggerInstallApp()">
           <span>📲</span><span>Install App</span>
         </button>
-        <button class="settings-pill" id="ghTokenPillBtn" onclick="openPATModal()">
-          <span>🔑</span><span>GitHub Token</span>
-        </button>
         <button class="settings-pill" id="dataMgmtPillBtn" onclick="openDataMgmtModal()">
           <span>🗂️</span><span>Data Management</span>
         </button>
@@ -5270,17 +5267,25 @@
   }
 
   function showHubProfileMenu() {
+    const row = 'display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);font-size:0.95rem;cursor:pointer;transition:background 0.15s;';
     showFMModal({
       title: `${isAdmin() ? '🛡️' : '👤'} ${currentUser}`,
-      body: `<p style="color:var(--text-2);font-size:0.88rem;margin-bottom:4px;">${isAdmin() ? 'Admin account' : 'Standard account'}</p>`,
-      buttons: [
-        { label: 'Log Out', cls: 'fm-btn-danger', action: () => {
-          setSavedUser(null); setSessionToken(null); currentUser = null;
-          localStorage.removeItem(PAT_KEY);
-          stopInactivityWatch(); location.reload();
-        }},
-        { label: 'Cancel', cls: 'fm-btn-cancel' }
-      ]
+      body: `
+        <p style="color:var(--text-2);font-size:0.88rem;margin-bottom:14px;">${isAdmin() ? 'Admin account' : 'Standard account'}</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button style="${row}" onclick="closeFMModal();openPATModal()">
+            <span style="font-size:1.4rem;flex-shrink:0;">🔑</span>
+            <span><strong>GitHub Token</strong><br><span style="font-size:0.8rem;opacity:0.65;">${getPAT() ? 'Token saved — tap to manage' : 'Add a token to become admin'}</span></span>
+          </button>
+          <button style="${row}border-color:rgba(217,69,61,0.4);" onclick="setSavedUser(null);setSessionToken(null);currentUser=null;localStorage.removeItem(PAT_KEY);stopInactivityWatch();location.reload();">
+            <span style="font-size:1.4rem;flex-shrink:0;">🚪</span>
+            <span><strong style="color:#d9453d;">Log Out</strong></span>
+          </button>
+          <button style="${row}justify-content:center;margin-top:4px;" onclick="closeFMModal()">
+            <span style="font-weight:600;">Cancel</span>
+          </button>
+        </div>`,
+      buttons: []
     });
   }
 
