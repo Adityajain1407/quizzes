@@ -2529,8 +2529,8 @@
       </div>
       <div class="hub-section">
         <div class="hub-section-title">⚙️ Settings</div>
-        <button class="settings-pill" id="themePillBtn" onclick="toggleSettingsPanel('themePanel', this)">
-          <span>🎨</span><span>Themes</span><span class="chevron">▾</span>
+        <button class="settings-pill" id="themePillBtn" onclick="openThemesModal()">
+          <span>🎨</span><span>Themes</span>
         </button>
         <button class="settings-pill" id="installAppBtn" style="display:none;" onclick="triggerInstallApp()">
           <span>📲</span><span>Install App</span>
@@ -2538,22 +2538,6 @@
         <button class="settings-pill" id="dataMgmtPillBtn" onclick="openDataMgmtModal()">
           <span>🗂️</span><span>Data Management</span>
         </button>
-
-        <div class="collapsible" id="themePanel">
-          <div class="daynight-row">
-            <button class="theme-swatch" id="daynightDay" onclick="setDarkMode(false)"><span>☀️</span><span>Day</span></button>
-            <button class="theme-swatch" id="daynightNight" onclick="setDarkMode(true)"><span>🌙</span><span>Night</span></button>
-          </div>
-          <div class="theme-panel-divider"></div>
-          <div class="theme-swatch-grid">
-            <button class="theme-swatch" data-theme-id="default" style="background:#fff7ed; border-color:#f97316; color:#c2410c;" onclick="setTheme('default')"><span>🟠</span><span>Default</span></button>
-            <button class="theme-swatch" data-theme-id="ocean" style="background:#e0f2fe; border-color:#0284c7; color:#075985;" onclick="setTheme('ocean')"><span>🌊</span><span>Ocean</span></button>
-            <button class="theme-swatch" data-theme-id="forest" style="background:#dcfce7; border-color:#16a34a; color:#166534;" onclick="setTheme('forest')"><span>🌲</span><span>Forest</span></button>
-            <button class="theme-swatch" data-theme-id="sunset" style="background:#ffe4e6; border-color:#e11d48; color:#9f1239;" onclick="setTheme('sunset')"><span>🌅</span><span>Sunset</span></button>
-            <button class="theme-swatch" data-theme-id="amethyst" style="background:#f3e8ff; border-color:#9333ea; color:#6b21a8;" onclick="setTheme('amethyst')"><span>🔮</span><span>Amethyst</span></button>
-            <button class="theme-swatch" data-theme-id="monochrome" style="background:#f4f4f5; border-color:#000000; color:#000000;" onclick="setTheme('monochrome')"><span>⬛</span><span>Monochrome</span></button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -3963,6 +3947,29 @@
     });
     document.getElementById('daynightDay')?.classList.toggle('active', !isDark);
     document.getElementById('daynightNight')?.classList.toggle('active', isDark);
+  }
+
+  // ── Themes: separate popup (like Data Management / Profile) ──
+  function openThemesModal() {
+    showFMModal({
+      title: '🎨 Themes',
+      body: `
+        <div class="daynight-row">
+          <button class="theme-swatch" id="daynightDay" onclick="setDarkMode(false)"><span>☀️</span><span>Day</span></button>
+          <button class="theme-swatch" id="daynightNight" onclick="setDarkMode(true)"><span>🌙</span><span>Night</span></button>
+        </div>
+        <div class="theme-panel-divider"></div>
+        <div class="theme-swatch-grid">
+          <button class="theme-swatch" data-theme-id="default" style="background:#fff7ed; border-color:#f97316; color:#c2410c;" onclick="setTheme('default')"><span>🟠</span><span>Default</span></button>
+          <button class="theme-swatch" data-theme-id="ocean" style="background:#e0f2fe; border-color:#0284c7; color:#075985;" onclick="setTheme('ocean')"><span>🌊</span><span>Ocean</span></button>
+          <button class="theme-swatch" data-theme-id="forest" style="background:#dcfce7; border-color:#16a34a; color:#166534;" onclick="setTheme('forest')"><span>🌲</span><span>Forest</span></button>
+          <button class="theme-swatch" data-theme-id="sunset" style="background:#ffe4e6; border-color:#e11d48; color:#9f1239;" onclick="setTheme('sunset')"><span>🌅</span><span>Sunset</span></button>
+          <button class="theme-swatch" data-theme-id="amethyst" style="background:#f3e8ff; border-color:#9333ea; color:#6b21a8;" onclick="setTheme('amethyst')"><span>🔮</span><span>Amethyst</span></button>
+          <button class="theme-swatch" data-theme-id="monochrome" style="background:#f4f4f5; border-color:#000000; color:#000000;" onclick="setTheme('monochrome')"><span>⬛</span><span>Monochrome</span></button>
+        </div>`,
+      buttons: [{ label: 'Done', cls: 'fm-btn-primary' }]
+    });
+    updateThemeActiveStates();
   }
 
   function initTheme() {
