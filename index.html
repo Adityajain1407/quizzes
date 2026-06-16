@@ -333,7 +333,6 @@
     gap: 12px 20px;
     min-height: 70px;
     padding: 10px 0;
-    overflow: hidden;
   }
   .logo {
     display: flex;
@@ -6097,11 +6096,18 @@
     kbFocused = null;
   }
 
-  // Find the best neighbour in a direction using screen-position scoring
+  // Find the best neighbour in a direction using screen-position scoring.
+  // For left/right, same-row candidates are strongly preferred (a much higher
+  // perpendicular-distance penalty) so horizontal movement never accidentally
+  // jumps to a different row just because it's geometrically "closer" overall —
+  // e.g. pressing Right from the logo must reach Search on the same row, not
+  // jump down to the Home breadcrumb on the row below.
   function findNeighbour(from, dir) {
     const all = getAllFocusable();
     const fc = getCenter(from);
+    const fromRect = from.getBoundingClientRect();
     let best = null, bestScore = Infinity;
+    const isHorizontal = dir === 'right' || dir === 'left';
     for (const el of all) {
       if (el === from) continue;
       const ec = getCenter(el);
@@ -6112,11 +6118,13 @@
       if (dir === 'left'  && dx >= -2) continue;
       if (dir === 'down'  && dy <= 2) continue;
       if (dir === 'up'    && dy >= -2) continue;
-      // Score: primary axis distance + perpendicular penalty
       let primary, perp;
-      if (dir === 'right' || dir === 'left') { primary = Math.abs(dx); perp = Math.abs(dy); }
-      else                                   { primary = Math.abs(dy); perp = Math.abs(dx); }
-      const score = primary + perp * 2.5;
+      if (isHorizontal) { primary = Math.abs(dx); perp = Math.abs(dy); }
+      else              { primary = Math.abs(dy); perp = Math.abs(dx); }
+      // Heavy penalty for left/right so same-row items always win over
+      // closer-but-different-row items.
+      const penalty = isHorizontal ? 12 : 2.5;
+      const score = primary + perp * penalty;
       if (score < bestScore) { bestScore = score; best = el; }
     }
     return best;
