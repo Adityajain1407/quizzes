@@ -3260,26 +3260,31 @@
       });
     });
     document.querySelectorAll(".search-result-item[data-type='saved']").forEach(el => {
-      el.addEventListener("click", async () => {
+      el.addEventListener("click", async (e) => {
+        e.stopPropagation();
         const pathArr = JSON.parse(decodeURIComponent(el.dataset.path));
         const quizName = pathArr[pathArr.length - 1];
         const safe = getSafeTopicName(pathArr.join('/'));
         closeOverlayFunc();
-        // Open the same Library Hub popup used everywhere else for saved questions
-        openLibrary('saved');
-        try {
-          const snap = await db.ref(`quiz_saved_questions_${getUserPrefix()}${safe}`).get();
-          const body = document.getElementById('libraryBody');
-          if (!snap.exists() || !body) { showToast('No saved questions found'); return; }
-          const data = snap.val();
-          const questions = Object.entries(data)
-            .map(([id, q]) => ({ id: Number(id), ...q, safeTopicName: safe }))
-            .sort((a, b) => a.id - b.id);
-          // Build the same allSaved list so the "← Back" button works correctly
-          if (!savedTree) savedTree = await buildSavedTree();
-          const allSaved = flattenSavedQuizzes(savedTree);
-          showSavedQuestionGrid(body, questions, quizName, allSaved);
-        } catch(e) { showToast('Could not load saved questions'); }
+        // Defer to next tick so this click event finishes fully bubbling/resolving
+        // before the library backdrop (with its own click-outside-closes listener)
+        // gets attached — avoids the same click being misread as "click outside panel".
+        setTimeout(async () => {
+          openLibrary('saved');
+          try {
+            const snap = await db.ref(`quiz_saved_questions_${getUserPrefix()}${safe}`).get();
+            const body = document.getElementById('libraryBody');
+            if (!snap.exists() || !body) { showToast('No saved questions found'); return; }
+            const data = snap.val();
+            const questions = Object.entries(data)
+              .map(([id, q]) => ({ id: Number(id), ...q, safeTopicName: safe }))
+              .sort((a, b) => a.id - b.id);
+            // Build the same allSaved list so the "← Back" button works correctly
+            if (!savedTree) savedTree = await buildSavedTree();
+            const allSaved = flattenSavedQuizzes(savedTree);
+            showSavedQuestionGrid(body, questions, quizName, allSaved);
+          } catch(e) { showToast('Could not load saved questions'); }
+        }, 0);
       });
     });
   }
