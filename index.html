@@ -3557,18 +3557,33 @@
   let libTab = 'fav';
   let pathBeforeFav = [];
 
+  let libScrollY = 0;
   function openLibrary(tab) {
     pathBeforeFav = [...currentPath];
     libOpen = true;
     libTab = tab || libTab;
-    document.body.style.overflow = 'hidden';
+    // overflow:hidden alone doesn't reliably stop touch-driven scroll/
+    // rubber-banding on mobile — pinning the body with position:fixed does,
+    // since there's then nothing behind the popup for a touch gesture to
+    // move at all.
+    libScrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${libScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
     document.getElementById('libraryBackdrop').classList.add('open');
     renderLibTab();
   }
   function closeLibrary() {
     libOpen = false;
     clearKbFocus();
-    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    window.scrollTo(0, libScrollY);
     document.getElementById('libraryBackdrop').classList.remove('open');
     currentPath = pathBeforeFav;
     renderNavigationView();

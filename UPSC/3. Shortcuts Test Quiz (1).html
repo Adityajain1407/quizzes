@@ -1861,6 +1861,10 @@
                 showQuizToast('⏭️ Skipped');
                 playSkipAnim();
                 break;
+            case 'f': case 'F':
+                e.preventDefault();
+                if (!skipReviewMode) promptFinishOrReview(); else endSkipReviewSession();
+                break;
             case ' ': {
                 e.preventDefault();
                 const origIdx = order[currentPos];
