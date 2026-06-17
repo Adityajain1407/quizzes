@@ -5376,6 +5376,10 @@
             <span style="font-size:1.4rem;flex-shrink:0;">🔑</span>
             <span><strong>GitHub Token</strong><br><span style="font-size:0.8rem;opacity:0.65;">${getPAT() ? 'Token saved — tap to manage' : 'Add a token to become admin'}</span></span>
           </button>
+          <button style="${row}" id="apiRateLimitRow" onclick="checkApiRateLimit()">
+            <span style="font-size:1.4rem;flex-shrink:0;">📊</span>
+            <span><strong>API Requests Left</strong><br><span style="font-size:0.8rem;opacity:0.65;" id="apiRateLimitText">Checking…</span></span>
+          </button>
           <button style="${row}border-color:rgba(217,69,61,0.4);" onclick="setSavedUser(null);setSessionToken(null);currentUser=null;localStorage.removeItem(PAT_KEY);stopInactivityWatch();location.reload();">
             <span style="font-size:1.4rem;flex-shrink:0;">🚪</span>
             <span><strong style="color:#d9453d;">Log Out</strong></span>
@@ -5386,6 +5390,34 @@
         </div>`,
       buttons: []
     });
+    checkApiRateLimit();
+  }
+
+  // Shows how many of the shared GitHub API quota's requests are left this
+  // hour, so a crash/blank-list can be told apart from a real bug — the
+  // whole portal (admin + every standard account) reads through the same
+  // token, so this number reflects everyone's combined usage, not just
+  // the current user's. Hitting /rate_limit itself never counts against
+  // the quota, so checking — even repeatedly — costs nothing.
+  async function checkApiRateLimit() {
+    const el = document.getElementById('apiRateLimitText');
+    if (!el) return;
+    el.textContent = 'Checking…';
+    const token = getReadToken();
+    if (!token) { el.textContent = 'No token saved — ask an admin to add one'; return; }
+    try {
+      const res = await fetch('https://api.github.com/rate_limit', {
+        headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+      });
+      if (!res.ok) { el.textContent = `Couldn't check (${res.status})`; return; }
+      const data = await res.json();
+      const core = data.resources?.core || data.rate;
+      if (!core) { el.textContent = "Couldn't read response"; return; }
+      const resetTime = new Date(core.reset * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      el.textContent = `${core.remaining} / ${core.limit} left — resets ${resetTime}`;
+    } catch (e) {
+      el.textContent = 'Couldn\'t check — network error';
+    }
   }
 
   // ── Admin: Pending Requests panel ──
