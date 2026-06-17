@@ -3133,13 +3133,10 @@
       renderSavedDetail(savedItems, idx);
     }));
     updateBreadcrumb();
-
-    // Auto-focus the first folder/quiz so arrow keys work immediately without
-    // requiring a "wasted" first press just to activate keyboard navigation.
-    // Touch/click interactions clear this automatically via the pointerdown
-    // listener, so it never visually interferes on mobile.
-    const firstItem = contentDiv.querySelector('.folder-card, .quiz-item');
-    if (firstItem) setKbFocus(firstItem);
+    // Nothing is auto-focused on render anymore — the first arrow-key press
+    // (handled in the main keydown listener) is what focuses the first
+    // folder/quiz, so nothing ever looks pre-selected before the user has
+    // actually touched the keyboard.
   }
   function renderSavedDetail(items, idx) {
     const item = items[idx];
@@ -4484,7 +4481,7 @@
       });
     });
   }
-  function closeFMModal() { document.getElementById('fmModalBackdrop')?.remove(); }
+  function closeFMModal() { document.getElementById('fmModalBackdrop')?.remove(); clearKbFocus(); }
 
   // --- GitHub API helpers ---
   function openNewFolderModal() {
@@ -6233,7 +6230,7 @@
     // ── Escape: close whatever is open, in priority order ──
     if (key === 'Escape') {
       if (document.getElementById('fmModalBackdrop')) { closeFMModal(); return; }
-      if (document.getElementById('choiceModal')?.classList.contains('active')) { document.getElementById('choiceModal').classList.remove('active'); return; }
+      if (document.getElementById('choiceModal')?.classList.contains('active')) { document.getElementById('choiceModal').classList.remove('active'); clearKbFocus(); return; }
       if (document.getElementById('clockModal')?.classList.contains('active')) { document.getElementById('clockModal').classList.remove('active'); return; }
       if (document.getElementById('weatherModal')?.classList.contains('active')) { document.getElementById('weatherModal').classList.remove('active'); return; }
       if (document.getElementById('dinoModal')?.classList.contains('active')) { document.getElementById('dinoModal').classList.remove('active'); return; }
@@ -6276,6 +6273,15 @@
           // Moving to a new question resets option focus back to the top
           libFocusIdx = -1;
         }
+        // Up at (or above) the topmost option backs all the way out to the
+        // quiz list — same as pressing the "← Back" button — instead of
+        // staying stuck cycling through the same 4 option capsules forever.
+        if (isUp && libFocusIdx <= 0) {
+          e.preventDefault();
+          const backBtn = document.getElementById('savedBackToList');
+          if (backBtn) { fireNoBubble(backBtn); libFocusIdx = -1; }
+          return;
+        }
         if (isUp || isDown) {
           e.preventDefault();
           const capsules = [...document.querySelectorAll('#libraryBody .option-capsule')];
@@ -6291,25 +6297,64 @@
         const newTab = tabs[activeTabIdx + (isRight ? 1 : -1)];
         if (newTab) { switchLibTab(newTab); libFocusIdx = -1; }
       }
+      // Up at the topmost list item backs out to "tab level" — clears focus
+      // instead of staying clamped on item 0 — so Up consistently means "go
+      // up a level" everywhere, and a fresh Down press re-enters the list
+      // at the top. Same fix as above, applied to the flat Favourites/
+      // Recents/Saved-list views (not just the Saved question detail).
+      if (isUp && libFocusIdx === 0) {
+        e.preventDefault();
+        document.querySelectorAll('.kb-lib-focus').forEach(el => el.classList.remove('kb-lib-focus'));
+        libFocusIdx = -1;
+        return;
+      }
       // Up/Down: focus items in the list
       if (isUp || isDown) {
         e.preventDefault();
         const items = [...document.querySelectorAll('#libraryBody .recent-item, #libraryBody .lib-saved-item, #libraryBody .saved-hub-back, #libraryBody .fav-section-title + .recent-item, #libraryBody .lib-fav-folder, #libraryBody .lib-fav-quiz, #libraryBody .lib-recent-item')];
         libNavItems(items, isDown, key);
       }
-      // Enter: click focused item
+      // Enter: click focused item. Resets list focus since Enter always
+      // transitions into a new nested view/context (a quiz's saved questions,
+      // a folder, etc.) which has its own separate focus state.
       if (key === 'Enter') {
         const focused = document.querySelector('#libraryBody .kb-lib-focus');
-        if (focused) { e.preventDefault(); focused.click(); }
+        if (focused) { e.preventDefault(); focused.click(); libFocusIdx = -1; }
       }
       return;
     }
 
-    // ── FM / settings modals — Enter confirms primary button ──
+    // ── FM modals — rename/delete/token/new-folder, and every settings
+    // sub-screen built on the same showFMModal() backdrop (Themes, Data
+    // Management, Profile, Pending Requests, etc.). Arrow keys move a
+    // spatial focus ring between the modal's buttons/swatches/rows, Enter
+    // activates whatever is focused (falling back to the primary button if
+    // nothing has been focused yet) ──
     if (document.getElementById('fmModalBackdrop')) {
+      const modalPool = () => [...document.querySelectorAll('.fm-modal button')]
+        .filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+
+      if (isArrow) {
+        e.preventDefault();
+        const pool = modalPool();
+        const curFocusedInModal = kbFocused && pool.includes(kbFocused) ? kbFocused : null;
+        if (!curFocusedInModal) {
+          // First arrow press inside the modal: focus the first option
+          if (pool.length) setKbFocus(pool[0]);
+          return;
+        }
+        const dir = isRight ? 'right' : isLeft ? 'left' : isDown ? 'down' : 'up';
+        const next = (dir === 'up' || dir === 'down')
+          ? (findRowNeighbour(curFocusedInModal, dir, pool) || findNeighbour(curFocusedInModal, dir, pool))
+          : findNeighbour(curFocusedInModal, dir, pool);
+        if (next) setKbFocus(next);
+        return;
+      }
       if (key === 'Enter') {
         e.preventDefault();
-        document.getElementById('fmBtn0')?.click(); // primary action is always btn0
+        const pool = modalPool();
+        if (kbFocused && pool.includes(kbFocused)) kbFocused.click();
+        else document.getElementById('fmBtn0')?.click(); // nothing focused yet — fall back to the primary action
       }
       return;
     }
@@ -6359,19 +6404,6 @@
       if (isUp || isDown) {
         const scroller = document.querySelector('#weatherModal .hub-scroll');
         if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 80 : -80, behavior: 'smooth' }); }
-      }
-      return;
-    }
-
-    // ── FM modals (rename, delete, token, new folder, data mgmt) ──
-    if (document.getElementById('fmModalBackdrop')) {
-      if (isUp || isDown) {
-        const scroller = document.querySelector('.fm-modal');
-        if (scroller) { e.preventDefault(); scroller.scrollBy({ top: isDown ? 60 : -60, behavior: 'smooth' }); }
-      }
-      if (key === 'Enter') {
-        e.preventDefault();
-        document.getElementById('fmBtn0')?.click();
       }
       return;
     }
