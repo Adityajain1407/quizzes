@@ -6709,25 +6709,32 @@
     // ── Main homepage: full spatial navigation ──
     if (!isAnyModalOpen() && !libOpen) {
       const dir = isRight ? 'right' : isLeft ? 'left' : isDown ? 'down' : 'up';
+      // A stale reference (e.g. the folder card you just pressed Enter on,
+      // now detached after navigating into that folder) counts as "nothing
+      // focused" — otherwise the next arrow press falls back to whatever's
+      // first in raw page order (the logo/header) instead of the new
+      // folder's actual content.
+      const liveFocus = kbFocused && document.body.contains(kbFocused) ? kbFocused : null;
 
-      if (!kbFocused && isArrow) {
-        // First keypress: pick first content item or first focusable
+      if (!liveFocus && isArrow) {
+        // First keypress (or first press after a stale focus): pick first
+        // content item or first focusable
         e.preventDefault();
         const first = document.querySelector('.folder-card, .quiz-item') || getAllFocusable()[0];
         if (first) setKbFocus(first);
         return;
       }
 
-      if (kbFocused && isArrow) {
+      if (liveFocus && isArrow) {
         e.preventDefault();
-        const next = spatialNav(kbFocused, dir);
+        const next = spatialNav(liveFocus, dir);
         if (next) setKbFocus(next);
         return;
       }
 
-      if (kbFocused && (key === 'Enter' || key === ' ')) {
+      if (liveFocus && (key === 'Enter' || key === ' ')) {
         e.preventDefault();
-        kbFocused.click();
+        liveFocus.click();
         return;
       }
     }
