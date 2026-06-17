@@ -6556,6 +6556,12 @@
         kbFocused.classList.contains('saved-hub-back')
       );
       if ((prevBtn || nextBtn) && !onOuterRow) {
+        if (['1','2','3','4'].includes(key)) {
+          e.preventDefault();
+          const letter = 'ABCD'[Number(key) - 1];
+          document.querySelector(`#libraryBody .option-capsule.unanswered-capsule[data-letter="${letter}"]`)?.click();
+          return;
+        }
         if (key === 'Tab') {
           // Switch Reattempt/Revise without leaving the detail view — the
           // one action besides question-nav/option-select this screen
