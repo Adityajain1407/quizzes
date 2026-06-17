@@ -269,31 +269,6 @@
     overscroll-behavior-y: contain;
   }
 
-  /* ========== FIX 1: Quiz container overflow clipping ========== */
-  .quiz-container {
-    overflow: clip; /* replaces overflow: hidden to prevent wheel event trapping */
-  }
-
-  /* ========== FIX 2: Touch‑device height fix for quiz containers ========== */
-  @media (pointer: coarse) {
-    .quiz-container {
-      display: flex;
-      flex-direction: column;
-      max-height: calc(100vh - 40px);
-      /* Add explicit height to force flex children to shrink */
-      height: calc(100vh - 40px);
-      height: calc(100dvh - 40px); /* dynamic viewport for mobile */
-    }
-    /* Also apply the same fix to any inner scrollable area if needed */
-    .quiz-container #quizMainContent {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }
-  }
-
   .pull-refresh-indicator {
     text-align: center;
     font-size: 0.85rem;
