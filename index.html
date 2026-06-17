@@ -3762,8 +3762,9 @@
         <button class="smt-btn ${savedViewMode==='attempt'?'active':''}" data-mode="attempt">✏️ Attempt</button>
       </div>
       <div id="savedModeBody"></div>`;
-    document.getElementById('savedBackToList').onclick = () => showSavedQuizList(body, allSaved);
-    body.querySelectorAll('.smt-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.getElementById('savedBackToList').onclick = (e) => { e.stopPropagation(); showSavedQuizList(body, allSaved); };
+    body.querySelectorAll('.smt-btn').forEach(btn => btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (savedViewMode === btn.dataset.mode) return;
       savedViewMode = btn.dataset.mode;
       showSavedQuestionGrid(body, questions, quizName, allSaved);
@@ -3862,22 +3863,27 @@
       </div>`;
     if (!answered) {
       modeBody.querySelectorAll('.option-capsule.unanswered-capsule').forEach(cap => {
-        cap.addEventListener('click', () => {
+        cap.addEventListener('click', (e) => {
+          e.stopPropagation();
           q._attempt = cap.dataset.letter;
           renderAttemptQuestion(modeBody, questions, idx, quizName, allSaved, body);
         });
       });
     }
-    modeBody.querySelectorAll('.attempt-nav-chip').forEach(chip => chip.addEventListener('click', () => {
+    modeBody.querySelectorAll('.attempt-nav-chip').forEach(chip => chip.addEventListener('click', (e) => {
+      e.stopPropagation();
       renderAttemptQuestion(modeBody, questions, parseInt(chip.dataset.idx), quizName, allSaved, body);
     }));
-    modeBody.querySelector('#atPrev')?.addEventListener('click', () => {
+    modeBody.querySelector('#atPrev')?.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (idx > 0) renderAttemptQuestion(modeBody, questions, idx - 1, quizName, allSaved, body);
     });
-    modeBody.querySelector('#atNext')?.addEventListener('click', () => {
+    modeBody.querySelector('#atNext')?.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (idx < questions.length - 1) renderAttemptQuestion(modeBody, questions, idx + 1, quizName, allSaved, body);
     });
-    modeBody.querySelector('#atUnsave')?.addEventListener('click', async () => {
+    modeBody.querySelector('#atUnsave')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
       if (!db) return;
       try {
         await db.ref(`quiz_saved_questions_${getUserPrefix()}${q.safeTopicName}/${q.id}`).remove();
