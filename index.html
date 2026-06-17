@@ -1649,6 +1649,8 @@
     .header-inner { gap: 8px; }
     .header-actions { gap: 8px; }
     .logo-text { display: none; }
+    /* Library/Favourites icon matches the other circular icon buttons */
+    .logo-icon { width: 40px; height: 40px; border-radius: 50%; }
     /* Search collapses to icon circle */
     .search-compact {
       width: 40px; height: 40px; min-width: 40px;
@@ -1696,6 +1698,7 @@
     .wbtn-icon { font-size: 0.95rem; }
     .search-compact { width: 36px; height: 36px; min-width: 36px; }
     .theme-toggle { width: 36px; height: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
+    .logo-icon { width: 36px; height: 36px; border-radius: 50%; }
     .folders-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .quizzes-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .weather-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 6px; }
@@ -1718,7 +1721,6 @@
     .header-inner { gap: 5px; }
     .header-actions { gap: 5px; }
     .weather-btn, .live-clock { padding: 0 6px; height: 34px; }
-    .logo-icon { width: 24px; height: 24px; }
     .folders-grid, .quizzes-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   }
   /* ----- FILE MANAGER: selection, action bar, menus, modals ----- */
@@ -2843,26 +2845,28 @@
   }
 
   // ── True fullscreen across platforms ──
-  // Requested in a regular browser tab AND an installed/standalone PWA — the
-  // Fullscreen API itself is what hides the address bar, tab strip, and the
-  // three-dot menu, and on Android it also hides the on-screen nav buttons,
-  // regardless of how the page was launched. It requires a user gesture, so
-  // it's requested on the very first tap/click/keypress, and re-requested on
-  // every later interaction too (the early-return below makes that a no-op
-  // once already fullscreen) so exiting fullscreen — an Android back-gesture,
-  // Esc on desktop — doesn't permanently give up; the next tap re-enters it.
-  let _fullscreenPending = false;
+  // manifest.json's display:"fullscreen" handles this automatically on Android
+  // when launched from the home screen icon. Windows/Mac/desktop PWA windows and
+  // some Android browsers need an explicit Fullscreen API call. The API requires
+  // a user gesture, so we request it on the first tap/click after launch when
+  // running standalone, and silently no-op everywhere else (regular browser tabs).
+  let _fullscreenRequested = false;
   function requestAppFullscreen() {
-    if (_fullscreenPending || document.fullscreenElement) return;
+    if (_fullscreenRequested || !isStandaloneMode()) return;
+    if (document.fullscreenElement) { _fullscreenRequested = true; return; }
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-    if (!req) return;
-    _fullscreenPending = true;
-    Promise.resolve(req.call(el)).catch(() => {}).then(() => { _fullscreenPending = false; });
+    if (req) {
+      req.call(el).then(() => { _fullscreenRequested = true; }).catch(() => {});
+    }
   }
-  document.addEventListener('DOMContentLoaded', requestAppFullscreen, { once: true });
-  ['click', 'touchend', 'keydown'].forEach(ev =>
-    document.addEventListener(ev, requestAppFullscreen, { passive: true }));
+  if (isStandaloneMode()) {
+    // Try immediately (works on some desktop PWA shells without a gesture)
+    document.addEventListener('DOMContentLoaded', requestAppFullscreen, { once: true });
+    // Fallback: first user interaction definitely satisfies the gesture requirement
+    ['click', 'touchend', 'keydown'].forEach(ev =>
+      document.addEventListener(ev, requestAppFullscreen, { once: true, passive: true }));
+  }
 
   // Central quiz-opening logic — branches on webapp (standalone) vs website (browser tab) mode.
   // Webapp: navigate in-place (same tab) for a seamless native-app feel; returning
