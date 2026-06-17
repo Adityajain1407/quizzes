@@ -270,14 +270,21 @@
   }
 
   /* The Fullscreen API pins the fullscreen element (html) to position:fixed
-     at exactly the viewport size via the browser's own UA stylesheet, with
-     no scroll mechanism of its own unless one is explicitly given — without
-     this, entering fullscreen freezes the page at whatever height was
-     visible at that moment, with no way to scroll to the rest of it. */
+     at exactly the viewport size via the browser's own UA stylesheet. Once
+     html is position:fixed, relying on html itself to be the scrollable
+     element is unreliable for wheel/touch input (even with overflow-y:auto
+     on it, only the OS scrollbar thumb drag worked, not the wheel or touch)
+     — so instead, html stays non-scrolling and body becomes the dedicated
+     scroll container while fullscreen, which is the standard reliable
+     pattern for this. */
   html:fullscreen, html:-webkit-full-screen, html:-ms-fullscreen {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
     height: 100%;
+  }
+  html:fullscreen body, html:-webkit-full-screen body, html:-ms-fullscreen body {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .pull-refresh-indicator {
