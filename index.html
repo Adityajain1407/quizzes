@@ -269,6 +269,17 @@
     overscroll-behavior-y: contain;
   }
 
+  /* The Fullscreen API pins the fullscreen element (html) to position:fixed
+     at exactly the viewport size via the browser's own UA stylesheet, with
+     no scroll mechanism of its own unless one is explicitly given — without
+     this, entering fullscreen freezes the page at whatever height was
+     visible at that moment, with no way to scroll to the rest of it. */
+  html:fullscreen, html:-webkit-full-screen, html:-ms-fullscreen {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    height: 100%;
+  }
+
   .pull-refresh-indicator {
     text-align: center;
     font-size: 0.85rem;
@@ -662,7 +673,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-folder);
-    padding: 24px 12px 22px;
+    padding: 24px 12px 46px;
     text-align: center;
     cursor: pointer;
     transition: var(--transition);
@@ -723,7 +734,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-folder);
-    padding: 20px 14px 14px;
+    padding: 20px 14px 46px;
     display: flex;
     flex-direction: column;
     align-items: center;
