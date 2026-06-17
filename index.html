@@ -2364,7 +2364,9 @@
     transition: opacity 0.15s, background 0.15s;
     flex-shrink: 0;
   }
-  .recent-item:hover .recent-menu-btn { opacity: 1; }
+  .recent-item:hover .recent-menu-btn,
+  .recent-item:has(.kb-focus) .recent-menu-btn,
+  .recent-menu-btn.kb-focus { opacity: 1; }
   .recent-menu-btn:hover { background: var(--surface-3); color: var(--text); }
 
   /* ----- DATA MANAGEMENT COUNTDOWN ----- */
@@ -6451,15 +6453,17 @@
   // throughout the whole portal.
   const ROW_TOLERANCE = 12;
   function getRows(all) {
-    const withRects = all.map(el => ({ el, r: el.getBoundingClientRect() }))
-                          .sort((a, b) => a.r.top - b.r.top);
+    const withRects = all.map(el => {
+      const container = el.closest('.recent-item') || el;
+      return { el, r: container.getBoundingClientRect(), ownRect: el.getBoundingClientRect() };
+    }).sort((a, b) => a.r.top - b.r.top);
     const rows = [];
     for (const item of withRects) {
       let row = rows.find(r => Math.abs(r.top - item.r.top) <= ROW_TOLERANCE);
       if (!row) { row = { top: item.r.top, items: [] }; rows.push(row); }
       row.items.push(item);
     }
-    rows.forEach(r => r.items.sort((a, b) => a.r.left - b.r.left));
+    rows.forEach(r => r.items.sort((a, b) => a.ownRect.left - b.ownRect.left));
     rows.sort((a, b) => a.top - b.top);
     return rows;
   }
