@@ -5418,14 +5418,32 @@
     } catch(e) {}
   }
 
-  // Single entry point used by every refresh path. Builds the tree, and —
-  // unless this is the very first load — diffs against the previous file
-  // list first so deletions/renames/moves get cascaded across every
-  // account automatically, no matter where the change came from.
+  // Single entry point used by every refresh path. Builds the tree, and
+  // diffs against the previous file list (persisted to Firebase, not just
+  // kept in memory — see below) so deletions/renames/moves get cascaded
+  // across every account automatically, no matter where the change came
+  // from or whether any portal session was open to witness it.
+  const LAST_KNOWN_FILES_KEY = 'portal_last_known_files';
   async function reconcileFiles(files) {
     if (!files) return rootTree;
-    const prev = lastKnownFiles;
-    lastKnownFiles = files;
+
+    // The "previous" snapshot to diff against is read fresh from Firebase
+    // each time, rather than relying on an in-memory variable. An
+    // in-memory-only snapshot resets to empty on every fresh page load,
+    // which meant a rename/move done directly on GitHub (or via the portal
+    // on a different device) — with no portal session continuously open
+    // since before the change — was never recognized as a rename, and
+    // would have been mistaken for an unrelated delete+create. Persisting
+    // this to Firebase gives every session, even a brand new one, a
+    // durable "before" state to compare against.
+    let prev = lastKnownFiles;
+    if (db && !prev.length) {
+      try {
+        const snap = await db.ref(LAST_KNOWN_FILES_KEY).get();
+        if (snap.exists() && Array.isArray(snap.val())) prev = snap.val();
+      } catch(e) {}
+    }
+
     if (prev.length) {
       const { renamed, deleted, deletedFolders } = diffFileLists(prev, files);
       if (renamed.length || deleted.length || deletedFolders.length) {
@@ -5436,7 +5454,93 @@
         await Promise.all([loadFavourites(), loadRecents()]);
       }
     }
+
+    lastKnownFiles = files;
+    // Persist the new snapshot as the baseline for future reconciliation —
+    // by this session later, or any other session/device entirely. Only
+    // written when it actually changed, to skip a redundant write on every
+    // idle poll tick.
+    if (db && JSON.stringify(prev.map(f => [f.path, f.sha])) !== JSON.stringify(files.map(f => [f.path, f.sha]))) {
+      const minimal = files.map(f => ({ path: f.path, sha: f.sha }));
+      try { await db.ref(LAST_KNOWN_FILES_KEY).set(minimal); } catch(e) {}
+    }
+
     return buildTree(files);
+  }
+
+  // ── Comprehensive orphan sweep (safety net) ─────────────────────────────
+  // applyFirebaseDiffCleanup above only catches changes made WHILE a portal
+  // session is actively open (it diffs against an in-memory "last known"
+  // snapshot that starts fresh and empty every page load). A deletion made
+  // directly on GitHub — or via the portal on a different device — while no
+  // portal tab anywhere was open to witness it never gets diffed, and its
+  // data is silently orphaned forever.
+  //
+  // This sweep is a different, more robust strategy: rather than comparing
+  // two snapshots in time, it directly checks each piece of Firebase data
+  // against the file list as it exists RIGHT NOW. Anything that references
+  // a file/folder that doesn't currently exist gets removed — correct
+  // regardless of how or when the deletion happened, or whether any portal
+  // session was open to see it. Runs once per fresh portal session (from
+  // initPortal), not on every poll, since it requires a full-database read
+  // and is meant as an eventual-consistency safety net, not a real-time path.
+  async function sweepOrphanedFirebaseData(files) {
+    if (!db || !files) return;
+    try {
+      const liveFiles = files.filter(f => f.path.endsWith('.html') || f.path.endsWith('.md'));
+      const livePaths = new Set(liveFiles.map(f => f.path));
+      const liveSafes = new Set(liveFiles.map(f => safeNameFromPath(f.path)));
+      // A folder still exists if it currently contains a live quiz file, OR
+      // if it's merely empty but still present (marked by its .gitkeep,
+      // same convention used elsewhere for folder tracking) — otherwise an
+      // empty favourited folder would be wrongly treated as deleted.
+      const liveFolderPaths = new Set(
+        files.filter(f => f.path.endsWith('.gitkeep')).map(f => f.path.replace(/\/?\.gitkeep$/, ''))
+      );
+      const folderStillExists = (folderPath) => {
+        if (liveFolderPaths.has(folderPath)) return true;
+        const prefix = folderPath + '/';
+        for (const p of livePaths) { if (p.startsWith(prefix)) return true; }
+        return false;
+      };
+
+      const snap = await db.ref('/').get();
+      if (!snap.exists()) return;
+      const data = snap.val();
+      const safePrefixes = ['quiz_saved_state_', 'quiz_leaderboard_', 'quiz_saved_questions_'];
+      const removals = [];
+
+      for (const key of Object.keys(data)) {
+        const prefix = safePrefixes.find(p => key.startsWith(p));
+        if (prefix) {
+          const rest = key.slice(prefix.length); // "<safe>" (legacy) or "u_<user>__<safe>" (per-account)
+          const sep = rest.lastIndexOf('__');
+          const keySafe = sep === -1 ? rest : rest.slice(sep + 2);
+          if (!liveSafes.has(keySafe)) removals.push(key);
+          continue;
+        }
+        if (key.startsWith('quiz_portal_recents_') || key.startsWith('quiz_portal_favourites_')) {
+          const entries = data[key];
+          if (!entries || typeof entries !== 'object') continue;
+          for (const subKey of Object.keys(entries)) {
+            const entry = entries[subKey];
+            const entryPath = entry && entry.path;
+            if (!entryPath) continue;
+            // Recents are always quiz files; favourites can be either —
+            // distinguished by the explicit type field set when favourited.
+            const stillExists = entry.type === 'folder' ? folderStillExists(entryPath) : livePaths.has(entryPath);
+            if (!stillExists) removals.push(`${key}/${subKey}`);
+          }
+        }
+      }
+
+      if (!removals.length) return;
+      for (const path of removals) { try { await db.ref(path).remove(); } catch(e) {} }
+      // Refresh this session's own in-memory copies so the UI reflects the
+      // sweep immediately too.
+      await Promise.all([loadFavourites(), loadRecents()]);
+      if (document.getElementById('libraryBody')) renderLibTab();
+    } catch(e) {}
   }
 
   function getSavedUser()   { return localStorage.getItem('portal_current_user') || null; }
@@ -6190,6 +6294,14 @@
             <span style="font-size:1.4rem;flex-shrink:0;">🔖</span>
             <span><strong>Clear My Saved Questions</strong><br><span style="font-size:0.8rem;opacity:0.65;">Removes your bookmarked questions</span></span>
           </button>
+          <button style="${row}" onclick="closeFMModal();dmAction('progress')">
+            <span style="font-size:1.4rem;flex-shrink:0;">⏳</span>
+            <span><strong>Clear My Saved Progress</strong><br><span style="font-size:0.8rem;opacity:0.65;">Removes your in-progress position in partially-completed quizzes</span></span>
+          </button>
+          <button style="${row}border-color:rgba(217,69,61,0.4);" onclick="closeFMModal();dmAction('all_mine')">
+            <span style="font-size:1.4rem;flex-shrink:0;">🧺</span>
+            <span><strong style="color:#d9453d;">Clear ALL My Data</strong><br><span style="font-size:0.8rem;opacity:0.65;">Recents, favourites, saved questions and progress — all at once</span></span>
+          </button>
           ${adminRows}
           <button style="${row}justify-content:center;margin-top:4px;border-color:var(--border-2);" onclick="closeFMModal()">
             <span style="font-weight:600;">Cancel</span>
@@ -6204,6 +6316,8 @@
       recents: { icon: '🕐', title: 'Clear Recents?', desc: 'All recent quiz history will be permanently deleted.', color: '#d9453d' },
       favourites: { icon: '⭐', title: 'Clear Favourites?', desc: 'All favourited quizzes and folders will be permanently removed.', color: '#d9453d' },
       saved:   { icon: '🔖', title: 'Clear Saved Questions?', desc: 'All bookmarked questions across all quizzes will be permanently deleted.', color: '#d9453d' },
+      progress: { icon: '⏳', title: 'Clear Saved Progress?', desc: 'Your in-progress position in any partially-completed quizzes will be lost — they\'ll start over from the beginning next time.', color: '#d9453d' },
+      all_mine: { icon: '🧺', title: 'Clear ALL My Data?', desc: 'Everything tied to your account — recents, favourites, saved questions, and in-progress quiz positions — will be permanently deleted. Other accounts are not affected.', color: '#7f1d1d' },
       master:  { icon: '💥', title: 'Master Reset?', desc: 'ALL Firebase data will be wiped — quiz states, leaderboards, saved questions, recents, favourites. This cannot be undone.', color: '#7f1d1d' },
       legacy:  { icon: '🧹', title: 'Clean Up Legacy Data?', desc: 'Removes old saved questions, recents, favourites and quiz progress saved before the account system existed. Only affects data NOT tied to any username. This cannot be undone.', color: '#d9453d' }
     };
@@ -6274,6 +6388,37 @@
           for (const k of toDelete) await db.ref(k).remove();
         }
         showToast('✅ Saved questions cleared');
+      } else if (type === 'progress') {
+        // In-progress quiz position (where you left off, set by the quiz
+        // template itself while taking a quiz) — separate from saved
+        // questions, recents, and favourites.
+        const snap = await db.ref('/').get();
+        if (snap.exists()) {
+          const data = snap.val();
+          const toDelete = Object.keys(data).filter(k => k.startsWith(`quiz_saved_state_${getUserPrefix()}`));
+          for (const k of toDelete) await db.ref(k).remove();
+        }
+        showToast('✅ Saved progress cleared');
+      } else if (type === 'all_mine') {
+        // Everything tied to this account in one pass: recents, favourites,
+        // saved questions, and saved progress. Scoped strictly to the
+        // current user's own prefix throughout — never touches any other
+        // account's data, even though it reads the whole database root to
+        // find matching keys (the same one-read-many-matches pattern the
+        // granular actions above already use).
+        const prefix = getUserPrefix();
+        const removals = [getRecKey(), getFavKey()];
+        const snap = await db.ref('/').get();
+        if (snap.exists()) {
+          const data = snap.val();
+          const dataPrefixes = ['quiz_saved_questions_', 'quiz_saved_state_'];
+          for (const k of Object.keys(data)) {
+            if (dataPrefixes.some(p => k.startsWith(`${p}${prefix}`))) removals.push(k);
+          }
+        }
+        for (const k of removals) { try { await db.ref(k).remove(); } catch(e) {} }
+        recents = {}; favourites = {};
+        showToast('✅ All your data cleared');
       } else if (type === 'master') {
         await db.ref('/').remove();
         recents = {}; favourites = {};
@@ -6480,6 +6625,7 @@
       const files = await loadFiles(true);
       if (files === null) { showLoadError(); return; }
       rootTree = await reconcileFiles(files);
+      sweepOrphanedFirebaseData(files); // safety net — runs in the background, doesn't block first paint
       let restoredPath = [];
       try { const s = sessionStorage.getItem('quiz_current_path'); if (s) restoredPath = JSON.parse(s); } catch(e) {}
       currentPath = (Array.isArray(restoredPath) && getNodeFromPath(rootTree, restoredPath)) ? restoredPath : [];
