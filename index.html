@@ -1904,6 +1904,8 @@
     padding: 1.5rem;
     width: 100%;
     max-width: 420px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     box-shadow: 0 8px 40px rgba(0,0,0,0.25);
     animation: fadeInDown 0.2s ease;
   }
@@ -6261,6 +6263,11 @@
   function openDataMgmtModal() {
     const row = 'display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);font-size:0.95rem;cursor:pointer;transition:background 0.15s;';
     const adminRows = isAdmin() ? `
+          <div style="display:flex;align-items:center;gap:10px;margin:18px 0 4px;">
+            <span style="font-size:0.78rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-3);white-space:nowrap;">🛡️ Admin Tools</span>
+            <span style="flex:1;height:1px;background:var(--border-2);"></span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--text-3);margin:0 0 10px;">These affect the whole portal and every account — not just yours.</p>
           <button style="${row}" onclick="closeFMModal();showPendingRequests()">
             <span style="font-size:1.4rem;flex-shrink:0;">🕐</span>
             <span><strong>Pending Requests</strong><br><span style="font-size:0.8rem;opacity:0.65;">Review & approve new accounts</span></span>
@@ -6280,7 +6287,11 @@
     showFMModal({
       title: '🗂️ Data Management',
       body: `
-        <p style="margin-bottom:14px;">Manage your data stored in Firebase.</p>
+        <p style="margin-bottom:4px;">Manage your data stored in Firebase.</p>
+        <div style="display:flex;align-items:center;gap:10px;margin:14px 0 10px;">
+          <span style="font-size:0.78rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-3);white-space:nowrap;">👤 My Data</span>
+          <span style="flex:1;height:1px;background:var(--border-2);"></span>
+        </div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button style="${row}" onclick="closeFMModal();dmAction('recents')">
             <span style="font-size:1.4rem;flex-shrink:0;">🕐</span>
