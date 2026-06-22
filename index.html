@@ -907,8 +907,8 @@
   .search-overlay-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
+    gap: 10px;
+    margin-bottom: 20px;
   }
   .search-overlay-input {
     flex: 1;
@@ -920,34 +920,63 @@
     color: var(--text);
     outline: none;
   }
+  .search-category-wrapper {
+    position: relative;
+    flex-shrink: 0;
+  }
+  .search-category-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 60px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition);
+  }
+  .search-category-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .search-category-btn .chevron {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    transition: transform 0.2s;
+  }
+  .search-category-btn.open .chevron { transform: rotate(180deg); }
+  .search-category-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    min-width: 160px;
+    overflow: hidden;
+    z-index: 10;
+  }
+  .search-category-dropdown.open { display: block; }
+  .search-cat-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text);
+    transition: var(--transition);
+  }
+  .search-cat-option:hover { background: var(--surface-2); color: var(--accent); }
+  .search-cat-option.active { font-weight: 700; color: var(--accent); background: var(--surface-2); }
   .close-overlay {
     font-size: 28px;
     cursor: pointer;
     color: var(--text-3);
     transition: var(--transition);
+    flex-shrink: 0;
   }
   .close-overlay:hover {
-    color: var(--accent);
-  }
-  .search-toolbar {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 12px;
-  }
-  .toolbar-btn {
-    background: var(--surface-2);
-    border: none;
-    padding: 6px 14px;
-    border-radius: 40px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    color: var(--text-2);
-    transition: var(--transition);
-  }
-  .toolbar-btn:hover {
-    background: var(--surface-3);
     color: var(--accent);
   }
   .results-area {
@@ -967,9 +996,9 @@
   }
   @media (max-width: 480px) {
     .search-overlay { padding: 16px 14px; }
-    .search-overlay-header { gap: 10px; margin-bottom: 16px; }
+    .search-overlay-header { gap: 8px; margin-bottom: 14px; }
     .search-overlay-input { padding: 11px 14px; font-size: 1rem; }
-    .search-toolbar { gap: 8px; margin-bottom: 14px; }
+    .search-category-btn { padding: 8px 12px; font-size: 0.8rem; }
   }
   .results-header {
     font-weight: 600;
@@ -2662,12 +2691,21 @@
 <!-- SEARCH OVERLAY -->
 <div id="searchOverlay" class="search-overlay">
   <div class="search-overlay-header">
-    <input type="text" id="overlaySearchInput" class="search-overlay-input" placeholder="Search folders, subfolders, quizzes..." autofocus>
+    <input type="text" id="overlaySearchInput" class="search-overlay-input" placeholder="Search folders, quizzes, questions..." autofocus>
+    <div class="search-category-wrapper">
+      <button class="search-category-btn" id="searchCategoryBtn">
+        <span id="searchCategoryLabel">All</span>
+        <span class="chevron">▾</span>
+      </button>
+      <div class="search-category-dropdown" id="searchCategoryDropdown">
+        <div class="search-cat-option active" data-cat="all">🔍 All</div>
+        <div class="search-cat-option" data-cat="folders">📁 Folders</div>
+        <div class="search-cat-option" data-cat="quizzes">📖 Quizzes</div>
+        <div class="search-cat-option" data-cat="saved">🔖 Saved</div>
+        <div class="search-cat-option" data-cat="questions">❓ Questions</div>
+      </div>
+    </div>
     <span class="close-overlay" id="closeOverlayBtn">&times;</span>
-  </div>
-  <div class="search-toolbar">
-    <button class="toolbar-btn" id="showResultsBtn">📋 Results</button>
-    <button class="toolbar-btn" id="showHistoryBtn">🕘 History</button>
   </div>
   <div id="searchResultsPanel" class="results-area"></div>
 </div>
@@ -3415,10 +3453,12 @@
   const closeOverlay = document.getElementById("closeOverlayBtn");
   const overlayInput = document.getElementById("overlaySearchInput");
   const resultsPanel = document.getElementById("searchResultsPanel");
-  const showResultsBtn = document.getElementById("showResultsBtn");
-  const showHistoryBtn = document.getElementById("showHistoryBtn");
 
-  let currentSearchQuery = "", currentResults = [], currentSavedResults = [];
+  // Cache of parsed FULL_QUIZ arrays keyed by file path — avoids re-fetching
+  // quiz files across successive searches in the same session.
+  const quizContentCache = {};
+  let currentSearchQuery = "", currentResults = [], currentSavedResults = [], currentQuestionResults = [];
+  let currentSearchCategory = "all"; // all | folders | quizzes | saved | questions
 
   function flattenSavedQuizzes(node, path = []) {
     let out = [];
@@ -3431,50 +3471,165 @@
     return out;
   }
 
+  // Fetch and parse a quiz file's FULL_QUIZ array from its raw HTML source.
+  // Returns an array of {text, opts, ans, exp} or null on failure.
+  async function fetchQuizQuestions(filePath) {
+    if (quizContentCache[filePath] !== undefined) return quizContentCache[filePath];
+    try {
+      const url = BASE_URL + '/' + filePath.split('/').map(p => encodeURIComponent(p)).join('/');
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) { quizContentCache[filePath] = null; return null; }
+      const text = await res.text();
+      // Extract the FULL_QUIZ array literal from the script source.
+      // The template always writes: const FULL_QUIZ = [ ... ];
+      const match = text.match(/const\s+FULL_QUIZ\s*=\s*(\[[\s\S]*?\]);\s*\n?\s*const\s+TOTAL_QS/);
+      if (!match) { quizContentCache[filePath] = null; return null; }
+      // eslint-disable-next-line no-new-func
+      const questions = Function('"use strict"; return (' + match[1] + ')')();
+      quizContentCache[filePath] = Array.isArray(questions) ? questions : null;
+      return quizContentCache[filePath];
+    } catch (e) {
+      quizContentCache[filePath] = null;
+      return null;
+    }
+  }
+
+  // Search inside quiz question text and option text across all quiz files.
+  // Returns an array of {quizName, quizPath, filePath, questionIdx, question}.
+  async function searchInsideQuizzes(query) {
+    const lowerQuery = query.toLowerCase();
+    const allItems = getAllSearchableItems();
+    const quizFiles = allItems.filter(i => i.type === 'quiz');
+    const results = [];
+    // Fetch in parallel with a concurrency cap of 6 to be polite to GitHub Pages
+    const CONCURRENCY = 6;
+    for (let i = 0; i < quizFiles.length; i += CONCURRENCY) {
+      const batch = quizFiles.slice(i, i + CONCURRENCY);
+      const fetched = await Promise.all(batch.map(q => fetchQuizQuestions(q.fullPath).then(qs => ({ q, qs }))));
+      for (const { q, qs } of fetched) {
+        if (!qs) continue;
+        qs.forEach((question, idx) => {
+          const searchable = [
+            question.text,
+            ...(question.opts || []),
+          ].join(' ').toLowerCase();
+          if (searchable.includes(lowerQuery)) {
+            results.push({
+              quizName: q.name,
+              quizPath: q.parentPath,
+              filePath: q.fullPath,
+              quizUrl: q.url,
+              questionIdx: idx,
+              question
+            });
+          }
+        });
+      }
+    }
+    return results;
+  }
+
   async function performSearch(query) {
     currentSearchQuery = query;
-    if (!query.trim()) { currentResults = []; currentSavedResults = []; renderResultsPanel(); return; }
+    if (!query.trim()) { currentResults = []; currentSavedResults = []; currentQuestionResults = []; renderResultsPanel(); return; }
     const allItems = getAllSearchableItems();
     const lowerQuery = query.toLowerCase();
     currentResults = allItems.filter(item => item.name.toLowerCase().includes(lowerQuery));
     if (db && !savedTree) { savedTree = await buildSavedTree(); }
     currentSavedResults = savedTree ? flattenSavedQuizzes(savedTree).filter(s => s.name.toLowerCase().includes(lowerQuery)) : [];
+    currentQuestionResults = []; // reset — will be populated by background search
     if (query.trim()) addToHistory(query);
     renderResultsPanel();
+    // Run question search in the background — re-renders when done.
+    // Guard against the query changing mid-flight (user typed more).
+    const queryAtStart = query;
+    searchInsideQuizzes(query).then(qResults => {
+      if (currentSearchQuery !== queryAtStart) return; // stale, discard
+      currentQuestionResults = qResults;
+      renderResultsPanel();
+    });
   }
   function renderResultsPanel() {
     if (!currentSearchQuery.trim()) {
       resultsPanel.innerHTML = `<div class="empty-state">🔍 Type something to search...</div>`;
       return;
     }
-    if (currentResults.length === 0 && currentSavedResults.length === 0) {
-      resultsPanel.innerHTML = `<div class="empty-state">😕 No results for "${escapeHtml(currentSearchQuery)}"</div>`;
-      return;
-    }
+    const cat = currentSearchCategory;
     const folders = currentResults.filter(i => i.type === "folder");
     const quizzes = currentResults.filter(i => i.type === "quiz");
-    let html = `<div class="results-column"><div class="results-header">📁 Folders (${folders.length})</div>`;
-    for (const f of folders) {
-      html += `<div class="search-result-item" data-type="folder" data-path="${encodeURIComponent(JSON.stringify(f.path))}">
-        <div><span class="result-name">📁 ${escapeHtml(f.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(f.parentPath)}</span></div>
-        <span class="result-time">${f.quizCount} quiz${f.quizCount!==1?'zes':''}</span>
-      </div>`;
+    const qSearching = currentQuestionResults.length === 0 && currentSearchQuery.trim();
+
+    // Build only the sections that are active in this category
+    let html = '';
+
+    const showFolders = cat === 'all' || cat === 'folders';
+    const showQuizzes = cat === 'all' || cat === 'quizzes';
+    const showSaved   = cat === 'all' || cat === 'saved';
+    const showQs      = cat === 'all' || cat === 'questions';
+
+    if (showFolders) {
+      html += `<div class="results-column"><div class="results-header">📁 Folders (${folders.length})</div>`;
+      if (folders.length === 0) html += `<div class="empty-state" style="padding:12px 0;font-size:0.9rem;">No folders found</div>`;
+      for (const f of folders) {
+        html += `<div class="search-result-item" data-type="folder" data-path="${encodeURIComponent(JSON.stringify(f.path))}">
+          <div><span class="result-name">📁 ${escapeHtml(f.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(f.parentPath)}</span></div>
+          <span class="result-time">${f.quizCount} quiz${f.quizCount!==1?'zes':''}</span>
+        </div>`;
+      }
+      html += `</div>`;
     }
-    html += `</div><div class="results-column"><div class="results-header">📖 Quizzes (${quizzes.length})</div>`;
-    for (const q of quizzes) {
-      html += `<div class="search-result-item" data-type="quiz" data-url="${escapeHtml(q.url)}">
-        <div><span class="result-name">📄 ${escapeHtml(q.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(q.parentPath)}</span></div>
-        <span class="result-arrow">→</span>
-      </div>`;
+
+    if (showQuizzes) {
+      html += `<div class="results-column"><div class="results-header">📖 Quizzes (${quizzes.length})</div>`;
+      if (quizzes.length === 0) html += `<div class="empty-state" style="padding:12px 0;font-size:0.9rem;">No quizzes found</div>`;
+      for (const q of quizzes) {
+        html += `<div class="search-result-item" data-type="quiz" data-url="${escapeHtml(q.url)}">
+          <div><span class="result-name">📄 ${escapeHtml(q.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(q.parentPath)}</span></div>
+          <span class="result-arrow">→</span>
+        </div>`;
+      }
+      html += `</div>`;
     }
-    html += `</div><div class="results-column"><div class="results-header">🔖 Saved (${currentSavedResults.length})</div>`;
-    for (const s of currentSavedResults) {
-      html += `<div class="search-result-item" data-type="saved" data-path="${encodeURIComponent(JSON.stringify(s.path))}">
-        <div><span class="result-name">🔖 ${escapeHtml(s.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(s.parentPath)}</span></div>
-        <span class="result-time">${s.count} saved</span>
-      </div>`;
+
+    if (showSaved) {
+      html += `<div class="results-column"><div class="results-header">🔖 Saved (${currentSavedResults.length})</div>`;
+      if (currentSavedResults.length === 0) html += `<div class="empty-state" style="padding:12px 0;font-size:0.9rem;">No saved quizzes found</div>`;
+      for (const s of currentSavedResults) {
+        html += `<div class="search-result-item" data-type="saved" data-path="${encodeURIComponent(JSON.stringify(s.path))}">
+          <div><span class="result-name">🔖 ${escapeHtml(s.name)}</span><br><span style="font-size:0.7rem;">${escapeHtml(s.parentPath)}</span></div>
+          <span class="result-time">${s.count} saved</span>
+        </div>`;
+      }
+      html += `</div>`;
     }
-    html += `</div>`;
+
+    if (showQs) {
+      const qHeader = qSearching && (cat === 'questions' || cat === 'all')
+        ? `❓ Questions <span style="font-size:0.75rem;opacity:0.6;">— searching inside quizzes…</span>`
+        : `❓ Questions (${currentQuestionResults.length})`;
+      html += `<div class="results-column"><div class="results-header">${qHeader}</div>`;
+      if (!qSearching && currentQuestionResults.length === 0) html += `<div class="empty-state" style="padding:12px 0;font-size:0.9rem;">No matching questions found</div>`;
+      for (const r of currentQuestionResults) {
+        const qNum = r.questionIdx + 1;
+        const preview = r.question.text.length > 80 ? r.question.text.slice(0, 80) + '…' : r.question.text;
+        html += `<div class="search-result-item" data-type="question"
+          data-quiz-name="${escapeHtml(r.quizName)}"
+          data-quiz-path="${escapeHtml(r.quizPath)}"
+          data-quiz-url="${escapeHtml(r.quizUrl)}"
+          data-question-idx="${r.questionIdx}"
+          data-question="${encodeURIComponent(JSON.stringify(r.question))}">
+          <div>
+            <span class="result-name">Q.${qNum} — ${escapeHtml(r.quizName)}</span><br>
+            <span style="font-size:0.7rem;color:var(--text-3);">${escapeHtml(r.quizPath)}</span><br>
+            <span style="font-size:0.75rem;opacity:0.8;">${escapeHtml(preview)}</span>
+          </div>
+          <span class="result-arrow">→</span>
+        </div>`;
+      }
+      html += `</div>`;
+    }
+
+    if (!html) html = `<div class="empty-state">😕 No results for "${escapeHtml(currentSearchQuery)}"</div>`;
     resultsPanel.innerHTML = html;
     document.querySelectorAll(".search-result-item[data-type='folder']").forEach(el => {
       el.addEventListener("click", () => {
@@ -3521,7 +3676,63 @@
         }, 0);
       });
     });
+    // Question result click — opens a full-screen single-question viewer
+    document.querySelectorAll(".search-result-item[data-type='question']").forEach(el => {
+      el.addEventListener("click", () => {
+        const question = JSON.parse(decodeURIComponent(el.dataset.question));
+        const quizName = el.dataset.quizName;
+        const quizPath = el.dataset.quizPath;
+        const questionIdx = parseInt(el.dataset.questionIdx) + 1;
+        closeOverlayFunc();
+        showQuestionViewer(question, quizName, quizPath, questionIdx);
+      });
+    });
   }
+
+  // Single-question viewer — shows one question in the already-answered/revision
+  // style: correct option green, every option's explanation expanded, no interaction.
+  function showQuestionViewer(question, quizName, quizPath, questionNum) {
+    const existing = document.getElementById('questionViewerModal');
+    if (existing) existing.remove();
+
+    // Build the option capsules reusing the portal's existing CSS variables.
+    // Inline styles use the same variables the quiz template uses so they
+    // adapt to the current theme (including dark mode) automatically.
+    let optsHtml = '';
+    const expMap = {};
+    if (question.exp) {
+      question.exp.split(/\r?\n/).forEach(line => {
+        const m = line.match(/^\(([a-d])\)\s*(.*)/i);
+        if (m) expMap[m[1].toLowerCase()] = m[2].trim();
+      });
+    }
+    (question.opts || []).forEach((opt, i) => {
+      const letter = String.fromCharCode(65 + i);
+      const isCorrect = letter === question.ans;
+      const bg = isCorrect ? 'var(--correct-bg, #d3f0d9)' : 'var(--surface-2, #f8f9fa)';
+      const border = isCorrect ? '2px solid var(--correct-border, #2b7e3a)' : '1.5px solid var(--border-2, rgba(0,0,0,0.15))';
+      const textColor = isCorrect ? 'var(--correct-text, #145c23)' : 'var(--text, #1e293b)';
+      const expText = expMap[letter.toLowerCase()] || '';
+      optsHtml += `<div style="background:${bg};border:${border};border-radius:1rem;padding:0.85rem 1.1rem;margin-bottom:0.75rem;">
+        <div style="font-weight:700;font-size:1.05rem;color:${textColor};">${escapeHtml(opt)}</div>
+        ${expText ? `<div style="font-size:0.9rem;margin-top:0.45rem;color:${textColor};opacity:0.85;text-align:justify;">${escapeHtml(expText)}</div>` : ''}
+      </div>`;
+    });
+
+    const modal = document.createElement('div');
+    modal.id = 'questionViewerModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);z-index:4500;overflow-y:auto;padding:20px;box-sizing:border-box;display:flex;align-items:flex-start;justify-content:center;';
+    modal.innerHTML = `<div style="background:var(--surface);color:var(--text);border-radius:1.5rem;max-width:700px;width:100%;padding:1.8rem;position:relative;margin:auto;">
+      <button id="closeQViewer" style="position:absolute;top:12px;right:12px;background:transparent;border:none;font-size:1.2rem;cursor:pointer;color:var(--text);opacity:0.6;line-height:1;padding:4px;">✕</button>
+      <div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);margin-bottom:0.5rem;">${escapeHtml(quizPath ? quizPath + ' › ' : '')}${escapeHtml(quizName)} · Q.${questionNum}</div>
+      <div style="font-size:1.2rem;font-weight:700;line-height:1.4;margin-bottom:1.4rem;border-left:4px solid var(--accent);padding-left:0.9rem;text-align:justify;">${escapeHtml(question.text)}</div>
+      ${optsHtml}
+    </div>`;
+    document.body.appendChild(modal);
+    document.getElementById('closeQViewer').onclick = () => modal.remove();
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  }
+
   function renderHistoryPanel() {
     if (searchHistory.length === 0) {
       resultsPanel.innerHTML = `<div class="empty-state">🕘 No search history yet.</div>`;
@@ -3542,7 +3753,7 @@
         const query = el.dataset.query;
         overlayInput.value = query;
         performSearch(query);
-        showResultsBtn.click();
+        showResultsView();
       });
     });
     const clearBtn = document.getElementById("clearHistoryBtn");
@@ -3558,6 +3769,11 @@
     currentSearchQuery = "";
     currentResults = [];
     currentSavedResults = [];
+    currentQuestionResults = [];
+    // Reset dropdown to "All" on close
+    currentSearchCategory = "all";
+    document.getElementById('searchCategoryLabel').textContent = "All";
+    document.querySelectorAll('.search-cat-option').forEach(o => o.classList.toggle('active', o.dataset.cat === 'all'));
   }
   searchCompact.addEventListener("click", () => {
     overlay.classList.add("active");
@@ -3567,10 +3783,34 @@
     showResultsView();
   });
   closeOverlay.addEventListener("click", closeOverlayFunc);
-  
   overlayInput.addEventListener("input", (e) => performSearch(e.target.value));
-  showResultsBtn.addEventListener("click", showResultsView);
-  showHistoryBtn.addEventListener("click", renderHistoryPanel);
+
+  // Category dropdown wiring
+  const categoryBtn = document.getElementById('searchCategoryBtn');
+  const categoryDropdown = document.getElementById('searchCategoryDropdown');
+  const categoryLabel = document.getElementById('searchCategoryLabel');
+  const catLabels = { all: 'All', folders: 'Folders', quizzes: 'Quizzes', saved: 'Saved', questions: 'Questions' };
+
+  categoryBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    categoryBtn.classList.toggle('open');
+    categoryDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', () => {
+    categoryBtn.classList.remove('open');
+    categoryDropdown.classList.remove('open');
+  });
+  document.querySelectorAll('.search-cat-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentSearchCategory = opt.dataset.cat;
+      categoryLabel.textContent = catLabels[currentSearchCategory];
+      document.querySelectorAll('.search-cat-option').forEach(o => o.classList.toggle('active', o === opt));
+      categoryBtn.classList.remove('open');
+      categoryDropdown.classList.remove('open');
+      renderResultsPanel(); // re-filter immediately, no re-fetch needed
+    });
+  });
 
   // ----- CHOICE MODAL -----
   const choiceModal = document.getElementById("choiceModal");
