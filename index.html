@@ -273,6 +273,11 @@
     user-select: text;
     -webkit-touch-callout: default;
   }
+  /* Re-enable scrollbar thumb dragging — user-select:none on * blocks it */
+  *::-webkit-scrollbar-thumb {
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
 
   /* ----- Custom right-click context menu (Refresh only) ----- */
   #customContextMenu {
@@ -6318,18 +6323,11 @@
     if (!pad) return;
     pad.innerHTML = '';
     const btnStyle = 'border:1.5px solid var(--border-2);background:var(--surface-2);border-radius:14px;font-weight:700;color:var(--text);cursor:pointer;transition:all 0.1s;';
-    [1,2,3,4,5,6,7,8,9,'',0,'del'].forEach(k => {
-      const b = document.createElement('button');
-      b.style.cssText = btnStyle;
-      b.innerHTML = k === 'del' ? '⌫' : k === '' ? '' : k;
-      if (k === '') { b.style.visibility='hidden'; pad.appendChild(b); return; }
-      b.addEventListener('click', () => { b.style.transform='scale(0.9)'; setTimeout(()=>b.style.transform='',100); onDigit(String(k)); });
-      b.addEventListener('touchstart', () => b.style.background='var(--surface-3)', {passive:true});
-      b.addEventListener('touchend',   () => b.style.background='var(--surface-2)', {passive:true});
-      pad.appendChild(b);
-    });
-    // Shared in-flight guard — prevents rapid keyboard/click entry from
-    // queuing multiple simultaneous async PIN checks against Firebase.
+
+    // Keyboard is gated behind an explicit click/tap on the pad.
+    // This prevents the inactivity-lock screen being bypassed by
+    // incidental typing before the user has touched the PIN pad.
+    let pinPadActivated = false;
     let pinCheckInFlight = false;
     const safeOnDigit = (d) => {
       if (!pinCheckInFlight) {
@@ -6337,27 +6335,29 @@
         Promise.resolve(onDigit(d)).finally(() => { pinCheckInFlight = false; });
       }
     };
-    // Re-bind click handlers on already-created buttons to use safeOnDigit
-    pad.querySelectorAll('button').forEach(b => {
-      const k = b.innerHTML === '⌫' ? 'del' : b.innerHTML;
-      if (k === '' || b.style.visibility === 'hidden') return;
-      b.replaceWith(b.cloneNode(true)); // remove old listener
+
+    [1,2,3,4,5,6,7,8,9,'',0,'del'].forEach(k => {
+      const b = document.createElement('button');
+      b.style.cssText = btnStyle;
+      b.innerHTML = k === 'del' ? '⌫' : k === '' ? '' : k;
+      if (k === '') { b.style.visibility = 'hidden'; pad.appendChild(b); return; }
+      b.addEventListener('click', () => {
+        pinPadActivated = true;
+        b.style.transform = 'scale(0.9)';
+        setTimeout(() => b.style.transform = '', 100);
+        safeOnDigit(String(k));
+      });
+      b.addEventListener('touchstart', () => b.style.background = 'var(--surface-3)', { passive: true });
+      b.addEventListener('touchend',   () => { b.style.background = 'var(--surface-2)'; pinPadActivated = true; }, { passive: true });
+      pad.appendChild(b);
     });
-    pad.querySelectorAll('button').forEach(b => {
-      const k = b.innerHTML === '⌫' ? 'del' : b.innerHTML;
-      if (!k || b.style.visibility === 'hidden') return;
-      b.addEventListener('click', () => { b.style.transform='scale(0.9)'; setTimeout(()=>b.style.transform='',100); safeOnDigit(k); });
-    });
-    // Keyboard support — guards:
-    // 1. Ignore if focus is on an input/textarea/select so typing in a
-    //    password field can't simultaneously advance the PIN
-    // 2. preventDefault stops the digit from also firing other global listeners
-    // 3. In-flight flag (via safeOnDigit) prevents rapid-typing double-submit
+
     el._pinKeyHandler = (e) => {
+      if (!pinPadActivated) return;                            // must tap pad first
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.key >= '0' && e.key <= '9') { e.preventDefault(); safeOnDigit(e.key); }
-      else if (e.key === 'Backspace') { e.preventDefault(); safeOnDigit('del'); }
+      else if (e.key === 'Backspace')    { e.preventDefault(); safeOnDigit('del'); }
     };
     document.removeEventListener('keydown', el._pinKeyHandler);
     document.addEventListener('keydown', el._pinKeyHandler);
@@ -7611,8 +7611,8 @@
     customCtxMenu.style.top  = y + 'px';
     customCtxMenu.classList.add('visible');
   });
-  document.addEventListener('click',   () => customCtxMenu.classList.remove('visible'));
-  document.addEventListener('scroll',  () => customCtxMenu.classList.remove('visible'), true);
+  document.addEventListener('click',  () => customCtxMenu.classList.remove('visible'));
+  document.addEventListener('scroll', () => customCtxMenu.classList.remove('visible'), true);
   document.getElementById('customCtxRefresh').addEventListener('click', () => {
     customCtxMenu.classList.remove('visible');
     refreshFilesAndSync(null);
@@ -7623,50 +7623,6 @@
   document.addEventListener('copy',      (e) => { if (!e.target.closest('input, textarea, [contenteditable]')) e.preventDefault(); });
   document.addEventListener('cut',       (e) => { if (!e.target.closest('input, textarea, [contenteditable]')) e.preventDefault(); });
   document.addEventListener('dragstart', (e) => { if (!e.target.closest('input, textarea, [contenteditable]')) e.preventDefault(); });
-
-  // ── 3. PIN KEYBOARD FIX — require explicit pad tap before keyboard works ─
-  // Overrides the buildPinPad function defined earlier with a version that
-  // gates keyboard input behind pinPadActivated — set only when the user
-  // physically clicks or taps a button on the pad. This prevents the inactivity
-  // lock screen from being bypassed by typing without touching the pad first.
-  buildPinPad = function(el, onDigit) {
-    const pad = el.querySelector('#pinPad');
-    if (!pad) return;
-    pad.innerHTML = '';
-    const btnStyle = 'border:1.5px solid var(--border-2);background:var(--surface-2);border-radius:14px;font-weight:700;color:var(--text);cursor:pointer;transition:all 0.1s;';
-    let pinPadActivated = false;
-    let pinCheckInFlight = false;
-    const safeOnDigit = (d) => {
-      if (!pinCheckInFlight) {
-        pinCheckInFlight = true;
-        Promise.resolve(onDigit(d)).finally(() => { pinCheckInFlight = false; });
-      }
-    };
-    [1,2,3,4,5,6,7,8,9,'',0,'del'].forEach(k => {
-      const b = document.createElement('button');
-      b.style.cssText = btnStyle;
-      b.innerHTML = k === 'del' ? '⌫' : k === '' ? '' : k;
-      if (k === '') { b.style.visibility='hidden'; pad.appendChild(b); return; }
-      b.addEventListener('click', () => {
-        pinPadActivated = true;
-        b.style.transform='scale(0.9)'; setTimeout(()=>b.style.transform='',100);
-        safeOnDigit(String(k));
-      });
-      b.addEventListener('touchstart', () => b.style.background='var(--surface-3)', {passive:true});
-      b.addEventListener('touchend',   () => { b.style.background='var(--surface-2)'; pinPadActivated = true; }, {passive:true});
-      pad.appendChild(b);
-    });
-    // Keyboard only works after the user has explicitly clicked/tapped a pad button
-    el._pinKeyHandler = (e) => {
-      if (!pinPadActivated) return;
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      if (e.key >= '0' && e.key <= '9') { e.preventDefault(); safeOnDigit(e.key); }
-      else if (e.key === 'Backspace')    { e.preventDefault(); safeOnDigit('del'); }
-    };
-    document.removeEventListener('keydown', el._pinKeyHandler);
-    document.addEventListener('keydown', el._pinKeyHandler);
-  };
 
 </script>
 </body>
