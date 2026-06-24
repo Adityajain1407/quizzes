@@ -1498,7 +1498,6 @@
   .cal-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
   .cal-dot.holiday { background: #e53935; }
   .cal-dot.mp { background: #f57c00; }
-  .cal-dot.personal { background: var(--accent); }
   /* Day events popup */
   .cal-day-modal {
     display: none;
@@ -2818,7 +2817,6 @@
     .pin-pad { max-width: 200px !important; }
   }
 </style>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body data-theme="default">
 
@@ -2944,48 +2942,12 @@
         <button class="settings-pill" id="dataMgmtPillBtn" onclick="openDataMgmtModal()">
           <span>🗂️</span><span>Data Management</span>
         </button>
-        <button class="settings-pill" id="gcalPillBtn" onclick="openGCalModal()">
-          <span>🗓️</span><span>Google Calendar</span><span id="gcalConnectedDot" style="display:none;width:7px;height:7px;border-radius:50%;background:#2e7d32;margin-left:2px;"></span>
-        </button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- GOOGLE CALENDAR MODAL -->
-<div id="gcalModal" class="gcal-modal-overlay">
-  <div class="gcal-modal-card">
-    <div class="gcal-modal-header">
-      <h3>🗓️ Google Calendar</h3>
-      <button class="gcal-close" id="closeGCalBtn">&times;</button>
-    </div>
-    <div class="gcal-modal-body">
-      <!-- Holidays -->
-      <div class="gcal-card-section">
-        <div class="gcal-section-title">📅 Holidays</div>
-        <p>Shown automatically — no sign-in needed.</p>
-        <div class="gcal-legend">
-          <div class="gcal-legend-item"><span style="width:8px;height:8px;border-radius:50%;background:#e53935;display:inline-block;"></span>National &amp; religious</div>
-          <div class="gcal-legend-item"><span style="width:8px;height:8px;border-radius:50%;background:#f57c00;display:inline-block;"></span>Madhya Pradesh</div>
-        </div>
-      </div>
-      <!-- Personal calendar -->
-      <div class="gcal-card-section">
-        <div class="gcal-section-title">👤 Your Google Calendar</div>
-        <p>Connect your account to see personal events. Each user's calendar is private.</p>
-        <div class="gcal-connect-row">
-          <span class="gcal-connect-status" id="gcalStatusLabel">Not connected</span>
-          <button class="gcal-btn" id="gcalConnectBtn">Connect</button>
-        </div>
-        <div id="gcalConnectedInfo" class="gcal-connected-info" style="display:none;">
-          <div class="gcal-email" id="gcalConnectedEmail"></div>
-          <div class="gcal-note">Your events are shown on the calendar.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- CALENDAR DAY EVENTS MODAL -->
 <div id="calDayModal" class="cal-day-modal">
   <div class="cal-day-modal-card">
@@ -7739,10 +7701,8 @@
     if (installBtn) installBtn.style.display = 'none';
     deferredInstallPrompt = null;
   });
-  // ── GOOGLE CALENDAR INTEGRATION ──────────────────────────────────────────
+  // ── GOOGLE CALENDAR INTEGRATION — HOLIDAYS ONLY ──────────────────────────
   const GCAL_API_KEY    = 'AIzaSyCO9_PtQeMFNR-pKhoVCC0AM7azM6GmCUY';
-  const GCAL_CLIENT_ID  = '460932863387-qdhrlcpl463cet2jerusfrqfu1sungi7.apps.googleusercontent.com';
-  const GCAL_SCOPES     = 'https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/userinfo.email';
   const HOLIDAY_CALENDARS = [
     'en.indian%23holiday%40group.v.calendar.google.com',       // National public holidays
     'en.hinduism%23holiday%40group.v.calendar.google.com',     // Hindu festivals
@@ -7789,16 +7749,7 @@
       .map(h => ({ day: h.d, name: h.name, type: 'mp' }));
   }
 
-  // Per-user token storage — each portal user has their own GCal token
-  function gcalTokenKey()  { return `gcal_token_${currentUser || 'guest'}`; }
-  function gcalEmailKey()  { return `gcal_email_${currentUser || 'guest'}`; }
-  function getGCalToken()  { return localStorage.getItem(gcalTokenKey()) || ''; }
-  function getGCalEmail()  { return localStorage.getItem(gcalEmailKey()) || ''; }
-  function setGCalToken(t) { if (t) localStorage.setItem(gcalTokenKey(), t); else localStorage.removeItem(gcalTokenKey()); }
-  function setGCalEmail(e) { if (e) localStorage.setItem(gcalEmailKey(), e); else localStorage.removeItem(gcalEmailKey()); }
-  function isGCalConnected() { return !!getGCalToken(); }
-
-  // In-memory event cache: { "YYYY-MM": { holidays: [...], personal: [...] } }
+  // In-memory event cache: { "YYYY-MM": { holidays: [...] } }
   const gcalCache = {};
 
   // Fetch India public holidays for a given year-month (no auth needed)
@@ -7833,104 +7784,7 @@
     } catch(e) { return getMPHolidays(year, month); }
   }
 
-  // Fetch personal Google Calendar events for a given year-month (OAuth token required)
-  async function fetchPersonalEvents(year, month) {
-    const token = getGCalToken();
-    if (!token) return [];
-    const key = `${year}-${String(month+1).padStart(2,'0')}`;
-    if (gcalCache[key]?.personal !== undefined) return gcalCache[key].personal;
-    try {
-      const tMin = new Date(year, month, 1).toISOString();
-      const tMax = new Date(year, month+1, 0, 23, 59, 59).toISOString();
-      const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(tMin)}&timeMax=${encodeURIComponent(tMax)}&singleEvents=true&orderBy=startTime&maxResults=100`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.status === 401) { setGCalToken(''); setGCalEmail(''); updateGCalUI(); return []; }
-      if (!res.ok) { if (!gcalCache[key]) gcalCache[key] = {}; gcalCache[key].personal = []; return []; }
-      const data = await res.json();
-      const events = (data.items || []).map(e => {
-        const start = e.start?.date || e.start?.dateTime || '';
-        const day = parseInt(start.split('T')[0].split('-')[2]);
-        const time = e.start?.dateTime ? new Date(e.start.dateTime).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : 'All day';
-        return { day, name: e.summary || '(No title)', time };
-      }).filter(e => e.day);
-      if (!gcalCache[key]) gcalCache[key] = {};
-      gcalCache[key].personal = events;
-      return events;
-    } catch(e) { return []; }
-  }
-
-  // OAuth: request access token using Google Identity Services token client
-  let gcalTokenClient = null;
-  function initGCalTokenClient() {
-    if (!window.google?.accounts?.oauth2) return;
-    gcalTokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GCAL_CLIENT_ID,
-      scope: GCAL_SCOPES,
-      callback: async (resp) => {
-        if (resp.error) { showToast('❌ Google Calendar connection failed'); return; }
-        setGCalToken(resp.access_token);
-        // Fetch user email to display
-        try {
-          const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${resp.access_token}` }
-          });
-          if (r.ok) { const d = await r.json(); setGCalEmail(d.email || ''); }
-        } catch(e) {}
-        updateGCalUI();
-        // Clear cache so next renderCalendar picks up personal events
-        Object.keys(gcalCache).forEach(k => { if (gcalCache[k]) delete gcalCache[k].personal; });
-        renderCalendar();
-        showToast('✅ Google Calendar connected');
-      }
-    });
-  }
-
-  function connectGCal() {
-    if (!gcalTokenClient) { initGCalTokenClient(); }
-    if (!gcalTokenClient) { showToast('⚠️ Google sign-in not ready yet — try again'); return; }
-    gcalTokenClient.requestAccessToken();
-  }
-
-  function disconnectGCal() {
-    const token = getGCalToken();
-    if (token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(token, () => {});
-    setGCalToken(''); setGCalEmail('');
-    Object.keys(gcalCache).forEach(k => { if (gcalCache[k]) delete gcalCache[k].personal; });
-    updateGCalUI();
-    renderCalendar();
-    showToast('Google Calendar disconnected');
-  }
-
-  function updateGCalUI() {
-    const connected = isGCalConnected();
-    const dot = document.getElementById('gcalConnectedDot');
-    const statusLabel = document.getElementById('gcalStatusLabel');
-    const connectBtn  = document.getElementById('gcalConnectBtn');
-    const connInfo    = document.getElementById('gcalConnectedInfo');
-    const connEmail   = document.getElementById('gcalConnectedEmail');
-    if (dot) dot.style.display = connected ? 'inline-block' : 'none';
-    if (statusLabel) { statusLabel.textContent = connected ? 'Connected' : 'Not connected'; statusLabel.className = 'gcal-connect-status' + (connected ? ' connected' : ''); }
-    if (connectBtn) { connectBtn.textContent = connected ? 'Disconnect' : 'Connect Google Calendar'; connectBtn.className = connected ? 'gcal-btn disconnect' : 'gcal-btn'; }
-    if (connInfo)   connInfo.style.display = connected ? 'block' : 'none';
-    if (connEmail)  connEmail.textContent = getGCalEmail() || 'Google Account';
-  }
-
-  function openGCalModal() {
-    document.getElementById('choiceModal')?.classList.remove('active');
-    updateGCalUI();
-    document.getElementById('gcalModal').classList.add('active');
-  }
-
-  document.getElementById('closeGCalBtn').addEventListener('click', () => {
-    document.getElementById('gcalModal').classList.remove('active');
-  });
-  document.getElementById('gcalModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('gcalModal')) document.getElementById('gcalModal').classList.remove('active');
-  });  document.getElementById('gcalConnectBtn').addEventListener('click', () => {
-    if (isGCalConnected()) disconnectGCal(); else connectGCal();
-  });
-
-  // Enhanced renderCalendar — fetches holidays + personal events, renders dots, handles day click popup
+  // Enhanced renderCalendar — fetches holidays, renders dots, handles day click popup
   let calViewYear, calViewMonth;
   function renderCalendar() {
     const now = new Date();
@@ -7982,19 +7836,11 @@
   }
 
   async function loadCalendarEvents(year, month) {
-    const [holidays, personal] = await Promise.all([
-      fetchHolidays(year, month),
-      fetchPersonalEvents(year, month)
-    ]);
-    // Group by day
+    const holidays = await fetchHolidays(year, month);
     const byDay = {};
     for (const h of holidays) {
-      if (!byDay[h.day]) byDay[h.day] = { holidays: [], personal: [] };
+      if (!byDay[h.day]) byDay[h.day] = { holidays: [] };
       byDay[h.day].holidays.push(h);
-    }
-    for (const p of personal) {
-      if (!byDay[p.day]) byDay[p.day] = { holidays: [], personal: [] };
-      byDay[p.day].personal.push(p);
     }
     const wrap = document.getElementById('calendarWrap');
     if (!wrap) return;
@@ -8006,7 +7852,6 @@
       const mpHols  = events.holidays.filter(h => h.type === 'mp');
       if (natHols.length) dotsEl.innerHTML += `<span class="cal-dot holiday" title="${natHols.map(h=>h.name).join(', ')}"></span>`;
       if (mpHols.length)  dotsEl.innerHTML += `<span class="cal-dot mp" title="${mpHols.map(h=>h.name).join(', ')}"></span>`;
-      if (events.personal.length) dotsEl.innerHTML += `<span class="cal-dot personal"></span>`;
     }
   }
 
@@ -8019,13 +7864,9 @@
   });
 
   async function showCalDayPopup(cell, day, year, month) {
-    const [holidays, personal] = await Promise.all([
-      fetchHolidays(year, month),
-      fetchPersonalEvents(year, month)
-    ]);
+    const holidays = await fetchHolidays(year, month);
     const dayHols = holidays.filter(h => h.day === day);
-    const dayEvts = personal.filter(p => p.day === day);
-    if (!dayHols.length && !dayEvts.length) return;
+    if (!dayHols.length) return;
 
     const dateStr = new Date(year, month, day).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     document.getElementById('calDayModalTitle').textContent = dateStr;
@@ -8037,20 +7878,9 @@
         <div><div class="cal-ev-name">${h.name}</div><div class="cal-ev-time">${h.type === 'mp' ? 'MP State Holiday' : 'Public Holiday'}</div></div>
       </div>`;
     }
-    for (const e of dayEvts) {
-      body += `<div class="cal-ev-row">
-        <span class="cal-dot personal"></span>
-        <div><div class="cal-ev-name">${e.name}</div><div class="cal-ev-time">${e.time}</div></div>
-      </div>`;
-    }
     document.getElementById('calDayModalBody').innerHTML = body;
     document.getElementById('calDayModal').classList.add('active');
   }
-
-  // Init GCal token client once Google Identity Services loads
-  window.addEventListener('load', () => {
-    setTimeout(() => { initGCalTokenClient(); updateGCalUI(); }, 800);
-  });
 
   async function triggerInstallApp() {
     if (!deferredInstallPrompt) return;
