@@ -1,11 +1,16 @@
-// Aditya's Portal — Service Worker
-// Strategy: cache the app shell (index.html, manifest, icons) for offline access
-// and instant repeat loads. Everything else (quiz HTML files, Firebase calls,
-// GitHub API) goes network-first, since that content changes frequently and
-// must always reflect the latest version — the cache here is purely a fallback
-// for when the network is unavailable.
+// Aditya's Portal — Service Worker v2
+// Strategy:
+//   • App shell (index.html, manifest, icons) → Cache-first + background refresh
+//   • Quiz HTML files (same-origin .html) → Network-first, fallback to cache
+//   • search-index.json → Network-first, fallback to cache
+//   • Cross-origin (Firebase, GitHub API, fonts, CDN) → Network-only (bypass)
+//
+// Hard Refresh from the portal sends SKIP_WAITING so the new SW activates
+// immediately without requiring a second page load.
 
-const CACHE_NAME = 'aditya-portal-shell-v1';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME    = `aditya-portal-${CACHE_VERSION}`;
+
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,70 +22,113 @@ const APP_SHELL = [
   './icons/apple-touch-icon.png'
 ];
 
+// ── INSTALL — pre-cache app shell ──────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
+      // Do NOT skipWaiting here — wait for the portal's Hard Refresh to trigger
+      // it explicitly via the message below. This prevents half-updated states.
   );
 });
 
+// ── ACTIVATE — clean up old caches ─────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((names) =>
-      Promise.all(
-        names.filter((name) => name !== CACHE_NAME)
-             .map((name) => caches.delete(name))
-      )
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((names) => Promise.all(
+        names
+          .filter((n) => n.startsWith('aditya-portal-') && n !== CACHE_NAME)
+          .map((n) => caches.delete(n))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
+// ── MESSAGE — Hard Refresh from the portal triggers immediate activation ───
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// ── FETCH ──────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Only handle GET requests — everything else (POST to Firebase, etc.) passes through untouched.
+  // Only handle GET
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  // Never intercept cross-origin requests (Firebase, GitHub API, fonts, etc.) —
-  // let the browser handle those normally so auth/headers work correctly.
+  // ── Cross-origin → bypass completely (Firebase, GitHub API, Google fonts,
+  //    CDNs, Lingva translation servers, etc.)
   if (url.origin !== self.location.origin) return;
 
-  const isAppShellFile = APP_SHELL.some((path) => {
-    const resolved = new URL(path, self.location.origin + self.registration.scope).href;
-    return resolved === request.url || request.url === resolved;
+  const path = url.pathname;
+
+  // ── App shell files → Cache-first, background refresh ──────────────────
+  const isShell = APP_SHELL.some((p) => {
+    const resolved = new URL(p, self.location).href;
+    return resolved === request.url || url.pathname === new URL(p, self.location).pathname;
   });
 
-  if (isAppShellFile) {
-    // App shell: cache-first for instant loads, but refresh the cache in the
-    // background so the next launch picks up any update.
+  if (isShell) {
     event.respondWith(
       caches.match(request).then((cached) => {
-        const networkFetch = fetch(request).then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+        // Kick off a background refresh regardless
+        const fresh = fetch(request).then((res) => {
+          if (res && res.ok) {
+            caches.open(CACHE_NAME).then((c) => c.put(request, res.clone()));
           }
-          return response;
-        }).catch(() => cached);
-        return cached || networkFetch;
+          return res;
+        }).catch(() => null);
+        // Serve cached immediately; if no cache yet, wait for network
+        return cached ?? fresh;
       })
     );
-  } else {
-    // Everything else same-origin (quiz HTML files, etc.): network-first,
-    // falling back to cache only if completely offline.
+    return;
+  }
+
+  // ── search-index.json → Network-first, cache fallback ──────────────────
+  if (path.endsWith('search-index.json')) {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response && response.ok) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+        .then((res) => {
+          if (res && res.ok) {
+            caches.open(CACHE_NAME).then((c) => c.put(request, res.clone()));
           }
-          return response;
+          return res;
         })
         .catch(() => caches.match(request))
     );
+    return;
   }
+
+  // ── Quiz HTML files (.html same-origin, not index.html) → Network-first ─
+  if (path.endsWith('.html') && !path.endsWith('/index.html') && !path.endsWith('/about.html') && !path.endsWith('/terms.html') && !path.endsWith('/privacy.html')) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res && res.ok) {
+            caches.open(CACHE_NAME).then((c) => c.put(request, res.clone()));
+          }
+          return res;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // ── Everything else same-origin → Network-first, cache as fallback ──────
+  event.respondWith(
+    fetch(request)
+      .then((res) => {
+        if (res && res.ok) {
+          caches.open(CACHE_NAME).then((c) => c.put(request, res.clone()));
+        }
+        return res;
+      })
+      .catch(() => caches.match(request))
+  );
 });

@@ -1,38 +1,30 @@
 {
   "name": "Aditya's Portal",
-  "short_name": "Aditya's Portal",
-  "description": "Quiz hosting portal with favourites, recents, and saved questions.",
+  "short_name": "Quiz Portal",
+  "description": "UPSC & competitive exam quiz portal with folders, revision mode, leaderboard and saved questions.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone", "minimal-ui", "browser"],
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#f97316",
+  "background_color": "#0f0f1a",
   "theme_color": "#f97316",
+  "prefer_related_applications": false,
+  "categories": ["education"],
+  "lang": "en-IN",
   "icons": [
+    { "src": "icons/icon-192.png",          "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png",          "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [],
+  "shortcuts": [
     {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icons/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "name": "Open Portal",
+      "short_name": "Portal",
+      "description": "Browse quiz folders",
+      "url": "./"
     }
   ]
 }

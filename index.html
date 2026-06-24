@@ -350,6 +350,10 @@
   html {
     overflow-x: hidden;
     overscroll-behavior-y: none;
+    /* Smooth font rendering for app-like crispness */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
@@ -358,6 +362,79 @@
     max-width: 100%;
   }
 
+  /* ── NATIVE APP PAGE TRANSITIONS ────────────────────────────────────────
+     Folder drill-down: new content slides in from the right (like iOS)
+     Back navigation: slides out to the right */
+  @keyframes slideInRight  { from { opacity:0; transform:translateX(40px);  } to { opacity:1; transform:translateX(0); } }
+  @keyframes slideInLeft   { from { opacity:0; transform:translateX(-40px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes slideOutRight { from { opacity:1; transform:translateX(0); }    to { opacity:0; transform:translateX(40px); } }
+  @keyframes slideOutLeft  { from { opacity:1; transform:translateX(0); }    to { opacity:0; transform:translateX(-40px); } }
+
+  .nav-enter-forward  { animation: slideInRight  0.22s cubic-bezier(.2,.9,.4,1) both; }
+  .nav-enter-back     { animation: slideInLeft   0.22s cubic-bezier(.2,.9,.4,1) both; }
+  .nav-exit-forward   { animation: slideOutLeft  0.18s cubic-bezier(.4,0,.6,1) both; }
+  .nav-exit-back      { animation: slideOutRight 0.18s cubic-bezier(.4,0,.6,1) both; }
+
+  /* ── RIPPLE EFFECT on folder cards and quiz items ───────────────────── */
+  .folder-card, .quiz-item, .quiz-link {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.18;
+    transform: scale(0);
+    animation: rippleAnim 0.5s cubic-bezier(.4,0,.2,1) forwards;
+    pointer-events: none;
+  }
+  @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+  /* ── NATIVE TOUCH ACTIVE STATES ─────────────────────────────────────── */
+  .folder-card:active  { transform: scale(0.97); transition: transform 0.1s; }
+  .quiz-item:active    { transform: scale(0.98); transition: transform 0.1s; }
+  .ctx-menu-item:active { background: var(--surface-3); }
+
+  /* ── MINIMUM TOUCH TARGETS (44px Apple HIG / 48dp Material) ─────────── */
+  button, .icon-btn, .nav-btn, .breadcrumb-item,
+  .folder-card, .quiz-item, .settings-pill, .choice-card {
+    min-height: 44px;
+  }
+  .icon-btn { min-width: 44px; }
+
+  /* ── MOMENTUM SCROLLING on all scrollable areas ─────────────────────── */
+  .hub-scroll, .nav-pane, .folders-grid, .library-body,
+  .results-area, .history-list, .hub-scroll, .breadcrumb-bar {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── BOTTOM NAV SAFE AREA (home indicator on modern phones) ─────────── */
+  .bottom-bar, .stats-bar {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  /* ── SMOOTH MODAL ENTRANCE ──────────────────────────────────────────── */
+  .choice-modal.active > * {
+    animation: modalSlideUp 0.28s cubic-bezier(.2,.9,.4,1) both;
+  }
+  @keyframes modalSlideUp { from { opacity:0; transform:translateY(24px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+  .cal-day-modal.active > * {
+    animation: modalSlideUp 0.28s cubic-bezier(.2,.9,.4,1) both;
+  }
+  .gcal-modal-overlay.active > * {
+    animation: modalSlideUp 0.28s cubic-bezier(.2,.9,.4,1) both;
+  }
+
+  /* ── CONTEXT MENU ENTRANCE ──────────────────────────────────────────── */
+  .ctx-menu    { animation: ctxFadeIn 0.15s cubic-bezier(.2,.9,.4,1) both; }
+  #customContextMenu.visible { animation: ctxFadeIn 0.15s cubic-bezier(.2,.9,.4,1) both; }
+
+  /* ── AUTH CARD ENTRANCE ─────────────────────────────────────────────── */
+  .auth-card { animation: modalSlideUp 0.3s cubic-bezier(.2,.9,.4,1) both; }
+
+  /* ── FOLDER SECTION TITLE spacing ──────────────────────────────────── */
   .pull-refresh-indicator {
     text-align: center;
     font-size: 0.85rem;
@@ -8230,6 +8307,64 @@
     document.getElementById('calDayModalBody').innerHTML = body;
     document.getElementById('calDayModal').classList.add('active');
   }
+
+  // ── NATIVE APP ANIMATIONS ──────────────────────────────────────────────
+
+  // Track navigation direction for slide animation
+  // +1 = drilling forward (into folder), -1 = going back
+  let _navDirection = 0;
+  let _lastPathLen  = 0;
+
+  // Wrap renderNavigationView to auto-detect direction and animate
+  const _origRenderNav = renderNavigationView;
+  renderNavigationView = function() {
+    const newLen = currentPath.length;
+    _navDirection = newLen > _lastPathLen ? 1 : newLen < _lastPathLen ? -1 : 0;
+    _lastPathLen = newLen;
+    _origRenderNav();
+    if (_navDirection !== 0) {
+      const main = document.querySelector('.main');
+      if (main) {
+        const cls = _navDirection > 0 ? 'nav-enter-forward' : 'nav-enter-back';
+        main.classList.remove('nav-enter-forward','nav-enter-back','nav-exit-forward','nav-exit-back');
+        void main.offsetWidth; // force reflow
+        main.classList.add(cls);
+        main.addEventListener('animationend', () => main.classList.remove(cls), { once: true });
+      }
+    }
+  };
+
+  // Ripple effect on folder cards and quiz items
+  function addRipple(el, e) {
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX ?? e.touches?.[0]?.clientX ?? rect.left + rect.width/2) - rect.left;
+    const y = (e.clientY ?? e.touches?.[0]?.clientY ?? rect.top + rect.height/2) - rect.top;
+    const size = Math.max(rect.width, rect.height) * 1.5;
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x - size/2}px;top:${y - size/2}px;`;
+    el.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+  }
+
+  // Attach ripple to folder cards and quiz items (called after each renderNavigationView)
+  const _origRenderNav2 = renderNavigationView;
+  renderNavigationView = function() {
+    _origRenderNav2();
+    document.querySelectorAll('.folder-card, .quiz-item, .quiz-link').forEach(el => {
+      el.addEventListener('pointerdown', (e) => {
+        addRipple(el, e);
+        navigator.vibrate?.(8); // subtle haptic on tap
+      }, { once: false, passive: true });
+    });
+  };
+
+  // Haptic on context menu open
+  const _origShowCtxMenu = showCtxMenu;
+  showCtxMenu = function(...args) {
+    navigator.vibrate?.(15);
+    _origShowCtxMenu(...args);
+  };
 
   async function triggerInstallApp() {
     if (!deferredInstallPrompt) return;
