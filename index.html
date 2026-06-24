@@ -1224,7 +1224,15 @@
   .hub-section + .hub-section {
     margin-top: 28px;
   }
-  .hub-section-title {
+  .folder-section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 18px 0 10px;
+  }
+  .folder-section-title:first-child { margin-top: 0; }
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -3408,6 +3416,7 @@
     const savedItems = currentNode.__saved__ || [];
     let html = "";
     if (subfolders.length) {
+      html += `<div class="folder-section-title">📁 Folders</div>`;
       html += `<div class="folders-grid${viewMode === 'list' ? ' list-view' : ''}">`;
       for (const [name, node] of subfolders) {
         const count = savedMode ? countSaved(node) : countQuizzes(node);
@@ -3426,6 +3435,7 @@
       html += `</div>`;
     }
     if (quizzes.length) {
+      html += `<div class="folder-section-title">📄 Files</div>`;
       // Sort by numeric prefix in filename (1__, 2__, 10__ etc), fallback to name
       const sorted = [...quizzes].sort((a, b) => {
         const numA = parseInt(a.path.split('/').pop().match(/^(\d+)/)?.[1] || '9999');
