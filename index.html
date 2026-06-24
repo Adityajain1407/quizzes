@@ -2713,7 +2713,6 @@
 
   /* ── ADMIN-ONLY UI HIDING ── */
   body.non-admin .sel-admin-only { display: none !important; }
-  body.non-admin #newFolderBtn   { display: none !important; }
   body.non-admin .view-toggle-divider { display: none !important; }
 
   /* ── AUTH SCREEN ── */
@@ -2882,8 +2881,9 @@
 </div>
 <div id="ctxMenuContainer"></div>
 <div id="customContextMenu">
-  <button id="customCtxRefresh">↻ &nbsp;Refresh</button>
+  <button id="customCtxRefresh">↻ &nbsp;Hard Refresh</button>
   <button id="customCtxUpload" class="sel-admin-only">⬆ &nbsp;Upload Quiz</button>
+  <button id="customCtxNewFolder" class="sel-admin-only" style="border-top: 1px solid var(--border); margin-top:3px; padding-top:10px;">📁 &nbsp;New Folder</button>
 </div>
 <!-- Hidden file input for quiz upload -->
 <input type="file" id="quizUploadInput" accept=".html" style="display:none" multiple>
@@ -3617,13 +3617,10 @@
         <div class="view-toggle-group">
           <button class="view-toggle-btn${viewMode==='grid'?' active':''}" id="gridViewBtn">Grid</button>
           <button class="view-toggle-btn${viewMode==='list'?' active':''}" id="listViewBtn">List</button>
-          <div class="view-toggle-divider"></div>
-          <button class="view-toggle-btn" id="newFolderBtn">New Folder</button>
         </div>
       </div>
     </div>`;
     breadcrumbContainer.innerHTML = html;
-    document.getElementById('newFolderBtn')?.addEventListener('click', openNewFolderModal);
     document.getElementById('gridViewBtn').addEventListener('click', () => setViewMode('grid'));
     document.getElementById('listViewBtn').addEventListener('click', () => setViewMode('list'));
     document.querySelectorAll(".breadcrumb-item").forEach(el=>{
@@ -7983,6 +7980,30 @@
   }
 
   // ── 1. CUSTOM RIGHT-CLICK MENU (Refresh only) ──────────────────────────
+  // Hard refresh — clears service worker caches then reloads, equivalent to
+  // Ctrl+Shift+R. Essential for PWA installs which have no address bar or
+  // browser refresh button to trigger a cache-bypassing reload.
+  async function hardRefresh() {
+    showToast('🔄 Hard refreshing...');
+    try {
+      // Tell the service worker to skip waiting and update immediately
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          await reg.update();
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      }
+      // Clear all Cache Storage caches
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+    } catch(e) {}
+    // Force reload bypassing HTTP cache
+    window.location.reload(true);
+  }
+
   const customCtxMenu = document.getElementById('customContextMenu');
 
   function showRefreshMenu(x, y) {
@@ -8030,8 +8051,13 @@
 
   document.getElementById('customCtxRefresh').addEventListener('click', () => {
     customCtxMenu.classList.remove('visible');
-    refreshFilesAndSync(null);
-    showToast('Refreshing...');
+    hardRefresh();
+  });
+
+  document.getElementById('customCtxNewFolder')?.addEventListener('click', () => {
+    customCtxMenu.classList.remove('visible');
+    if (!isAdmin()) { showToast('⚠️ Admin access required'); return; }
+    openNewFolderModal();
   });
 
   // ── Upload Quiz ──────────────────────────────────────────────────────────
