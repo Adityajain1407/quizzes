@@ -2857,24 +2857,30 @@
 
 <!-- GOOGLE CALENDAR MODAL -->
 <div id="gcalModal" class="choice-modal">
-  <div class="hub-panel" style="max-width:480px;">
-    <div class="hub-header">
-      <h3>🗓️ Google Calendar</h3>
-      <span class="close-choice" id="closeGCalBtn" style="position:static;font-size:1.6rem;">&times;</span>
+  <div style="background:var(--surface);border-radius:20px;max-width:420px;width:calc(100% - 32px);margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);">
+      <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text);">🗓️ Google Calendar</h3>
+      <span id="closeGCalBtn" style="font-size:1.6rem;cursor:pointer;color:var(--text-3);line-height:1;">&times;</span>
     </div>
-    <div class="hub-scroll" style="padding:16px 0 8px;">
-      <div class="hub-section" style="margin-bottom:0;">
-        <div class="hub-section-title">📅 India Public Holidays</div>
-        <p style="font-size:0.82rem;color:var(--text-2);margin:6px 0 14px;line-height:1.5;">Indian public holidays are shown automatically on the calendar. No sign-in needed.</p>
-        <div class="hub-section-title" style="margin-top:8px;">👤 Your Google Calendar</div>
-        <p style="font-size:0.82rem;color:var(--text-2);margin:6px 0 14px;line-height:1.5;">Connect your Google account to see your personal events on the calendar. Each user connects their own account — your events stay private.</p>
-        <div class="gcal-connect-row">
+    <!-- Body -->
+    <div style="padding:18px 20px 22px;display:flex;flex-direction:column;gap:16px;">
+      <!-- Holidays section -->
+      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;">
+        <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:6px;">📅 India Public Holidays</div>
+        <p style="margin:0;font-size:0.83rem;color:var(--text-2);line-height:1.5;">Shown automatically on the calendar — no sign-in needed. Tap any red dot to see the holiday name.</p>
+      </div>
+      <!-- Personal calendar section -->
+      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;">
+        <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:6px;">👤 Your Google Calendar</div>
+        <p style="margin:0 0 12px;font-size:0.83rem;color:var(--text-2);line-height:1.5;">Connect your Google account to see your personal events. Each user connects their own account — events stay private.</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
           <span class="gcal-connect-status" id="gcalStatusLabel">Not connected</span>
           <button class="gcal-btn" id="gcalConnectBtn">Connect Google Calendar</button>
         </div>
-        <div id="gcalConnectedInfo" style="display:none;margin-top:10px;padding:10px 12px;background:var(--surface-2);border-radius:10px;font-size:0.8rem;color:var(--text-2);">
-          <div id="gcalConnectedEmail" style="font-weight:600;color:var(--text);margin-bottom:4px;"></div>
-          <div>Events from your primary calendar are shown on the calendar.</div>
+        <div id="gcalConnectedInfo" style="display:none;margin-top:12px;padding:10px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border-2);">
+          <div id="gcalConnectedEmail" style="font-weight:700;font-size:0.85rem;color:var(--text);margin-bottom:3px;"></div>
+          <div style="font-size:0.78rem;color:var(--text-2);">Your calendar events are shown on the calendar.</div>
         </div>
       </div>
     </div>
