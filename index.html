@@ -299,7 +299,7 @@
   #customContextMenu button {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
     padding: 9px 14px;
     background: transparent;
@@ -312,6 +312,10 @@
     text-align: left;
     transition: background 0.12s;
     margin: 0;
+  }
+  #customContextMenu button svg {
+    flex-shrink: 0;
+    opacity: 0.8;
   }
   #customContextMenu button:hover {
     background: var(--surface-2);
@@ -2081,6 +2085,7 @@
   .ctx-menu-item:hover { background: var(--surface-2); }
   .ctx-menu-item.danger { color: var(--danger); }
   .ctx-menu-item.danger:hover { background: var(--danger-bg); }
+  .ctx-menu-item svg { flex-shrink: 0; opacity: 0.8; }
 
   /* Floating action bar shown when items are selected */
   .selection-bar {
@@ -2939,9 +2944,9 @@
 </div>
 <div id="ctxMenuContainer"></div>
 <div id="customContextMenu">
-  <button id="customCtxRefresh">↻ &nbsp;Hard Refresh</button>
-  <button id="customCtxUpload" class="sel-admin-only">⬆ &nbsp;Upload Quiz</button>
-  <button id="customCtxNewFolder" class="sel-admin-only">📁 &nbsp;New Folder</button>
+  <button id="customCtxRefresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> &nbsp;Hard Refresh</button>
+  <button id="customCtxUpload" class="sel-admin-only"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> &nbsp;Upload Quiz</button>
+  <button id="customCtxNewFolder" class="sel-admin-only"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg> &nbsp;New Folder</button>
 </div>
 <!-- Hidden file input for quiz upload -->
 <input type="file" id="quizUploadInput" accept=".html" style="display:none" multiple>
@@ -5225,16 +5230,25 @@
     menu.className = 'ctx-menu';
     menu.id = 'activeCtxMenu';
     const isStarred = isFavourited(path);
-    const starLabel = isStarred ? '⭐ Remove from Favourites' : '☆ Add to Favourites';
+
+    const svgStar     = isStarred
+      ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
+      : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+    const svgRename   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const svgMove     = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><polyline points="12 12 16 12 16 16"/><line x1="8" y1="16" x2="16" y2="16"/></svg>`;
+    const svgReset    = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>`;
+    const svgDelete   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+
+    const starLabel = isStarred ? 'Remove from Favourites' : 'Add to Favourites';
     const resetLogsBtn = (type === 'quiz' && admin)
-      ? `<button class="ctx-menu-item" id="ctxResetLogsBtn">🔄 Reset Logs</button>` : '';
+      ? `<button class="ctx-menu-item" id="ctxResetLogsBtn">${svgReset} Reset Logs</button>` : '';
     const adminBtns = admin ? `
-      <button class="ctx-menu-item" id="ctxRenameBtn">✏️ Rename</button>
-      <button class="ctx-menu-item" id="ctxMoveBtn">📂 Move</button>
+      <button class="ctx-menu-item" id="ctxRenameBtn">${svgRename} Rename</button>
+      <button class="ctx-menu-item" id="ctxMoveBtn">${svgMove} Move</button>
       ${resetLogsBtn}
-      <button class="ctx-menu-item danger" id="ctxDeleteBtn">🗑️ Delete</button>` : '';
+      <button class="ctx-menu-item danger" id="ctxDeleteBtn">${svgDelete} Delete</button>` : '';
     menu.innerHTML = `
-      <button class="ctx-menu-item" id="ctxStarBtn">${starLabel}</button>
+      <button class="ctx-menu-item" id="ctxStarBtn">${svgStar} ${starLabel}</button>
       ${adminBtns}
     `;
     container.appendChild(menu);
