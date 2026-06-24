@@ -261,20 +261,16 @@
     padding: 0;
     box-sizing: border-box;
   }
-  /* Prevent text selection on display-only UI elements only.
-     Do NOT include body, html, or div — these affect scrollbar
-     draggability on the page's main scroll container. */
-  .folders-grid, .folder-card, .file-list-item,
-  .nav-header, .top-bar, .bottom-bar, .sidebar,
-  .breadcrumb, .toolbar, .search-compact,
-  .library-item, .recent-item, .hub-section,
-  h1, h2, h3, h4, p, span, label {
+  /* Prevent text selection everywhere except inputs.
+     Using * is safe — the previous scrollbar issue was caused by
+     overscroll-behavior-y on body (now fixed), not user-select. */
+  *, *::before, *::after {
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
   }
-  /* Re-enable selection inside inputs */
+  /* Re-enable only where the user needs to type */
   input, textarea, [contenteditable="true"] {
     -webkit-user-select: text;
     -moz-user-select: text;
