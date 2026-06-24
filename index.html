@@ -2857,49 +2857,7 @@
   .setup-role-icon { font-size: 2rem; margin-bottom: 8px; }
   .setup-role-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
   .setup-role-desc { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; line-height: 1.4; }
-  .setup-engine-card {
-    border: 2px solid var(--border-2); border-radius: 16px;
-    padding: 16px; cursor: pointer; background: var(--surface-2);
-    transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px;
-    margin-bottom: 10px;
-  }
-  .setup-engine-card:hover { border-color: var(--accent); background: var(--accent-bg); }
-  .setup-engine-card.selected { border-color: var(--accent); background: var(--accent-bg); }
-  .setup-engine-icon { font-size: 1.8rem; flex-shrink: 0; }
-  .setup-engine-title { font-weight: 700; font-size: 0.92rem; color: var(--text); }
-  .setup-engine-badge {
-    display: inline-block; font-size: 0.65rem; font-weight: 700;
-    padding: 2px 7px; border-radius: 20px; margin-left: 6px;
-    background: var(--accent); color: #fff;
-  }
-  .setup-engine-desc { font-size: 0.76rem; color: var(--text-2); margin-top: 3px; line-height: 1.4; }
-  .setup-engine-warn {
-    background: rgba(224,48,48,0.08); border: 1.5px solid rgba(224,48,48,0.2);
-    border-radius: 12px; padding: 12px 14px; font-size: 0.8rem;
-    color: var(--danger); line-height: 1.5; margin: 10px 0;
-  }
-  .setup-lang-toggle {
-    display: inline-flex; border-radius: 40px; background: var(--surface-2);
-    border: 1px solid var(--border-2); padding: 2px; gap: 2px; margin-bottom: 16px;
-  }
-  .setup-lang-btn {
-    padding: 5px 14px; border: none; border-radius: 40px; font-size: 0.8rem;
-    font-weight: 600; cursor: pointer; background: transparent;
-    color: var(--text-3); transition: all 0.15s;
-  }
-  .setup-lang-btn.active { background: var(--accent); color: #fff; }
-  .setup-instruction-step {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-  }
   .setup-instruction-step:last-child { border-bottom: none; }
-  .setup-instruction-num {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--accent); color: #fff; font-size: 0.75rem;
-    font-weight: 700; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 1px;
-  }
-  .setup-instruction-text { font-size: 0.82rem; color: var(--text-2); line-height: 1.5; }
   .setup-btn {
     width: 100%; padding: 13px; border: none; border-radius: 40px;
     background: var(--accent); color: #fff; font-weight: 700;
@@ -6521,82 +6479,10 @@
     return html;
   }
 
-  // DeepL setup instructions — English and Hindi
-  const DEEPL_INSTRUCTIONS = {
-    en: [
-      { text: 'Go to <a href="https://deepl.com/pro-api" target="_blank" style="color:var(--accent);font-weight:700;">deepl.com/pro-api</a>' },
-      { text: 'Click <strong>"Sign up for free"</strong> — no credit card needed' },
-      { text: 'Enter your email and create a password, then verify your email' },
-      { text: 'Once logged in, go to your <strong>Account → API Keys</strong> section' },
-      { text: 'Click <strong>"Create API Key"</strong> → copy the key (ends in <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;">:fx</code>)' },
-      { text: 'Paste the key in the box below and click Activate' },
-    ],
-    hi: [
-      { text: '<a href="https://deepl.com/pro-api" target="_blank" style="color:var(--accent);font-weight:700;">deepl.com/pro-api</a> पर जाएं' },
-      { text: '<strong>"Sign up for free"</strong> पर क्लिक करें — कोई क्रेडिट कार्ड नहीं चाहिए' },
-      { text: 'अपना ईमेल और पासवर्ड दर्ज करें, फिर ईमेल verify करें' },
-      { text: 'लॉग इन करने के बाद <strong>Account → API Keys</strong> में जाएं' },
-      { text: '<strong>"Create API Key"</strong> पर क्लिक करें → key कॉपी करें (अंत में <code style="background:var(--surface-2);padding:1px 5px;border-radius:4px;">:fx</code> होगा)' },
-      { text: 'नीचे दिए box में key paste करें और Activate पर क्लिक करें' },
-    ]
-  };
-
-  function renderDeeplInstructions(lang) {
-    return DEEPL_INSTRUCTIONS[lang].map((s, i) =>
-      `<div class="setup-instruction-step">
-        <div class="setup-instruction-num">${i+1}</div>
-        <div class="setup-instruction-text">${s.text}</div>
-      </div>`
-    ).join('');
-  }
-
-  // For existing approved users who have a PIN but haven't done setup:
-  // Verify their PIN first, then run setup wizard steps 1-3, skip PIN creation
-  function showSetupPINForExisting(u, userData, onSuccess) {
-    // If Firebase was cleared, user has no PIN hash — go to PIN creation directly
-    if (!userData.pin) {
-      getSetupState(u).then(state => {
-        const s = state || { step: 1, role: null, engine: null, completed: false };
-        s._hasPIN = false;
-        showSetupStep(u, { ...s, step: Math.min(s.step || 1, 3) }, onSuccess);
-      });
-      return;
-    }
-    const html = authCard(`Welcome back, ${u}`,
-      'Please enter your PIN to continue setup',
-      `<div style="text-align:center;">
-        <div class="pin-dots" id="pinDots">
-          ${[0,1,2,3].map(i=>`<div class="pin-dot" data-i="${i}"></div>`).join('')}
-        </div>
-        <div class="pin-pad" id="pinPad"></div>
-        <div class="auth-error" id="pinErr"></div>
-      </div>`);
-    showAuthOverlay(html, el => {
-      let digits = '';
-      buildPinPad(el, async (d) => {
-        if (d === 'del') { digits = digits.slice(0,-1); }
-        else if (digits.length < 4) { digits += d; }
-        updatePinDots(el, digits);
-        if (digits.length === 4) {
-          const hash = await sha256(digits + u);
-          if (hash !== userData.pin) {
-            el.querySelector('#pinErr').textContent = 'Incorrect PIN — try again';
-            digits = ''; updatePinDots(el, digits); return;
-          }
-          // PIN correct — now run setup (skip PIN step at end)
-          const state = await getSetupState(u) || { step: 1, role: null, engine: null, completed: false };
-          // Mark that this user already has a PIN so wizard skips PIN creation
-          state._hasPIN = true;
-          showSetupStep(u, state, onSuccess);
-        }
-      });
-    });
-  }
-
   // ── WIZARD ENTRY POINT ──
   async function startSetupWizard(u, onSuccess) {
     setupInProgress = true;
-    const state = await getSetupState(u) || { step: 1, role: null, engine: null, completed: false };
+    const state = await getSetupState(u) || { step: 1, role: null, completed: false };
     if (state.completed) {
       setupInProgress = false;
       showSetPinScreen(u, onSuccess);
@@ -6700,138 +6586,9 @@
     });
   }
 
-  // ── STEP 3: Translation Engine ──
-  function showSetupEngine(u, state, onSuccess) {
-    const stepNum = state.role === 'admin' ? 3 : 2;
-    const html = authCard('Choose Translation Engine',
-      'Select your preferred engine for Hindi translation',
-      `${setupProgressHtml(stepNum)}
-      <div class="setup-body" id="engineBody">
-        <div class="setup-engine-card" id="engineDeepL">
-          <div class="setup-engine-icon">🔵</div>
-          <div>
-            <div class="setup-engine-title">DeepL <span class="setup-engine-badge">Recommended</span></div>
-            <div class="setup-engine-desc">Superior Hindi quality · 500,000 chars/month free · Requires a free account</div>
-          </div>
-        </div>
-        <div class="setup-engine-card" id="engineLingva">
-          <div class="setup-engine-icon">🟢</div>
-          <div>
-            <div class="setup-engine-title">Lingva</div>
-            <div class="setup-engine-desc">No account needed · Lower quality · Community server</div>
-          </div>
-        </div>
-        <div class="auth-error" id="engineErr"></div>
-      </div>`);
-    showAuthOverlay(html, el => {
-      el.querySelector('#engineDeepL').onclick = async () => {
-        const ns = { ...state, step: stepNum, engine: 'deepl' };
-        await saveSetupState(u, ns);
-        showDeepLSetup(u, ns, onSuccess);
-      };
-      el.querySelector('#engineLingva').onclick = async () => {
-        showLingvaWarning(u, state, onSuccess);
-      };
-    });
-  }
-
-  // ── DeepL Setup Instructions ──
-  function showDeepLSetup(u, state, onSuccess) {
-    const stepNum = state.role === 'admin' ? 3 : 2;
-    let lang = 'en';
-    const render = () => {
-      const html = authCard('Set Up DeepL',
-        'Get your free API key in 2 minutes',
-        `${setupProgressHtml(stepNum)}
-        <div class="setup-body">
-          <div style="text-align:center;margin-bottom:12px;">
-            <div class="setup-lang-toggle">
-              <button class="setup-lang-btn ${lang==='en'?'active':''}" id="langEn">English</button>
-              <button class="setup-lang-btn ${lang==='hi'?'active':''}" id="langHi">हिंदी</button>
-            </div>
-          </div>
-          <div id="deeplInstructions">${renderDeeplInstructions(lang)}</div>
-          <input class="setup-key-input" type="password" id="deeplKeyInput"
-            placeholder="${lang==='hi' ? 'यहाँ API key paste करें' : 'Paste your DeepL API key here'}"
-            value="${escapeHtml(localStorage.getItem(`deepl_key_${u}`) || '')}">
-          <div class="auth-error" id="deeplKeyErr"></div>
-          <button class="setup-btn" id="deeplActivate">${lang==='hi' ? 'सक्रिय करें →' : 'Activate DeepL →'}</button>
-          <button class="setup-btn secondary" id="deeplSkip">${lang==='hi' ? 'अभी नहीं, Lingva उपयोग करें' : 'Skip for now, use Lingva'}</button>
-        </div>`);
-      showAuthOverlay(html, el => {
-        el.querySelector('#langEn').onclick = () => { lang = 'en'; render(); };
-        el.querySelector('#langHi').onclick = () => { lang = 'hi'; render(); };
-        el.querySelector('#deeplActivate').onclick = async () => {
-          const btn = el.querySelector('#deeplActivate');
-          const key = el.querySelector('#deeplKeyInput').value.trim();
-          const errEl = el.querySelector('#deeplKeyErr');
-          if (!key) { errEl.textContent = lang==='hi' ? 'कृपया API key दर्ज करें' : 'Please enter your API key'; return; }
-          btn.textContent = lang==='hi' ? 'जाँच हो रही है...' : 'Validating…'; btn.disabled = true;
-          // Validate key by doing a tiny test translation
-          try {
-            const res = await fetch('https://api-free.deepl.com/v2/translate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({ auth_key: key, text: 'test', target_lang: 'HI' })
-            });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(err.message || `Invalid key (${res.status})`);
-            }
-            localStorage.setItem(`deepl_key_${u}`, key);
-            const ns = { ...state, engine: 'deepl', step: 4 };
-            await saveSetupState(u, ns);
-            showSetupPIN(u, ns, onSuccess);
-          } catch(e) {
-            errEl.textContent = (lang==='hi' ? 'त्रुटि: ' : 'Error: ') + e.message;
-            btn.textContent = lang==='hi' ? 'सक्रिय करें →' : 'Activate DeepL →'; btn.disabled = false;
-          }
-        };
-        el.querySelector('#deeplSkip').onclick = async () => {
-          const ns = { ...state, engine: 'lingva', step: 4 };
-          await saveSetupState(u, ns);
-          showSetupPIN(u, ns, onSuccess);
-        };
-      });
-    };
-    render();
-  }
-
-  // ── Lingva Warning ──
-  function showLingvaWarning(u, state, onSuccess) {
-    const html = authCard('Are you sure?', null,
-      `${setupProgressHtml(state.role === 'admin' ? 3 : 2)}
-      <div class="setup-body">
-        <div class="setup-engine-warn">
-          ⚠️ Lingva uses a community-hosted server and produces lower quality Hindi translations.
-          DeepL is strongly recommended for accurate exam content.
-        </div>
-        <p style="font-size:0.82rem;color:var(--text-2);line-height:1.5;margin:12px 0;">
-          DeepL is free (500,000 characters/month) and takes only 2 minutes to set up.
-          You can always change your engine later in Settings.
-        </p>
-        <button class="setup-btn" id="lingvaGetDeepL">🔵 Get a free DeepL account</button>
-        <button class="setup-btn secondary" id="lingvaProceed">Proceed with Lingva anyway</button>
-      </div>`);
-    showAuthOverlay(html, el => {
-      el.querySelector('#lingvaGetDeepL').onclick = async () => {
-        const ns = { ...state, engine: 'deepl' };
-        await saveSetupState(u, ns);
-        showDeepLSetup(u, ns, onSuccess);
-      };
-      el.querySelector('#lingvaProceed').onclick = async () => {
-        const ns = { ...state, engine: 'lingva', step: 4 };
-        await saveSetupState(u, ns);
-        showSetupPIN(u, ns, onSuccess);
-      };
-    });
-  }
-
   // ── STEP 4: Set PIN ──
   async function showSetupPIN(u, state, onSuccess) {
-    // Save engine preference to localStorage
-    if (state.engine) localStorage.setItem('translate_engine', state.engine);
-    // Existing users who already have a PIN skip PIN creation
+// Existing users who already have a PIN skip PIN creation
     if (state._hasPIN) {
       await saveSetupState(u, { ...state, completed: true, step: 4 });
       setupInProgress = false;
@@ -6916,7 +6673,7 @@
             digits = ''; updatePinDots(el, digits);
           }
         }
-      });
+      }, isLock); // requirePadActivation=true for lock screen — prevents single keypress bypass
       el.querySelector('#pinForgot').onclick = () => {
         setSavedUser(null); setSessionToken(null); currentUser = null;
         showLoginScreen(onSuccess);
@@ -6925,13 +6682,14 @@
   }
 
   // ── PIN pad builder ──
-  function buildPinPad(el, onDigit) {
+  function buildPinPad(el, onDigit, requirePadActivation = false) {
     const pad = el.querySelector('#pinPad');
     if (!pad) return;
     pad.innerHTML = '';
     const btnStyle = 'border:1.5px solid var(--border-2);background:var(--surface-2);border-radius:14px;font-weight:700;color:var(--text);cursor:pointer;transition:all 0.1s;pointer-events:auto;';
 
     let pinCheckInFlight = false;
+    let padActivated = !requirePadActivation; // if not required, treat as already activated
     const safeOnDigit = (d) => {
       if (!pinCheckInFlight) {
         pinCheckInFlight = true;
@@ -6945,19 +6703,19 @@
       b.innerHTML = k === 'del' ? '⌫' : k === '' ? '' : k;
       if (k === '') { b.style.visibility = 'hidden'; pad.appendChild(b); return; }
       b.addEventListener('click', () => {
+        padActivated = true;
         b.style.transform = 'scale(0.9)';
         setTimeout(() => b.style.transform = '', 100);
         safeOnDigit(String(k));
       });
       b.addEventListener('touchstart', () => b.style.background = 'var(--surface-3)', { passive: true });
-      b.addEventListener('touchend',   () => b.style.background = 'var(--surface-2)', { passive: true });
+      b.addEventListener('touchend',   () => { b.style.background = 'var(--surface-2)'; padActivated = true; }, { passive: true });
       pad.appendChild(b);
     });
 
-    // Keyboard: only fires when the auth overlay is actually visible
-    // and focus is not inside a text input (password field etc.)
     el._pinKeyHandler = (e) => {
-      if (!document.getElementById('authOverlay')) return; // overlay gone
+      if (!document.getElementById('authOverlay')) return;
+      if (!padActivated) return; // lock screen: must tap pad first
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.key >= '0' && e.key <= '9') { e.preventDefault(); safeOnDigit(e.key); }
