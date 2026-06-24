@@ -5091,8 +5091,11 @@
   // now logging in (e.g. a shared device previously used by another admin),
   // clear it — admin status should never silently carry over between accounts.
   function reconcileLocalPATOwnership(username) {
-    const owner = localStorage.getItem(PAT_OWNER_KEY);
-    if (getPAT() && owner !== username) {
+    const owner = (localStorage.getItem(PAT_OWNER_KEY) || '').toLowerCase().trim();
+    const normalUser = (username || '').toLowerCase().trim();
+    // Only clear if a DIFFERENT owner is explicitly stored — never clear when
+    // owner is blank (e.g. during first-time setup before owner key is written)
+    if (getPAT() && owner && owner !== normalUser) {
       localStorage.removeItem(PAT_KEY);
       localStorage.removeItem(PAT_OWNER_KEY);
     }
@@ -5130,7 +5133,7 @@
     token = token.trim();
     if (token) {
       localStorage.setItem(PAT_KEY, token);
-      if (currentUser) localStorage.setItem(PAT_OWNER_KEY, currentUser);
+      if (currentUser) localStorage.setItem(PAT_OWNER_KEY, currentUser.toLowerCase().trim());
       // Only a non-secret "this account is an admin" flag goes to Firebase —
       // never the token value itself.
       if (db && currentUser) {
@@ -6660,6 +6663,7 @@
             headers: { Authorization: `Bearer ${val}`, Accept: 'application/vnd.github+json' }
           });
           if (!res.ok) throw new Error('Invalid token — check it and try again');
+          currentUser = u; // ensure currentUser is set before savePAT writes owner key
           await savePAT(val);
           await db.ref(`${USERS_FB_KEY}/${u}/isAdmin`).set(true);
           const ns = { ...state, step: 3, role: 'admin' };
