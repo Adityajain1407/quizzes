@@ -261,26 +261,25 @@
     padding: 0;
     box-sizing: border-box;
   }
-  /* Prevent text selection on interactive UI elements only —
-     not globally, which breaks scrollbar dragging and iOS touch events */
+  /* Prevent text selection on display-only UI elements.
+     Critical: 'div' must NOT be here — it would block scrollbar dragging
+     on every scrollable container (which are all divs). */
   body, .folders-grid, .folder-card, .file-list-item,
   .nav-header, .top-bar, .bottom-bar, .sidebar,
   .breadcrumb, .toolbar, .search-compact,
   .library-item, .recent-item, .hub-section,
-  h1, h2, h3, h4, p, span, label, div {
+  h1, h2, h3, h4, p, span, label {
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
   }
-  /* Re-enable selection where the user needs to type or drag scrollbars */
-  input, textarea, [contenteditable="true"],
-  *::-webkit-scrollbar-thumb {
-    -webkit-user-select: auto;
-    -moz-user-select: auto;
-    user-select: auto;
+  /* Re-enable selection inside inputs */
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
     -webkit-touch-callout: default;
-    pointer-events: auto;
   }
 
   /* ----- Custom right-click context menu (Refresh only) ----- */
