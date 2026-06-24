@@ -1497,6 +1497,7 @@
   .cal-dots { display: flex; gap: 2px; justify-content: center; min-height: 5px; }
   .cal-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
   .cal-dot.holiday { background: #e53935; }
+  .cal-dot.mp { background: #f57c00; }
   .cal-dot.personal { background: var(--accent); }
   /* Day events popup */
   .cal-events-popup {
@@ -2868,7 +2869,7 @@
       <!-- Holidays section -->
       <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;">
         <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:6px;">📅 India Public Holidays</div>
-        <p style="margin:0;font-size:0.83rem;color:var(--text-2);line-height:1.5;">Shown automatically on the calendar — no sign-in needed. Tap any red dot to see the holiday name.</p>
+        <p style="margin:0;font-size:0.83rem;color:var(--text-2);line-height:1.5;">Shown automatically on the calendar — no sign-in needed. Tap any date to see the name.<br><br><span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;"><span style="width:8px;height:8px;border-radius:50%;background:#e53935;display:inline-block;"></span> National &amp; religious holidays</span><span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#f57c00;display:inline-block;"></span> Madhya Pradesh state holidays</span></p>
       </div>
       <!-- Personal calendar section -->
       <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;">
@@ -7633,7 +7634,51 @@
   const GCAL_API_KEY    = 'AIzaSyCO9_PtQeMFNR-pKhoVCC0AM7azM6GmCUY';
   const GCAL_CLIENT_ID  = '460932863387-qdhrlcpl463cet2jerusfrqfu1sungi7.apps.googleusercontent.com';
   const GCAL_SCOPES     = 'https://www.googleapis.com/auth/calendar.readonly';
-  const INDIA_HOLIDAY_CAL = 'en.indian%23holiday%40group.v.calendar.google.com';
+  const HOLIDAY_CALENDARS = [
+    'en.indian%23holiday%40group.v.calendar.google.com',       // National public holidays
+    'en.hinduism%23holiday%40group.v.calendar.google.com',     // Hindu festivals
+    'en.islamic%23holiday%40group.v.calendar.google.com',      // Islamic festivals
+    'en.christian%23holiday%40group.v.calendar.google.com',    // Christian festivals
+  ];
+
+  // Madhya Pradesh state gazette holidays (Google doesn't provide state-level
+  // calendar IDs for Indian states — these are the official MP state holidays).
+  // Format: { month (0-indexed), day, name }
+  const MP_STATE_HOLIDAYS = [
+    // 2025
+    { y:2025, m:0,  d:26, name:'Republic Day' },
+    { y:2025, m:0,  d:14, name:'Makar Sankranti (MP)' },
+    { y:2025, m:1,  d:19, name:'Chhatrapati Shivaji Maharaj Jayanti (MP)' },
+    { y:2025, m:2,  d:1,  name:'Madhya Pradesh Foundation Day' },
+    { y:2025, m:2,  d:30, name:'Ram Navami (MP)' },
+    { y:2025, m:3,  d:14, name:'Dr. Ambedkar Jayanti (MP)' },
+    { y:2025, m:4,  d:1,  name:'Maharashtra / Labour Day (MP Govt)' },
+    { y:2025, m:5,  d:21, name:'Eid ul-Adha (MP)' },
+    { y:2025, m:7,  d:15, name:'Independence Day' },
+    { y:2025, m:7,  d:27, name:'Janmashtami (MP)' },
+    { y:2025, m:8,  d:5,  name:'Teacher\'s Day (MP)' },
+    { y:2025, m:9,  d:2,  name:'Gandhi Jayanti' },
+    { y:2025, m:9,  d:2,  name:'Dussehra (MP)' },
+    { y:2025, m:9,  d:20, name:'Diwali (MP)' },
+    { y:2025, m:9,  d:21, name:'Govardhan Puja (MP)' },
+    { y:2025, m:9,  d:22, name:'Bhai Dooj (MP)' },
+    { y:2025, m:10, d:5,  name:'Guru Nanak Jayanti (MP)' },
+    { y:2025, m:11, d:25, name:'Christmas Day' },
+    // 2026
+    { y:2026, m:0,  d:26, name:'Republic Day' },
+    { y:2026, m:0,  d:14, name:'Makar Sankranti (MP)' },
+    { y:2026, m:2,  d:1,  name:'Madhya Pradesh Foundation Day' },
+    { y:2026, m:3,  d:14, name:'Dr. Ambedkar Jayanti (MP)' },
+    { y:2026, m:7,  d:15, name:'Independence Day' },
+    { y:2026, m:9,  d:2,  name:'Gandhi Jayanti' },
+    { y:2026, m:11, d:25, name:'Christmas Day' },
+  ];
+
+  function getMPHolidays(year, month) {
+    return MP_STATE_HOLIDAYS
+      .filter(h => h.y === year && h.m === month)
+      .map(h => ({ day: h.d, name: h.name, type: 'mp' }));
+  }
 
   // Per-user token storage — each portal user has their own GCal token
   function gcalTokenKey()  { return `gcal_token_${currentUser || 'guest'}`; }
@@ -7652,20 +7697,31 @@
     const key = `${year}-${String(month+1).padStart(2,'0')}`;
     if (gcalCache[key]?.holidays !== undefined) return gcalCache[key].holidays;
     try {
-      const tMin = new Date(year, month, 1).toISOString();
-      const tMax = new Date(year, month+1, 0, 23, 59, 59).toISOString();
-      const url = `https://www.googleapis.com/calendar/v3/calendars/${INDIA_HOLIDAY_CAL}/events?key=${GCAL_API_KEY}&timeMin=${encodeURIComponent(tMin)}&timeMax=${encodeURIComponent(tMax)}&singleEvents=true&orderBy=startTime&maxResults=50`;
-      const res = await fetch(url);
-      if (!res.ok) { gcalCache[key] = { ...gcalCache[key], holidays: [] }; return []; }
-      const data = await res.json();
-      const holidays = (data.items || []).map(e => ({
-        day: parseInt((e.start.date || e.start.dateTime || '').split('-')[2]),
-        name: e.summary
-      })).filter(e => e.day);
+      const tMin = encodeURIComponent(new Date(year, month, 1).toISOString());
+      const tMax = encodeURIComponent(new Date(year, month+1, 0, 23, 59, 59).toISOString());
+      const results = await Promise.allSettled(HOLIDAY_CALENDARS.map(calId =>
+        fetch(`https://www.googleapis.com/calendar/v3/calendars/${calId}/events?key=${GCAL_API_KEY}&timeMin=${tMin}&timeMax=${tMax}&singleEvents=true&orderBy=startTime&maxResults=50`)
+          .then(r => r.ok ? r.json() : { items: [] })
+          .then(d => (d.items || []).map(e => ({
+            day: parseInt((e.start.date || e.start.dateTime || '').split('-')[2]),
+            name: e.summary,
+            type: 'national'
+          })).filter(e => e.day))
+          .catch(() => [])
+      ));
+      const seen = new Set();
+      const holidays = [
+        ...results.flatMap(r => r.status === 'fulfilled' ? r.value : []),
+        ...getMPHolidays(year, month)
+      ].filter(h => {
+        const k = `${h.day}|${h.name}`;
+        if (seen.has(k)) return false;
+        seen.add(k); return true;
+      }).sort((a,b) => a.day - b.day);
       if (!gcalCache[key]) gcalCache[key] = {};
       gcalCache[key].holidays = holidays;
       return holidays;
-    } catch(e) { return []; }
+    } catch(e) { return getMPHolidays(year, month); }
   }
 
   // Fetch personal Google Calendar events for a given year-month (OAuth token required)
@@ -7838,8 +7894,11 @@
       const dotsEl = document.getElementById(`dots-${day}`);
       if (!dotsEl) continue;
       dotsEl.innerHTML = '';
-      if (events.holidays.length) dotsEl.innerHTML += `<span class="cal-dot holiday" title="${events.holidays.map(h=>h.name).join(', ')}"></span>`;
-      if (events.personal.length)  dotsEl.innerHTML += `<span class="cal-dot personal"></span>`;
+      const natHols = events.holidays.filter(h => h.type !== 'mp');
+      const mpHols  = events.holidays.filter(h => h.type === 'mp');
+      if (natHols.length) dotsEl.innerHTML += `<span class="cal-dot holiday" title="${natHols.map(h=>h.name).join(', ')}"></span>`;
+      if (mpHols.length)  dotsEl.innerHTML += `<span class="cal-dot mp" title="${mpHols.map(h=>h.name).join(', ')}"></span>`;
+      if (events.personal.length) dotsEl.innerHTML += `<span class="cal-dot personal"></span>`;
     }
   }
 
@@ -7859,7 +7918,7 @@
     popup.className = 'cal-events-popup';
     const dateStr = new Date(year, month, day).toLocaleDateString(undefined, {weekday:'short',day:'numeric',month:'short'});
     let inner = `<div class="cal-ev-title">${dateStr}</div>`;
-    for (const h of dayHols) inner += `<div class="cal-ev-item"><span class="cal-dot holiday"></span><span>${h.name}</span></div>`;
+    for (const h of dayHols) inner += `<div class="cal-ev-item"><span class="cal-dot ${h.type === 'mp' ? 'mp' : 'holiday'}"></span><span>${h.name}</span></div>`;
     for (const e of dayEvts) inner += `<div class="cal-ev-item"><span class="cal-dot personal"></span><span><strong>${e.time}</strong> ${e.name}</span></div>`;
     popup.innerHTML = inner;
     cell.style.position = 'relative';
