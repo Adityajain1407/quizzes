@@ -1513,13 +1513,86 @@
   .cal-ev-item .cal-dot { margin-top: 3px; flex-shrink: 0; }
   .cal-ev-item span { line-height: 1.3; }
   /* Google Calendar connect section in hub */
-  .gcal-connect-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; }
+  .gcal-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px);
+    z-index: 2500;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .gcal-modal-overlay.active { display: flex; }
+  .gcal-modal-card {
+    background: var(--surface);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .gcal-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .gcal-modal-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .gcal-modal-header .gcal-close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-3);
+    line-height: 1;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .gcal-modal-body {
+    padding: 16px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .gcal-card-section {
+    background: var(--surface-2);
+    border-radius: 12px;
+    padding: 13px 15px;
+  }
+  .gcal-card-section .gcal-section-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 7px;
+  }
+  .gcal-card-section p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-2);
+    line-height: 1.5;
+  }
+  .gcal-legend { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .gcal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-2); }
+  .gcal-connect-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
   .gcal-connect-status { font-size: 0.8rem; color: var(--text-2); }
   .gcal-connect-status.connected { color: #2e7d32; font-weight: 600; }
-  .gcal-btn { padding: 7px 16px; border-radius: 40px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: 0.15s; white-space: nowrap; }
+  .gcal-btn { padding: 8px 16px; border-radius: 40px; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); font-weight: 700; font-size: 0.82rem; cursor: pointer; transition: 0.15s; white-space: nowrap; }
   .gcal-btn:hover { background: var(--accent); color: #fff; }
   .gcal-btn.disconnect { border-color: #e53935; color: #e53935; }
   .gcal-btn.disconnect:hover { background: #e53935; color: #fff; }
+  .gcal-connected-info { margin-top: 10px; padding: 10px 12px; background: var(--surface); border-radius: 10px; border: 1px solid var(--border-2); }
+  .gcal-connected-info .gcal-email { font-weight: 700; font-size: 0.85rem; color: var(--text); margin-bottom: 3px; }
+  .gcal-connected-info .gcal-note { font-size: 0.78rem; color: var(--text-2); }
 
 
   .breathing-modal {
@@ -2857,31 +2930,33 @@
 </div>
 
 <!-- GOOGLE CALENDAR MODAL -->
-<div id="gcalModal" class="choice-modal">
-  <div style="background:var(--surface);border-radius:20px;max-width:420px;width:calc(100% - 32px);margin:auto;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);">
-      <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text);">🗓️ Google Calendar</h3>
-      <span id="closeGCalBtn" style="font-size:1.6rem;cursor:pointer;color:var(--text-3);line-height:1;">&times;</span>
+<div id="gcalModal" class="gcal-modal-overlay">
+  <div class="gcal-modal-card">
+    <div class="gcal-modal-header">
+      <h3>🗓️ Google Calendar</h3>
+      <button class="gcal-close" id="closeGCalBtn">&times;</button>
     </div>
-    <!-- Body -->
-    <div style="padding:18px 20px 22px;display:flex;flex-direction:column;gap:16px;">
-      <!-- Holidays section -->
-      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;">
-        <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:6px;">📅 India Public Holidays</div>
-        <p style="margin:0;font-size:0.83rem;color:var(--text-2);line-height:1.5;">Shown automatically on the calendar — no sign-in needed. Tap any date to see the name.<br><br><span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;"><span style="width:8px;height:8px;border-radius:50%;background:#e53935;display:inline-block;"></span> National &amp; religious holidays</span><span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#f57c00;display:inline-block;"></span> Madhya Pradesh state holidays</span></p>
-      </div>
-      <!-- Personal calendar section -->
-      <div style="background:var(--surface-2);border-radius:12px;padding:14px 16px;">
-        <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);margin-bottom:6px;">👤 Your Google Calendar</div>
-        <p style="margin:0 0 12px;font-size:0.83rem;color:var(--text-2);line-height:1.5;">Connect your Google account to see your personal events. Each user connects their own account — events stay private.</p>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-          <span class="gcal-connect-status" id="gcalStatusLabel">Not connected</span>
-          <button class="gcal-btn" id="gcalConnectBtn">Connect Google Calendar</button>
+    <div class="gcal-modal-body">
+      <!-- Holidays -->
+      <div class="gcal-card-section">
+        <div class="gcal-section-title">📅 Holidays</div>
+        <p>Shown automatically — no sign-in needed.</p>
+        <div class="gcal-legend">
+          <div class="gcal-legend-item"><span style="width:8px;height:8px;border-radius:50%;background:#e53935;display:inline-block;"></span>National &amp; religious</div>
+          <div class="gcal-legend-item"><span style="width:8px;height:8px;border-radius:50%;background:#f57c00;display:inline-block;"></span>Madhya Pradesh</div>
         </div>
-        <div id="gcalConnectedInfo" style="display:none;margin-top:12px;padding:10px 12px;background:var(--surface);border-radius:10px;border:1px solid var(--border-2);">
-          <div id="gcalConnectedEmail" style="font-weight:700;font-size:0.85rem;color:var(--text);margin-bottom:3px;"></div>
-          <div style="font-size:0.78rem;color:var(--text-2);">Your calendar events are shown on the calendar.</div>
+      </div>
+      <!-- Personal calendar -->
+      <div class="gcal-card-section">
+        <div class="gcal-section-title">👤 Your Google Calendar</div>
+        <p>Connect your account to see personal events. Each user's calendar is private.</p>
+        <div class="gcal-connect-row">
+          <span class="gcal-connect-status" id="gcalStatusLabel">Not connected</span>
+          <button class="gcal-btn" id="gcalConnectBtn">Connect</button>
+        </div>
+        <div id="gcalConnectedInfo" class="gcal-connected-info" style="display:none;">
+          <div class="gcal-email" id="gcalConnectedEmail"></div>
+          <div class="gcal-note">Your events are shown on the calendar.</div>
         </div>
       </div>
     </div>
@@ -7817,8 +7892,7 @@
   });
   document.getElementById('gcalModal').addEventListener('click', (e) => {
     if (e.target === document.getElementById('gcalModal')) document.getElementById('gcalModal').classList.remove('active');
-  });
-  document.getElementById('gcalConnectBtn').addEventListener('click', () => {
+  });  document.getElementById('gcalConnectBtn').addEventListener('click', () => {
     if (isGCalConnected()) disconnectGCal(); else connectGCal();
   });
 
