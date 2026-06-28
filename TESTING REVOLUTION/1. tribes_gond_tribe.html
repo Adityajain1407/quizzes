@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f97316" id="themeColorMeta">
+    <link rel="icon" href="icons/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gyaan Portal">
+    <title>Tribes: Gond Tribe</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <style>
+        /* ===== THEME VARIABLES (12 = 6 themes x light/dark) ===== */
+        :root, body[data-theme="default"] {
+            --bg: #f4f6fa;
+            --surface: #ffffff;
+            --surface-2: #f8f9fa;
+            --surface-3: #eef2f6;
+            --border: rgba(0,0,0,0.06);
+            --border-2: rgba(0,0,0,0.1);
+            --text: #1e293b;
+            --text-2: #475569;
+            --text-3: #64748b;
+            --accent: #f97316;
+            --accent-dark: #ea580c;
+            --accent-bg: #fff7ed;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 8px -2px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            --shadow-lg: 0 15px 25px -8px rgba(0,0,0,0.1);
+            --radius-card: 20px;
+            --transition: all 0.25s ease;
+            --button-text: #ffffff;
+            --link-color: #0284c7;
+            --code-bg: #f5f5f5;
+            --code-text: #d73a49;
+        }
+        
+        body[data-theme="default"].dark {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #0f172a;
+            --surface-3: #334155;
+            --border: rgba(255,255,255,0.05);
+            --border-2: rgba(255,255,255,0.1);
+            --text: #f1f5f9;
+            --text-2: #cbd5e1;
+            --text-3: #94a3b8;
+            --accent: #fb923c;
+            --accent-dark: #f97316;
+            --accent-bg: #2d1a11;
+            --button-text: #ffffff;
+            --link-color: #38bdf8;
+            --code-bg: #1e293b;
+            --code-text: #fb7185;
+        }
+
+        /* Ocean theme */
+        body[data-theme="ocean"] {
+            --bg: #e0f2fe;
+            --surface: #ffffff;
+            --surface-2: #f0f9ff;
+            --surface-3: #bae6fd;
+            --border: rgba(2, 132, 199, 0.1);
+            --border-2: rgba(2, 132, 199, 0.2);
+            --text: #082f49;
+            --text-2: #0369a1;
+            --text-3: #0284c7;
+            --accent: #0284c7;
+            --accent-dark: #0369a1;
+            --accent-bg: #e0f2fe;
+            --shadow-md: 0 8px 16px rgba(2, 132, 199, 0.1);
+            --radius-card: 30px;
+            --button-text: #ffffff;
+            --link-color: #0284c7;
+            --code-bg: #e0f2fe;
+            --code-text: #0284c7;
+        }
+        
+        body[data-theme="ocean"].dark {
+            --bg: #082f49;
+            --surface: #0c4a6e;
+            --surface-2: #0e5a85;
+            --surface-3: #0369a1;
+            --border: rgba(255,255,255,0.1);
+            --border-2: rgba(255,255,255,0.18);
+            --text: #e0f2fe;
+            --text-2: #bae6fd;
+            --text-3: #7dd3fc;
+            --accent: #38bdf8;
+            --accent-dark: #0284c7;
+            --accent-bg: #1a3a5a;
+            --button-text: #ffffff;
+            --link-color: #38bdf8;
+            --code-bg: #0c4a6e;
+            --code-text: #bae6fd;
+        }
+
+        /* Forest theme */
+        body[data-theme="forest"] {
+            --bg: #f0fdf4;
+            --surface: #ffffff;
+            --surface-2: #e8f0e9;
+            --surface-3: #eef2f6;
+            --border: rgba(22,163,74,0.1);
+            --border-2: rgba(22,163,74,0.25);
+            --text: #14532d;
+            --text-2: #166534;
+            --text-3: #15803d;
+            --accent: #16a34a;
+            --accent-dark: #15803d;
+            --accent-bg: #f0fdf4;
+            --radius-card: 12px;
+            --shadow-lg: 0 15px 25px -8px rgba(22,163,74,0.15);
+            --button-text: #ffffff;
+            --link-color: #16a34a;
+            --code-bg: #f0fdf4;
+            --code-text: #16a34a;
+        }
+        
+        body[data-theme="forest"].dark {
+            --bg: #052e16;
+            --surface: #14532d;
+            --surface-2: #1a3d24;
+            --surface-3: #334155;
+            --border: rgba(255,255,255,0.1);
+            --border-2: rgba(255,255,255,0.1);
+            --text: #f0fdf4;
+            --text-2: #bbf7d0;
+            --text-3: #86efac;
+            --accent: #4ade80;
+            --accent-dark: #22c55e;
+            --accent-bg: #0a2a12;
+            --button-text: #ffffff;
+            --link-color: #4ade80;
+            --code-bg: #14532d;
+            --code-text: #bbf7d0;
+        }
+
+        /* Sunset theme */
+        body[data-theme="sunset"] {
+            --bg: #fff1f2;
+            --surface: #ffffff;
+            --surface-2: #f7eef0;
+            --surface-3: #eef2f6;
+            --border: rgba(225,29,72,0.1);
+            --border-2: rgba(225,29,72,0.2);
+            --text: #881337;
+            --text-2: #be123c;
+            --text-3: #e11d48;
+            --accent: #e11d48;
+            --accent-dark: #be123c;
+            --accent-bg: #fff1f2;
+            --radius-card: 20px;
+            --shadow-lg: 0 15px 25px -8px rgba(225,29,72,0.15);
+            --button-text: #ffffff;
+            --link-color: #e11d48;
+            --code-bg: #fff1f2;
+            --code-text: #e11d48;
+        }
+        
+        body[data-theme="sunset"].dark {
+            --bg: #4c0519;
+            --surface: #881337;
+            --surface-2: #6b1029;
+            --surface-3: #334155;
+            --border: rgba(255,255,255,0.1);
+            --border-2: rgba(255,255,255,0.1);
+            --text: #fff1f2;
+            --text-2: #ffe4e6;
+            --text-3: #fda4af;
+            --accent: #fb7185;
+            --accent-dark: #f43f5e;
+            --accent-bg: #3a0412;
+            --button-text: #ffffff;
+            --link-color: #fb7185;
+            --code-bg: #881337;
+            --code-text: #ffe4e6;
+        }
+
+        /* Cherry theme */
+        body[data-theme="cherry"] {
+            --bg: #fce7f3;
+            --surface: #ffffff;
+            --surface-2: #fbcfe8;
+            --surface-3: #f9a8d4;
+            --border: rgba(190,24,93,0.1);
+            --border-2: rgba(190,24,93,0.2);
+            --text: #740550;
+            --text-2: #be185d;
+            --text-3: #ec4899;
+            --accent: #ec4899;
+            --accent-dark: #be185d;
+            --accent-bg: #fce7f3;
+            --button-text: #ffffff;
+            --link-color: #ec4899;
+            --code-bg: #fce7f3;
+            --code-text: #be185d;
+        }
+        
+        body[data-theme="cherry"].dark {
+            --bg: #500724;
+            --surface: #740550;
+            --surface-2: #9d174d;
+            --surface-3: #be123c;
+            --border: rgba(255,255,255,0.1);
+            --border-2: rgba(255,255,255,0.1);
+            --text: #fce7f3;
+            --text-2: #fbcfe8;
+            --text-3: #f9a8d4;
+            --accent: #f472b6;
+            --accent-dark: #ec4899;
+            --accent-bg: #500724;
+            --button-text: #ffffff;
+            --link-color: #f472b6;
+            --code-bg: #740550;
+            --code-text: #fbcfe8;
+        }
+
+        /* Indigo theme */
+        body[data-theme="indigo"] {
+            --bg: #eef2ff;
+            --surface: #ffffff;
+            --surface-2: #e0e7ff;
+            --surface-3: #c7d2fe;
+            --border: rgba(79,70,229,0.1);
+            --border-2: rgba(79,70,229,0.2);
+            --text: #312e81;
+            --text-2: #4f46e5;
+            --text-3: #6366f1;
+            --accent: #4f46e5;
+            --accent-dark: #4338ca;
+            --accent-bg: #eef2ff;
+            --button-text: #ffffff;
+            --link-color: #4f46e5;
+            --code-bg: #eef2ff;
+            --code-text: #4f46e5;
+        }
+        
+        body[data-theme="indigo"].dark {
+            --bg: #1e1b4b;
+            --surface: #312e81;
+            --surface-2: #4f46e5;
+            --surface-3: #6366f1;
+            --border: rgba(255,255,255,0.1);
+            --border-2: rgba(255,255,255,0.1);
+            --text: #eef2ff;
+            --text-2: #e0e7ff;
+            --text-3: #c7d2fe;
+            --accent: #818cf8;
+            --accent-dark: #6366f1;
+            --accent-bg: #1e1b4b;
+            --button-text: #ffffff;
+            --link-color: #818cf8;
+            --code-bg: #312e81;
+            --code-text: #e0e7ff;
+        }
+
+        /* Base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        /* ===== LAYOUT: Sidebar + Content ===== */
+        #noteContainer {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            #noteContainer {
+                grid-template-columns: 1fr;
+            }
+            #sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                background: var(--surface);
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+        }
+
+        /* ===== SIDEBAR ===== */
+        #sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border-2);
+            overflow-y: auto;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            max-height: 100vh;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text);
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-list li {
+            margin: 6px 0;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-2);
+            transition: var(--transition);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-link:hover {
+            background: var(--surface-2);
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+
+        .toc-link.active {
+            background: var(--accent-bg);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Nesting indentation */
+        .toc-list .toc-list {
+            margin-left: 12px;
+            border-left: 1px solid var(--border);
+            padding-left: 0;
+        }
+
+        .test-chapter-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--accent);
+            color: var(--button-text);
+            border: none;
+            border-radius: var(--radius-card);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .test-chapter-btn:hover {
+            background: var(--accent-dark);
+        }
+
+        /* ===== MAIN CONTENT AREA ===== */
+        #contentArea {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        #toolbar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-2);
+            padding: 12px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .toolbar-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-3);
+            min-width: 60px;
+        }
+
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--surface-3);
+            border-color: var(--accent);
+        }
+
+        .toolbar-btn.active {
+            background: var(--accent);
+            color: var(--button-text);
+            border-color: var(--accent);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 6px;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .color-option:hover {
+            border-color: var(--text);
+        }
+
+        .color-option.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+        }
+
+        /* Highlight colors */
+        .color-yellow { background: #fef3c7; }
+        .color-cyan { background: #cffafe; }
+        .color-green { background: #dcfce7; }
+        .color-pink { background: #fbcfe8; }
+        .color-orange { background: #fed7aa; }
+
+        /* Content area */
+        #noteContent {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            background: var(--bg);
+        }
+
+        @media (max-width: 768px) {
+            #noteContent {
+                padding: 20px;
+            }
+        }
+
+        #noteContent::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #noteContent::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        /* ===== CONTENT FORMATTING ===== */
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+            scroll-margin-top: 80px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--text);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 12px;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: var(--text);
+            margin-top: 32px;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            color: var(--text-2);
+        }
+
+        p {
+            margin-bottom: 16px;
+            line-height: 1.7;
+            color: var(--text);
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: underline;
+            transition: var(--transition);
+        }
+
+        a:hover {
+            opacity: 0.8;
+        }
+
+        strong {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        em {
+            font-style: italic;
+            color: var(--text);
+        }
+
+        u {
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+            color: var(--text);
+        }
+
+        mark {
+            background-color: #fef3c7;
+            padding: 0 4px;
+            border-radius: 2px;
+        }
+
+        code {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-2);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        pre code {
+            background: none;
+            color: var(--code-text);
+            padding: 0;
+        }
+
+        ul, ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border-2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: var(--surface-2);
+            border-bottom: 2px solid var(--border-2);
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tbody tr:hover {
+            background: var(--surface-2);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid var(--border-2);
+        }
+
+        blockquote {
+            border-left: 4px solid var(--accent);
+            padding-left: 16px;
+            margin-left: 0;
+            margin-bottom: 16px;
+            color: var(--text-2);
+            font-style: italic;
+        }
+
+        hr {
+            border: none;
+            height: 2px;
+            background: var(--border-2);
+            margin: 32px 0;
+        }
+
+        /* ===== FONT SIZE CONTROL ===== */
+        body[data-font-size="small"] {
+            font-size: 14px;
+        }
+
+        body[data-font-size="medium"] {
+            font-size: 16px;
+        }
+
+        body[data-font-size="large"] {
+            font-size: 18px;
+        }
+
+        /* ===== MOBILE TOOLBAR (FAB) ===== */
+        @media (max-width: 768px) {
+            #toolbar {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                left: auto;
+                width: auto;
+                flex-direction: column;
+                gap: 0;
+                padding: 0;
+                border-radius: 50%;
+                width: 56px;
+                height: 56px;
+                background: var(--accent);
+                box-shadow: var(--shadow-lg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: none;
+                z-index: 100;
+            }
+
+            #toolbar.expanded {
+                width: 240px;
+                height: auto;
+                border-radius: var(--radius-card);
+                padding: 12px;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .toolbar-btn, .toolbar-label, .toolbar-group {
+                display: none;
+            }
+
+            #toolbar.expanded .toolbar-btn,
+            #toolbar.expanded .toolbar-label,
+            #toolbar.expanded .toolbar-group {
+                display: flex;
+            }
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            background: var(--accent);
+            color: var(--button-text);
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            z-index: 999;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== PRINT STYLES ===== */
+        @media print {
+            #sidebar, #toolbar { display: none; }
+            #noteContainer { grid-template-columns: 1fr; }
+            #noteContent { padding: 0; overflow: visible; }
+            body { background: white; color: black; }
+        }
+
+        /* ===== MOBILE MENU TOGGLE ===== */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            width: 44px;
+            height: 44px;
+            background: var(--surface);
+            border: 1px solid var(--border-2);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 101;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        /* ===== SELECTION & MARKUP STYLES ===== */
+        ::selection {
+            background: var(--accent-bg);
+            color: var(--accent);
+        }
+
+        .markup-highlight {
+            background-color: #fef3c7;
+            padding: 0 4px;
+            border-radius: 2px;
+        }
+
+        .markup-highlight.cyan {
+            background-color: #cffafe;
+        }
+
+        .markup-highlight.green {
+            background-color: #dcfce7;
+        }
+
+        .markup-highlight.pink {
+            background-color: #fbcfe8;
+        }
+
+        .markup-highlight.orange {
+            background-color: #fed7aa;
+        }
+
+        .markup-underline {
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+            color: var(--text);
+        }
+    </style>
+</head>
+<body data-theme="default" data-font-size="medium">
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+    
+    <div id="noteContainer">
+        <!-- Sidebar with TOC -->
+        <aside id="sidebar">
+            <div class="sidebar-title">📖 Contents</div>
+            <ul class="toc-list" id="tocList">
+                <li><a class="toc-link" data-toc-id="h1_main">THE GOND TRIBE</a>
+                    <ul class="toc-list">
+                        <li><a class="toc-link" data-toc-id="h2_1">1. OVERVIEW & DEMOGRAPHICS</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_1_1">1.1 Population & Rank</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_1_2">1.2 Geographic Distribution</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_1_3">1.3 Sub-Tribes</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_1_4">1.4 Gotras (Clans)</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_1_5">1.5 Village Administrative Structure</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_1_6">1.6 Food & Sacred Drinks</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_1_7">1.7 Death Rituals</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_2">2. FOLK DANCES (NRITYA)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_2_1">2.1 Main Folk Dances</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_2_2">2.2 Additional Folk Dances (Noted)</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_3">3. FOLK SONGS (LOK GEET)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_3_1">3.1 Marriage Song Timeline (Vivah Geet Chakra)</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_3_2">3.2 Thematic Folk Songs</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_4">4. FOLK THEATER (LOK NATYA)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_4_1">4.1 Main Forms</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_4_2">4.2 Regional Spotlight — Shahdol</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_4_3">4.3 Legendary Artist</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_5">5. MUSICAL INSTRUMENTS (VADYA YANTRA)</a></li>
+                        <li><a class="toc-link" data-toc-id="h2_6">6. EPIC STORY TRADITIONS</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_6_1">6.1 Comparison: Mainstream Epics vs. Gond Tradition</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_7">7. GOND FESTIVALS (PARV / TYOHAR)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_7_1">7.1 Complete Festival Quick-Reference Table</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_7_2">7.2 Festival Details</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_8">8. RELIGION & DEITIES (DEVTA AUR DHARM)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_8_1">8.1 Foundations of Faith</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_8_2">8.2 Priesthood System (Exam Alert)</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_8_3">8.3 Primary Tribal Deities</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_8_4">8.4 Disease-Governing Deities (Crucial for MCQs)imp***</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_8_5">8.5 Witchcraft & Tantra (Jaadu-Tona aur Tantra)</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_9">9. GOND LANGUAGE (BHASHA)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_9_1">9.1 Etymology — Origin of the Word "Gond"</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_9_2">9.2 Language Family</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_9_3">9.3 Official State Recognition</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_9_4">9.4 Regional Dialect Variation</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_10">10. GOND ECONOMIC LIFE</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_10_1">10.1 Main Occupation</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_10_2">10.2 Alternative Livelihoods</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_10_3">10.3 Special Agricultural Terms</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_10_4">10.4 Crop Seasons(imp***)</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_11">11. SOCIAL INSTITUTIONS — THE GHOTUL</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_11_1">11.1 Ghotul (घोटुल)</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_11_2">11.2 Dhanda (धांदा)</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="toc-link" data-toc-id="h2_12">12. KEY EXAM QUICK-REVISION(imp***)</a>
+                            <ul class="toc-list">
+                                <li><a class="toc-link" data-toc-id="h3_12_1">12.1 MCQ Practice — Quick Q&A</a></li>
+                                <li><a class="toc-link" data-toc-id="h3_12_2">12.2 Summary Cheat Sheet</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <button class="test-chapter-btn" id="testChapterBtn" style="display: none;">
+                ✓ Test Chapter
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <div id="contentArea">
+            <!-- Toolbar -->
+            <div id="toolbar">
+                <div class="toolbar-group">
+                    <span class="toolbar-label">Highlight:</span>
+                    <div class="color-picker" id="colorPicker">
+                        <div class="color-option color-yellow active" data-color="yellow"></div>
+                        <div class="color-option color-cyan" data-color="cyan"></div>
+                        <div class="color-option color-green" data-color="green"></div>
+                        <div class="color-option color-pink" data-color="pink"></div>
+                        <div class="color-option color-orange" data-color="orange"></div>
+                    </div>
+                </div>
+                <button class="toolbar-btn" id="highlightBtn" title="Ctrl+H">🖍️ Highlight</button>
+                <button class="toolbar-btn" id="underlineBtn" title="Ctrl+U">📝 Underline</button>
+                <button class="toolbar-btn" id="clearBtn" title="Ctrl+Shift+C">❌ Clear</button>
+                <button class="toolbar-btn" id="clearAllBtn" title="Clear All">🗑️ Clear All</button>
+                <div style="flex: 1;"></div>
+                <div class="toolbar-group">
+                    <label class="toolbar-label">Font:</label>
+                    <select id="fontSizeSelect" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-2); background: var(--surface-2);">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+                <button class="toolbar-btn" id="settingsBtn" title="Settings">⚙️</button>
+            </div>
+
+            <!-- Note Content -->
+            <div id="noteContent">
+                <h1 data-toc-id="h1_main">THE GOND TRIBE</h1>
+                <p><strong>Comprehensive Study Notes — Traditions, Culture, Religion, Language & Economy</strong></p>
+
+                <h2 data-toc-id="h2_1">1. OVERVIEW & DEMOGRAPHICS</h2>
+                <h3 data-toc-id="h3_1_1">1.1 Population & Rank</h3>
+                <ul>
+                    <li>Largest tribe in India</li>
+                    <li>2nd largest tribe in Madhya Pradesh (MP)</li>
+                    <li>Total population: 50.93 lakh (33.25% of the tribal population in MP)</li>
+                    <li>Self-designation / Original name: Koitor</li>
+                </ul>
+
+                <h3 data-toc-id="h3_1_2">1.2 Geographic Distribution</h3>
+                <ul>
+                    <li>Primarily found in South-East (Dakshin-Poorv) Madhya Pradesh</li>
+                    <li>Concentrated districts: Chhindwara, Mandla</li>
+                </ul>
+
+                <h3 data-toc-id="h3_1_3">1.3 Sub-Tribes</h3>
+                <ul>
+                    <li>Major sub-tribes: Agaria, Pardhan, Ojha, Solhas.</li>
+                </ul>
+
+                <h3 data-toc-id="h3_1_4">1.4 Gotras (Clans)</h3>
+                <ul>
+                    <li>System known as "Kur"</li>
+                    <li>Major gotras: Rajgond, Daurgond, Muriagond (extream backward class) economically</li>
+                </ul>
+
+                <h3 data-toc-id="h3_1_5">1.5 Village Administrative Structure</h3>
+                <ul>
+                    <li>Village head is called: Majhi (Mukhiya)</li>
+                    <li>Village officials include: Muqaddam, Kotwar, Likhari</li>
+                </ul>
+
+                <h3 data-toc-id="h3_1_6">1.6 Food & Sacred Drinks</h3>
+                <ul>
+                    <li>Traditional beverages: Pej, Mahua, devanna</li>
+                </ul>
+
+                <h3 data-toc-id="h3_1_7">1.7 Death Rituals</h3>
+                <ul>
+                    <li>Post-death ritual: Dashmani (ceremony performed after death)</li>
+                </ul>
+
+                <h2 data-toc-id="h2_2">2. FOLK DANCES (NRITYA)</h2>
+                <h3 data-toc-id="h3_2_1">2.1 Main Folk Dances</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dance Name</th>
+                            <th>Hindi Name</th>
+                            <th>Theme / Meaning</th>
+                            <th>Performer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Birha</td>
+                            <td>बिरहा</td>
+                            <td>Dance of separation / Girl's sorrow (Virha / Ladki ka viyog)</td>
+                            <td>General</td>
+                        </tr>
+                        <tr>
+                            <td>Kahrawa</td>
+                            <td>कहवा</td>
+                            <td>Happiness & Joy (Khushi aur Aanand)</td>
+                            <td>General</td>
+                        </tr>
+                        <tr>
+                            <td>Sajni</td>
+                            <td>सजनी</td>
+                            <td>Women-centric; Mother-in-law & Father-in-law dance (Samdhin-Samdhi Nritya)</td>
+                            <td>Female-led</td>
+                        </tr>
+                        <tr>
+                            <td>Sua</td>
+                            <td>सुआ</td>
+                            <td>Performed when paddy crop ripens (Dhan ki fasal pakne par)</td>
+                            <td>General</td>
+                        </tr>
+                        <tr>
+                            <td>Diwani</td>
+                            <td>दीवानी</td>
+                            <td>Ahir community dance — performed with cowry jewelry and weapons (flute, sword, stick)</td>
+                            <td>Men</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><em>Birha, Kahrawa, sajni, Diwani, Sua. (sajni hui diwani birha hone par kahar barsaya sua)</em></p>
+
+                <h3 data-toc-id="h3_2_2">2.2 Additional Folk Dances (Noted)</h3>
+                <ul>
+                    <li><strong>Karma / Saila / Bhadauni</strong> — listed as additional folk dance forms</li>
+                    <li><strong>Digna Art</strong> — a visual/folk art form associated with Gond</li>
+                    <li><strong>Nohadora Art</strong> — another traditional Gond art form</li>
+                </ul>
+
+                <h2 data-toc-id="h2_3">3. FOLK SONGS (LOK GEET)</h2>
+                <h3 data-toc-id="h3_3_1">3.1 Marriage Song Timeline (Vivah Geet Chakra)</h3>
+                <p>Songs are performed at specific stages of a wedding ceremony:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stage</th>
+                            <th>Song Name</th>
+                            <th>Hindi</th>
+                            <th>Theme</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Groom gets ready</td>
+                            <td>Nahadora (Nahodora)</td>
+                            <td>नाहोडोरा</td>
+                            <td>Groom's preparation</td>
+                        </tr>
+                        <tr>
+                            <td>Procession on the way (Barat)</td>
+                            <td>Dadariya</td>
+                            <td>दद्रिया</td>
+                            <td>Boasting / Heroic (Veer Ras / Garv)</td>
+                        </tr>
+                        <tr>
+                            <td>Wedding Banter</td>
+                            <td>Saila Bhadauni</td>
+                            <td>सैला भदौनी</td>
+                            <td>Teasing / Abuses / Maza aur Gaaliyaan</td>
+                        </tr>
+                        <tr>
+                            <td>In-Laws Meet (Samdhi-Samdhin Meelan)</td>
+                            <td>Sajni</td>
+                            <td>सजनी</td>
+                            <td>Meeting of in-laws</td>
+                        </tr>
+                        <tr>
+                            <td>Procession Returns (Barat Wapsi)</td>
+                            <td>Kahrawa</td>
+                            <td>कहवा</td>
+                            <td>Return celebration</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 data-toc-id="h3_3_2">3.2 Thematic Folk Songs</h3>
+                <ul>
+                    <li><strong>Devotional Songs (Shraddha)</strong>
+                        <ul>
+                            <li><strong>Jas Geet (जस गीत):</strong> Praise of Budhadev (Budhadev ki Stuti)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Romantic Songs (Prem)</strong>
+                        <ul>
+                            <li><strong>Jhooma Jhoomar (झूमा झूमर):</strong> Sung in memory of a lost partner (Sathi ki yaad mein)</li>
+                            <li><strong>Setam (सेतम):</strong> Satirizing / teasing the beloved (Priya par vyangya)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Seasonal Songs (Mausami)</strong>
+                        <ul>
+                            <li><strong>Phaag (फाग):</strong> Sung during the month of Phalguna (Phalgun maas mein)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Work / Dance Songs (Karma / Nritya)</strong>
+                        <ul>
+                            <li><strong>Karma (कर्मा):</strong> Has 4 types — Thadha, Lahki, Langda, Ragini</li>
+                        </ul>
+                    </li>
+                    <li><strong>Epic Songs (Gatha)</strong>
+                        <ul>
+                            <li><strong>Gondwani (गोंडवानी):</strong> Tales of Gond warriors (Gond Yoddhaaon ki gathayen)</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2 data-toc-id="h2_4">4. FOLK THEATER (LOK NATYA)</h2>
+                <h3 data-toc-id="h3_4_1">4.1 Main Forms</h3>
+                <ul>
+                    <li>Swang (स्वांग)</li>
+                    <li>Natya (नाट्य)</li>
+                    <li>Gammat (गम्मत)</li>
+                </ul>
+
+                <h3 data-toc-id="h3_4_2">4.2 Regional Spotlight — Shahdol</h3>
+                <ul>
+                    <li>Shahdol is famous for the Swang theater form</li>
+                    <li>Swang is sung on the "Barhar" day of the marriage ceremony (Vivah ke "Barhar" din Swang)</li>
+                </ul>
+
+                <h3 data-toc-id="h3_4_3">4.3 Legendary Artist</h3>
+                <ul>
+                    <li><strong>Mithubaks of Mudki Village:</strong> Renowned as a highly skilled Swang dancer (Mudi village ke Mithubaks — kushāl Swang nartaak)</li>
+                </ul>
+
+                <h2 data-toc-id="h2_5">5. MUSICAL INSTRUMENTS (VADYA YANTRA)</h2>
+                <p>Classified into 4 categories based on acoustic science:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category (Hindi)</th>
+                            <th>Type</th>
+                            <th>Classification</th>
+                            <th>Instruments</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Avanaddha (अवनद्ध)</td>
+                            <td>Membranophones / Struck</td>
+                            <td>Jhillidar / Peetne wale</td>
+                            <td>Mandar, Timki, Singbaja, Nagade</td>
+                        </tr>
+                        <tr>
+                            <td>Ghanavadya (घन)</td>
+                            <td>Idiophones / Percussion</td>
+                            <td>Taal Vadya</td>
+                            <td>Manjira, Khartal, Thiski, Chutki, Jhanjh</td>
+                        </tr>
+                        <tr>
+                            <td>Swar Vadya (स्वर)</td>
+                            <td>Aerophones / Wind</td>
+                            <td>Vayu / Phoonk Vadya</td>
+                            <td>Flute (Bansuri), Shehnai, Alghoza</td>
+                        </tr>
+                        <tr>
+                            <td>Tantu Vadya (तंतु)</td>
+                            <td>Chordophones / String</td>
+                            <td>Taar Vadya</td>
+                            <td>Tamura, Chikara, Kindari, Bana</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 data-toc-id="h2_6">6. EPIC STORY TRADITIONS</h2>
+                <h3 data-toc-id="h3_6_1">6.1 Comparison: Mainstream Epics vs. Gond Tradition</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Epic</th>
+                            <th>Mainstream Version</th>
+                            <th>Gond Tradition</th>
+                            <th>Key Difference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pandavani (पांडवानी)</td>
+                            <td>Mainstream: Bhandavani (Mahabharata)</td>
+                            <td>Bhima > Arjun (Bheem is hero, not Arjun)</td>
+                            <td>Values physical strength over archery</td>
+                        </tr>
+                        <tr>
+                            <td>Ramayani (रामायणी)</td>
+                            <td>Mainstream: Pyilvomdwar (Ramayana)</td>
+                            <td>Lakshman is the hero (Lakshman Nayak Hain)</td>
+                            <td>Lakshman had 7 marriages; known as "Gond Lamsnai" (service marriage)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 data-toc-id="h2_7">7. GOND FESTIVALS (PARV / TYOHAR)</h2>
+                <h3 data-toc-id="h3_7_1">7.1 Complete Festival Quick-Reference Table</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Festival</th>
+                            <th>Timing</th>
+                            <th>Key Focus & Ritual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Madai (मड़ई)</td>
+                            <td>Harvest Season</td>
+                            <td>Harvest happiness; Village deity worship; Dhanwahi Mela (famous in Mandla & Dindori)</td>
+                        </tr>
+                        <tr>
+                            <td>Navkhani</td>
+                            <td>Bhadrapaksha 9th (9th day after Ganesh Chaturthi)</td>
+                            <td>Kuldevi worship with new rice; celebrated when paddy ears emerge; Ancestor worship</td>
+                        </tr>
+                        <tr>
+                            <td>Bidri (बिदरी)</td>
+                            <td>Jyeshtha month</td>
+                            <td>Cloud Worship (Badal Puja); Water offered to Thakur Dev before sunrise; White chicken sacrifice; Grains distributed to mix with seeds</td>
+                        </tr>
+                        <tr>
+                            <td>Bakbandhi (बकबंधी)</td>
+                            <td>Ashadh Purnima (Guru Purnima)</td>
+                            <td>Nature's Rakshabandhan; Baiga extracts Palash roots, colours with turmeric, ties fibers to youth's wrists; Legend: Lingadev tied to Naga Baiga after fire test</td>
+                        </tr>
+                        <tr>
+                            <td>Hardhili (हरधिली)</td>
+                            <td>Shravas Amavasya (New moon of Shravana)</td>
+                            <td>Marks completion of Kharif sowing; Bulls worshipped and loosened from ploughs</td>
+                        </tr>
+                        <tr>
+                            <td>Cherta (छेरता)</td>
+                            <td>Paush Purnima</td>
+                            <td>Children's festival; Children go door-to-door with bamboo sticks and bags; Chant: "Cher Chitta Cherta"</td>
+                        </tr>
+                        <tr>
+                            <td>Larukaj (लारूकाज)</td>
+                            <td>Any time</td>
+                            <td>Prosperity ritual; Deity: Narayan Dev; Symbolizes marriage of the pig; involves pig sacrifice; Purpose: bring happiness and prosperity to family</td>
+                        </tr>
+                        <tr>
+                            <td>Meghnath (मेघनाथ)</td>
+                            <td>Phalguna 1st Half (1st fortnight)</td>
+                            <td>Festival of the Supreme Deity (Sarvocha Devata); Worship of ancestors (Purvjon ki Puja)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 data-toc-id="h3_7_2">7.2 Festival Details</h3>
+                <ul>
+                    <li><strong>Madai (मड़ई) — Harvest & Community Festival</strong>
+                        <ul>
+                            <li><strong>Concept:</strong> Harvest happiness and Village deity worship</li>
+                            <li><strong>Rituals:</strong> Meeting loved ones; buying/selling essential items</li>
+                            <li><strong>Exam Fact:</strong> Famous in Mandla & Dindori districts; Dhanwahi village Mela Haat is highly famous</li>
+                        </ul>
+                    </li>
+                    <li><strong>Navkhani (नवखानी) — New Rice Festival</strong>
+                        <ul>
+                            <li><strong>Concept:</strong> Celebrated when paddy ears emerge; Kuldevi worship with new rice</li>
+                            <li><strong>Timing:</strong> 9th day of Bhadrapaksha (after Ganesh Chaturthi)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Bidri (बिदरी) — Cloud Worship Festival</strong>
+                        <ul>
+                            <li><strong>Timing:</strong> Jyeshtha month</li>
+                            <li><strong>Ritual:</strong> Water offered to Thakur Dev before sunrise; white chicken sacrifice; grains distributed to mix with seeds</li>
+                            <li><strong>Meaning:</strong> From "Badri" or "Badal" — worshipping earth and nature</li>
+                        </ul>
+                    </li>
+                    <li><strong>Bakbandhi (बकबंधी) — Nature's Rakshabandhan</strong>
+                        <ul>
+                            <li><strong>Timing:</strong> Full moon of Ashadh (Guru Purnima)</li>
+                            <li><strong>Ritual:</strong> Baiga extracts Palash roots, colours with turmeric, ties fibers to youth's wrists</li>
+                            <li><strong>Legend:</strong> Lingadev tied it to Naga Baiga after a fire test</li>
+                        </ul>
+                    </li>
+                    <li><strong>Hardhili (हरधिली) — Kharif Completion</strong>
+                        <ul>
+                            <li><strong>Timing:</strong> New moon of Shravas (Shravan) month</li>
+                            <li><strong>Concept:</strong> Marks completion of Kharif sowing; Bulls worshipped and loosened from ploughs</li>
+                        </ul>
+                    </li>
+                    <li><strong>Cherta (छेरता) — Children's Festival</strong>
+                        <ul>
+                            <li><strong>Timing:</strong> Full moon of Paush</li>
+                            <li><strong>Ritual:</strong> Children go door-to-door with bamboo sticks and bags</li>
+                            <li><strong>Chant:</strong> "Cher Chitta Cherta"</li>
+                        </ul>
+                    </li>
+                    <li><strong>Larukaj (लारूकाज) — Prosperity & Animal Sacrifice Ritual</strong>
+                        <ul>
+                            <li><strong>Deity:</strong> Narayan Dev</li>
+                            <li><strong>Ritual Significance:</strong> Symbolizes the marriage of the pig; involves pig sacrifice</li>
+                            <li><strong>Purpose:</strong> Believed to bring happiness and prosperity to the family</li>
+                        </ul>
+                    </li>
+                    <li><strong>Meghnath (मेघनाथ) — Supreme Deity Festival</strong>
+                        <ul>
+                            <li><strong>Timing:</strong> First fortnight of Phalguna</li>
+                            <li><strong>Focus:</strong> Worship of the supreme deity; ancestor worship</li>
+                            <li><strong>Alternative name:</strong> Khandera / Khatta.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h2 data-toc-id="h2_8">8. RELIGION & DEITIES (DEVTA AUR DHARM)</h2>
+                <h3 data-toc-id="h3_8_1">8.1 Foundations of Faith</h3>
+                <ul>
+                    <li><strong>Supreme Deity:</strong> Meghnath (मेघनाथ) — Highest deity of the Gonds; celebrated in first fortnight of Phalguna
+                        <ul>
+                            <li>Alternative names: Khandera or Khatta (खंडेरा या खट्टा)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Lingadev & Koyapunem:</strong> The origin of the Gond religious system is traced to Lingadev; their worship system is called Koyapunem</li>
+                    <li><strong>Totemism (टोटेमवाद):</strong> The Totem holds a highly significant place in religious beliefs</li>
+                </ul>
+
+                <h3 data-toc-id="h3_8_2">8.2 Priesthood System (Exam Alert)</h3>
+                <ul>
+                    <li><strong>Traditional Priests:</strong> Often belong to the Baiga tribe</li>
+                    <li><strong>Specific Gond Priest:</strong> Officially referred to as "Dewari" (देवरी)</li>
+                    <li><strong>Core General Beliefs:</strong> Earth, water, and air are ruled by gods; strong belief in ancient spirit worship</li>
+                    <li><strong>Modern Note:</strong> Most of the Gond population now follows Hinduism</li>
+                </ul>
+
+                <h3 data-toc-id="h3_8_3">8.3 Primary Tribal Deities</h3>
+                <ul>
+                    <li><strong>Bada Dev (बड़ा देव)</strong> (Shivji)
+                        <ul>
+                            <li>The Almighty God (Sarvashaktimaan Ishwar)</li>
+                            <li>Forms and other names: Baraka Dev, Baradeva, Lingo, Rai Lingo, Barapen</li>
+                        </ul>
+                    </li>
+                    <li><strong>Dulha Dev (दूल्हा देव)</strong>
+                        <ul>
+                            <li>The most important deity of the tribe (Janjaati ke sabse mahatvapurna devta)</li>
+                            <li>Form of Lord Shankar</li>
+                            <li>Rides a white horse</li>
+                            <li>Located towards the East in the village</li>
+                        </ul>
+                    </li>
+                    <li><strong>Thakur Dev (ठाकुर देव)</strong>
+                        <ul>
+                            <li>Village protector deity</li>
+                            <li>Situated under a tree outside the village (Gaon ke bahar ped ke neeche)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Narayan Dev (नारायण देव)</strong>
+                        <ul>
+                            <li>Placed at the threshold of the house to prevent obstacles (Badhaaon ko rokne ke liye ghar ki dahleej par)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Ghamsen Dev (घमसेन देव)</strong>
+                        <ul>
+                            <li>Placed near the elder god (Bada Dev)</li>
+                            <li>Marked by a buried pillar (Gade hue khambhe ke roop mein)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Khairmai Devi (खैरमाई देवी)</strong>
+                        <ul>
+                            <li>Village protector goddess</li>
+                            <li>Situated under the Mahua tree (Mahua ped ke neeche)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Banjarin Mai (बंजारिन माई)</strong>
+                        <ul>
+                            <li>Forest goddess (Vandevi)</li>
+                            <li>Also known as: Ratri Mai, Andheri Mai</li>
+                        </ul>
+                    </li>
+                    <li><strong>Khair Khunt Muthiya Dev (खैर खूंट मुठिया देव)</strong>
+                        <ul>
+                            <li>Shepherd God and Cow Protector (Charwaha devta aur gaay rakshak)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Nageshwar Dev (नागेश्वर देव)</strong>
+                        <ul>
+                            <li>Represents Snake Worship (Naag Puja ka Prateek)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Sharda Mai (शारदा माई)</strong>
+                        <ul>
+                            <li>The goddess who bestows blessings (Aashirvad dene wali devi)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Shitala Mai (शीतला माई)</strong>
+                        <ul>
+                            <li>A loving goddess</li>
+                            <li>Considered the younger sister of Sharda Mai</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3 data-toc-id="h3_8_4">8.4 Disease-Governing Deities (Crucial for MCQs)imp***</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Deity (Hindi)</th>
+                            <th>Deity (English)</th>
+                            <th>Governs Disease</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>बूढ़ी माई (Budhi Mai)</td>
+                            <td>Budhi Mai</td>
+                            <td>Smallpox (Chechak)</td>
+                        </tr>
+                        <tr>
+                            <td>कसलाई माई (Kasalai Mai)</td>
+                            <td>Kasalai Mai</td>
+                            <td>Chickenpox / Chhoti Mata</td>
+                        </tr>
+                        <tr>
+                            <td>मढ़ी माता (Marhi Mata)</td>
+                            <td>Marhi Mata</td>
+                            <td>Cholera & Plague (Haija aur Plague)</td>
+                        </tr>
+                        <tr>
+                            <td>हुल्की माई / डल्की माई</td>
+                            <td>Hulki Mai / Dalki Mai</td>
+                            <td>Malaria Fever (Maleria Bukhar)</td>
+                        </tr>
+                        <tr>
+                            <td>चरंगा माई (Charanga Mai)</td>
+                            <td>Charanga Mai</td>
+                            <td>Animal Diseases (Pashu Rog)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Other Notable Deities:</strong><br>Aharani, Indrani, Kankali, Bhairav, Suraj, Jal, Agni, Dhartimata, Gaumata</p>
+
+                <h3 data-toc-id="h3_8_5">8.5 Witchcraft & Tantra (Jaadu-Tona aur Tantra)</h3>
+                <p>Strong belief in the soul and tantric processes</p>
+                <p>Three types of preventive gurus/practitioners in Gond society:</p>
+                <ol>
+                    <li>Umrao Guru (उ</li>
+                    <li>Jalandhar Guru</li>
+                    <li>Daugun Guru</li>
+                </ol>
+
+                <h2 data-toc-id="h2_9">9. GOND LANGUAGE (BHASHA)</h2>
+                <h3 data-toc-id="h3_9_1">9.1 Etymology — Origin of the Word "Gond"</h3>
+                <ul>
+                    <li>Derived from the Telugu word "Gonda" or "Gond"</li>
+                    <li>Meaning: Mountain (Parvat / Pahad)</li>
+                    <li>Result: Mountain Dwellers = Gonds (Pahaadon mein rehne wale = Gond)</li>
+                </ul>
+
+                <h3 data-toc-id="h3_9_2">9.2 Language Family</h3>
+                <ul>
+                    <li>Root: Dravidian Language Family (Dravid Bhasha Parivar)</li>
+                    <li>Primary language: Gondi (गोंडी)</li>
+                    <li>Other dialects: Halbi, Bhatri, Dorli</li>
+                    <li>Gondi is classified as a "middle-class" language — originally an unwritten dialect</li>
+                </ul>
+
+                <h3 data-toc-id="h3_9_3">9.3 Official State Recognition</h3>
+                <ul>
+                    <li>Gondi was officially included in the Madhya Pradesh Pathya Pustak Nigam (Textbook Corporation) in 2019</li>
+                </ul>
+
+                <h3 data-toc-id="h3_9_4">9.4 Regional Dialect Variation</h3>
+                <ul>
+                    <li><strong>Pure Gondi (Shuddh Gondi) — Districts:</strong>
+                        <ul>
+                            <li>Chhindwara (छिंदवाड़ा)</li>
+                            <li>Pandhurna (पांढुर्णा)</li>
+                            <li>Seoni (सिवनी)</li>
+                            <li>Betul (बैतूल)</li>
+                            <li>Narmadapuram (नर्मदापुरम)</li>
+                            <li>East Nimar / Khandwa (पूर्वी निमाड़ / खंडवा)</li>
+                            <li>Balaghat (बालाघाट)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Distorted Gondi (Vikrit Gondi) — Districts:</strong>
+                        <ul>
+                            <li>Mandla (मंडला)</li>
+                            <li>Dindori (डिंडोरी)</li>
+                            <li>Shahdol (शहडोल)</li>
+                            <li>Rewa (रीवा)</li>
+                        </ul>
+                    </li>
+                </ul>
+                <p><em>Note: Distorted regions show heavy Chhattisgarhi language influence</em></p>
+
+                <h2 data-toc-id="h2_10">10. GOND ECONOMIC LIFE</h2>
+                <h3 data-toc-id="h3_10_1">10.1 Main Occupation</h3>
+                <ul>
+                    <li>Primary occupation: Agriculture (Krishi)</li>
+                    <li>Main agricultural tool: Hal (The Plow)</li>
+                    <li>Traditional Gond term for agriculture: "Bari" (बाड़ी)</li>
+                </ul>
+
+                <h3 data-toc-id="h3_10_2">10.2 Alternative Livelihoods</h3>
+                <ul>
+                    <li>Animal husbandry (Pashupalan)</li>
+                    <li>Collection of forest produce (Vanopaj Sangrah)</li>
+                </ul>
+
+                <h3 data-toc-id="h3_10_3">10.3 Special Agricultural Terms</h3>
+                <ul>
+                    <li><strong>Harwahi (हरवाही):</strong> Farming engaged in by those without bulls or land (Bina bail ya zameen waalon dwara ki jaane wali kheti)</li>
+                </ul>
+
+                <h3 data-toc-id="h3_10_4">10.4 Crop Seasons(imp***)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Gond Name</th>
+                            <th>Standard Name</th>
+                            <th>Season</th>
+                            <th>Crops</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Siari (सियारी)</td>
+                            <td>Kharif / Monsoon</td>
+                            <td>Rainy season</td>
+                            <td>Paddy (Dhan), Kodon Kutki (millets), Oilseeds (Tilhan), Ramtila, Rice (Chawal)</td>
+                        </tr>
+                        <tr>
+                            <td>Unhari / Unyari (उन्हाड़ी)</td>
+                            <td>Rabi / Winter</td>
+                            <td>Winter season</td>
+                            <td>Wheat (Gehun), Gram (Chana), Mustard (Sarson), Lentils (Masoor), Linseed (Alsi)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 data-toc-id="h2_11">11. SOCIAL INSTITUTIONS — THE GHOTUL</h2>
+                <h3 data-toc-id="h3_11_1">11.1 Ghotul (घोटुल)</h3>
+                <ul>
+                    <li>The traditional youth home / dormitory of the Gond tribe (Gond janjaati ka paramparik yuva griha)</li>
+                    <li>A unique socio-educational institution for young men and women</li>
+                    <li>Key literary source: "The Muria and their Ghotul" — by anthropologist Verrier Elwin (1947)</li>
+                    <li>This is a highly significant ethnographic publication for tribal studies</li>
+                </ul>
+
+                <h3 data-toc-id="h3_11_2">11.2 Dhanda (धांदा)</h3>
+                <ul>
+                    <li>Traditional riddles and puzzles used to test intelligence and pass time</li>
+                    <li>Samay bitaane aur buddhi parikshan ke liye paramparik paheliyan</li>
+                </ul>
+
+                <h2 data-toc-id="h2_12">12. KEY EXAM QUICK-REVISION(imp***)</h2>
+                <h3 data-toc-id="h3_12_1">12.1 MCQ Practice — Quick Q&A</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Answer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>What is Gond also known as?</td>
+                            <td>Koitor</td>
+                        </tr>
+                        <tr>
+                            <td>2nd largest tribe in MP?</td>
+                            <td>Gond</td>
+                        </tr>
+                        <tr>
+                            <td>Ghotul belongs to which tribe?</td>
+                            <td>Gond</td>
+                        </tr>
+                        <tr>
+                            <td>Nohadora Art belongs to which tribe?</td>
+                            <td>Gond</td>
+                        </tr>
+                        <tr>
+                            <td>Digna Art belongs to which tribe?</td>
+                            <td>Gond</td>
+                        </tr>
+                        <tr>
+                            <td>Garh Mandla — famous king?</td>
+                            <td>Shankar Shah</td>
+                        </tr>
+                        <tr>
+                            <td>Sajni dance — theme?</td>
+                            <td>Samdhin-Samdhi (Mother/Father-in-law dance)</td>
+                        </tr>
+                        <tr>
+                            <td>Diwani dance — performers?</td>
+                            <td>Ahir + Weapons (Cowry jewelry with flute, sword, stick)</td>
+                        </tr>
+                        <tr>
+                            <td>Shahdol theater = ?</td>
+                            <td>Barhar Day / Swang</td>
+                        </tr>
+                        <tr>
+                            <td>Avanaddha instruments example?</td>
+                            <td>Mandar (Struck/membrane)</td>
+                        </tr>
+                        <tr>
+                            <td>Dadariya song — theme?</td>
+                            <td>Heroic / Way to wedding (Veer Ras)</td>
+                        </tr>
+                        <tr>
+                            <td>Jas Geet — dedicated to?</td>
+                            <td>Budhadev</td>
+                        </tr>
+                        <tr>
+                            <td>Pandavani — Gond twist?</td>
+                            <td>Bhima > Arjun (Bhima is hero)</td>
+                        </tr>
+                        <tr>
+                            <td>Ramayani — Gond twist?</td>
+                            <td>Lakshman is hero (7 marriages)</td>
+                        </tr>
+                        <tr>
+                            <td>Navkhani = ?</td>
+                            <td>Ancestor Worship + New Rice (Kuldevi)</td>
+                        </tr>
+                        <tr>
+                            <td>Gondi officially recognized in MP textbooks — year?</td>
+                            <td>2019</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 data-toc-id="h3_12_2">12.2 Summary Cheat Sheet</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Dance & Theater</th>
+                            <th>Music & Song</th>
+                            <th>Epic & Festival</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Sajni = Samdhin-Samdhi dance</td>
+                            <td>Avanaddha = Struck (Mandar)</td>
+                            <td>Ramayani = Lakshman Hero</td>
+                        </tr>
+                        <tr>
+                            <td>Diwani = Ahir + Weapons</td>
+                            <td>Dadariya = Heroic / Way to wedding</td>
+                            <td>Pandavani = Bhima > Arjun</td>
+                        </tr>
+                        <tr>
+                            <td>Shahdol Theater = Barhar Day, Swang</td>
+                            <td>Jas Geet = Budhadev</td>
+                            <td>Navkhani = Ancestor Worship</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: var(--surface); border-radius: var(--radius-card); padding: 24px; max-width: 400px; box-shadow: var(--shadow-lg);">
+            <h3 style="margin-bottom: 16px;">Settings</h3>
+            
+            <label style="display: block; margin-bottom: 12px;">
+                <strong>Theme:</strong>
+                <select id="themeSelect" style="width: 100%; padding: 8px; margin-top: 4px; border-radius: 8px; border: 1px solid var(--border-2);">
+                    <option value="default">Default</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="forest">Forest</option>
+                    <option value="sunset">Sunset</option>
+                    <option value="cherry">Cherry</option>
+                    <option value="indigo">Indigo</option>
+                </select>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <input type="checkbox" id="darkModeToggle" style="width: 20px; height: 20px; cursor: pointer;">
+                <strong>Dark Mode</strong>
+            </label>
+
+            <button id="closeSettingsBtn" style="width: 100%; padding: 12px; background: var(--accent); color: var(--button-text); border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // DO NOT EDIT ANYTHING BELOW THIS LINE ═══════════════════════════════════════════════════
+
+        const topicName = "Tribes: Gond Tribe";
+        const linkedQuizFile = ""; // e.g., "chapter_quiz.html"
+        
+        // Firebase configuration (same as Gyaan Portal)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxxxxxxxxxxxx",
+            authDomain: "gyaan-portal-xxxxx.firebaseapp.com",
+            databaseURL: "https://gyaan-portal-xxxxx.firebasedatabase.app",
+            projectId: "gyaan-portal-xxxxx",
+            storageBucket: "gyaan-portal-xxxxx.appspot.com",
+            messagingSenderId: "xxxxxxxxxxxxx",
+            appId: "xxxxxxxxxxxxx"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        // ===== THEME & FONT SIZE MANAGEMENT =====
+        function applyThemeFromPortal() {
+            const theme = localStorage.getItem('quiz_theme') || 'default';
+            const isDark = localStorage.getItem('quiz_dark') === 'true';
+            const fontSize = localStorage.getItem('quiz_fontsize') || 'medium';
+            
+            document.body.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-font-size', fontSize);
+            if (isDark) document.body.classList.add('dark');
+        }
+
+        // ===== USER AUTHENTICATION =====
+        const _portalUser = (localStorage.getItem('portal_current_user') || 'guest').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+        const _userPrefix = `u_${_portalUser}__`;
+        
+        const safeTopicName = topicName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const MARKUP_KEY_HIGHLIGHTS = `note_markup_${_userPrefix}${safeTopicName}_highlights`;
+        const MARKUP_KEY_UNDERLINES = `note_markup_${_userPrefix}${safeTopicName}_underlines`;
+
+        let currentHighlightColor = 'yellow';
+        let userMarkups = { highlights: [], underlines: [] };
+
+        // ===== LOAD MARKUPS FROM FIREBASE =====
+        async function loadMarkups() {
+            try {
+                await auth.signInAnonymously();
+                
+                const highlightsSnap = await db.ref(MARKUP_KEY_HIGHLIGHTS).once('value');
+                const underlinesSnap = await db.ref(MARKUP_KEY_UNDERLINES).once('value');
+                
+                userMarkups.highlights = highlightsSnap.val() || [];
+                userMarkups.underlines = underlinesSnap.val() || [];
+                
+                renderMarkups();
+            } catch (e) {
+                console.warn('Firebase load failed:', e);
+            }
+        }
+
+        function renderMarkups() {
+            // Render highlights and underlines from stored markups
+            // This is a simplified version; full implementation would wrap text nodes
+            userMarkups.highlights.forEach(markup => {
+                // highlightTextInPage(markup.text, markup.color);
+            });
+            userMarkups.underlines.forEach(markup => {
+                // underlineTextInPage(markup.text);
+            });
+        }
+
+        // ===== TEXT SELECTION TOOLBAR =====
+        document.addEventListener('mouseup', () => {
+            const selection = window.getSelection().toString();
+            if (selection.length > 0) {
+                // showToolbarForSelection(selection);
+            }
+        });
+
+        document.getElementById('colorPicker').addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-option')) {
+                document.querySelectorAll('.color-option').forEach(el => el.classList.remove('active'));
+                e.target.classList.add('active');
+                currentHighlightColor = e.target.getAttribute('data-color');
+            }
+        });
+
+        document.getElementById('highlightBtn').addEventListener('click', () => {
+            const selection = window.getSelection();
+            if (selection.toString()) {
+                applyHighlight(selection, currentHighlightColor);
+            }
+        });
+
+        document.getElementById('underlineBtn').addEventListener('click', () => {
+            const selection = window.getSelection();
+            if (selection.toString()) {
+                applyUnderline(selection);
+            }
+        });
+
+        function applyHighlight(selection, color) {
+            const span = document.createElement('mark');
+            span.className = `markup-highlight ${color}`;
+            
+            try {
+                const range = selection.getRangeAt(0);
+                range.surroundContents(span);
+                
+                const text = selection.toString();
+                userMarkups.highlights.push({ text, color, timestamp: Date.now() });
+                
+                db.ref(MARKUP_KEY_HIGHLIGHTS).set(userMarkups.highlights);
+                showToast(`✓ Highlighted: ${text.substring(0, 30)}...`);
+            } catch (e) {
+                console.warn('Highlight failed:', e);
+            }
+            
+            selection.removeAllRanges();
+        }
+
+        function applyUnderline(selection) {
+            const span = document.createElement('u');
+            span.className = 'markup-underline';
+            
+            try {
+                const range = selection.getRangeAt(0);
+                range.surroundContents(span);
+                
+                const text = selection.toString();
+                userMarkups.underlines.push({ text, timestamp: Date.now() });
+                
+                db.ref(MARKUP_KEY_UNDERLINES).set(userMarkups.underlines);
+                showToast(`✓ Underlined`);
+            } catch (e) {
+                console.warn('Underline failed:', e);
+            }
+            
+            selection.removeAllRanges();
+        }
+
+        // ===== KEYBOARD SHORTCUTS =====
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'h') {
+                    e.preventDefault();
+                    document.getElementById('highlightBtn').click();
+                } else if (e.key === 'u') {
+                    e.preventDefault();
+                    document.getElementById('underlineBtn').click();
+                }
+            }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                document.getElementById('clearBtn').click();
+            }
+        });
+
+        // ===== TABLE OF CONTENTS (SMOOTH SCROLL) =====
+        document.querySelectorAll('.toc-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const id = link.getAttribute('data-toc-id');
+                const heading = document.querySelector(`[data-toc-id="${id}"]`);
+                if (heading) {
+                    heading.scrollIntoView({ behavior: 'smooth' });
+                    document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // ===== SETTINGS MODAL =====
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'flex';
+        });
+
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'none';
+        });
+
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            document.body.setAttribute('data-theme', e.target.value);
+            localStorage.setItem('quiz_theme', e.target.value);
+        });
+
+        document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.add('dark');
+                localStorage.setItem('quiz_dark', 'true');
+            } else {
+                document.body.classList.remove('dark');
+                localStorage.setItem('quiz_dark', 'false');
+            }
+        });
+
+        document.getElementById('fontSizeSelect').addEventListener('change', (e) => {
+            document.body.setAttribute('data-font-size', e.target.value);
+            localStorage.setItem('quiz_fontsize', e.target.value);
+        });
+
+        // ===== LINKED QUIZ =====
+        if (linkedQuizFile && linkedQuizFile !== 'REPLACE_WITH_LINKED_QUIZ_NAME') {
+            document.getElementById('testChapterBtn').style.display = 'block';
+            document.getElementById('testChapterBtn').addEventListener('click', () => {
+                window.open(linkedQuizFile, '_blank');
+            });
+        }
+
+        // ===== MOBILE MENU TOGGLE =====
+        document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // Close sidebar when link clicked on mobile
+        document.querySelectorAll('.toc-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    document.getElementById('sidebar').classList.remove('open');
+                }
+            });
+        });
+
+        // ===== TOAST NOTIFICATIONS =====
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ===== INITIALIZATION =====
+        applyThemeFromPortal();
+        loadMarkups();
+
+        // Update active TOC link on scroll
+        const headings = document.querySelectorAll('h1, h2, h3');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            headings.forEach(heading => {
+                if (heading.offsetTop <= window.scrollY + 100) {
+                    current = heading.getAttribute('data-toc-id');
+                }
+            });
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-toc-id') === current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
