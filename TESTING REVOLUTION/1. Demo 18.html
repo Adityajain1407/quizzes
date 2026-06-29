@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 18</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <style>
+        /* ===== THEME VARIABLES ===== */
+        :root {
+            --bg: #f4f6fa;
+            --surface: #ffffff;
+            --surface-2: #f8f9fa;
+            --surface-3: #eef2f6;
+            --border: rgba(0,0,0,0.06);
+            --border-2: rgba(0,0,0,0.1);
+            --text: #1e293b;
+            --text-2: #475569;
+            --text-3: #64748b;
+            --accent: #f97316;
+            --accent-dark: #ea580c;
+            --accent-bg: #fff7ed;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 8px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 25px -8px rgba(0,0,0,0.1);
+            --radius-card: 20px;
+            --transition: all 0.25s ease;
+            --button-text: #ffffff;
+            --link-color: #0284c7;
+        }
+        
+        /* LIGHT THEMES */
+        html[data-theme="default"] { --bg: #f4f6fa; --surface: #ffffff; --text: #1e293b; --accent: #f97316; }
+        html[data-theme="ocean"] { --bg: #e0f2fe; --surface: #ffffff; --text: #082f49; --accent: #0284c7; }
+        html[data-theme="forest"] { --bg: #f0fdf4; --surface: #ffffff; --text: #14532d; --accent: #16a34a; }
+        html[data-theme="sunset"] { --bg: #fff1f2; --surface: #ffffff; --text: #881337; --accent: #e11d48; }
+        html[data-theme="cherry"] { --bg: #fce7f3; --surface: #ffffff; --text: #740550; --accent: #ec4899; }
+        html[data-theme="indigo"] { --bg: #eef2ff; --surface: #ffffff; --text: #312e81; --accent: #4f46e5; }
+        
+        /* DARK THEMES */
+        html[data-theme="default"].dark { --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --accent: #fb923c; }
+        html[data-theme="ocean"].dark { --bg: #082f49; --surface: #0c4a6e; --text: #e0f2fe; --accent: #38bdf8; }
+        html[data-theme="forest"].dark { --bg: #052e16; --surface: #14532d; --text: #f0fdf4; --accent: #4ade80; }
+        html[data-theme="sunset"].dark { --bg: #4c0519; --surface: #881337; --text: #fff1f2; --accent: #fb7185; }
+        html[data-theme="cherry"].dark { --bg: #500724; --surface: #740550; --text: #fce7f3; --accent: #f472b6; }
+        html[data-theme="indigo"].dark { --bg: #1e1b4b; --surface: #312e81; --text: #eef2ff; --accent: #818cf8; }
+
+        /* BASE STYLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CONTAINER */
+        .container { display: flex; width: 100%; height: 100%; }
+        .sidebar { width: 320px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; box-shadow: var(--shadow-sm); }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px; box-shadow: var(--shadow-sm); }
+        .banner-title { font-size: 28px; font-weight: 700; color: var(--accent); margin: 0; }
+        .content-wrapper { flex: 1; overflow-y: auto; padding: 40px; }
+        
+        /* SIDEBAR TOC */
+        .toc-title { font-size: 14px; font-weight: 600; text-transform: uppercase; color: var(--text-3); padding: 15px 20px 10px; margin-top: 10px; }
+        .toc-list { list-style: none; padding: 0; margin: 0; }
+        .toc-list li { margin: 0; }
+        .toc-link { 
+            display: block; padding: 10px 20px; color: var(--text-2); font-size: 14px; cursor: pointer; transition: var(--transition);
+            border-left: 3px solid transparent; text-decoration: none;
+        }
+        .toc-link:hover { background: var(--surface-2); color: var(--accent); }
+        .toc-link.active { background: var(--accent-bg); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+        .toc-h2 { padding-left: 40px; font-size: 13px; }
+        .toc-h3 { padding-left: 60px; font-size: 12px; }
+
+        /* CONTENT */
+        #noteContent { max-width: 900px; margin: 0 auto; }
+        h1 { font-size: 32px; font-weight: 700; margin: 40px 0 20px; color: var(--accent); }
+        h2 { font-size: 24px; font-weight: 700; margin: 30px 0 15px; color: var(--text); border-bottom: 2px solid var(--accent-bg); padding-bottom: 10px; }
+        h3 { font-size: 18px; font-weight: 600; margin: 20px 0 10px; color: var(--text); }
+        p { margin: 15px 0; color: var(--text); line-height: 1.8; }
+        
+        strong { color: var(--accent); font-weight: 600; }
+        em { font-style: italic; color: var(--text-2); }
+        
+        /* LISTS */
+        ul, ol { margin: 15px 0 15px 30px; }
+        li { margin: 8px 0; color: var(--text); line-height: 1.8; }
+        
+        /* TABLES */
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; background: var(--surface); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-sm); }
+        th { background: var(--accent-bg); color: var(--accent); padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        tr:hover { background: var(--surface-2); }
+
+        /* TOOLBAR */
+        .toolbar { 
+            display: flex; gap: 10px; padding: 15px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+            flex-wrap: wrap; align-items: center;
+        }
+        .btn { 
+            padding: 8px 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer;
+            border-radius: 6px; font-size: 12px; font-weight: 500; transition: var(--transition);
+        }
+        .btn:hover { background: var(--accent); color: var(--button-text); border-color: var(--accent); }
+        .btn.active { background: var(--accent); color: var(--button-text); }
+        
+        .color-picker { display: flex; gap: 8px; margin-left: auto; }
+        .color-btn { width: 28px; height: 28px; border-radius: 4px; cursor: pointer; border: 2px solid var(--border); transition: var(--transition); }
+        .color-btn:hover { transform: scale(1.1); }
+        .yellow { background: #fef08a; }
+        .pink { background: #fbcfe8; }
+        .blue { background: #bfdbfe; }
+        .green { background: #bbf7d0; }
+
+        /* HIGHLIGHTING */
+        mark { padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+        .markup-highlight { padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+        .markup-highlight.yellow { background: #fef08a; }
+        .markup-highlight.pink { background: #fbcfe8; }
+        .markup-highlight.blue { background: #bfdbfe; }
+        .markup-highlight.green { background: #bbf7d0; }
+
+        /* CONTEXT MENU */
+        #contextMenu { 
+            position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+            box-shadow: var(--shadow-lg); z-index: 1000; min-width: 150px; display: none;
+        }
+        #contextMenu.visible { display: block; }
+        .menu-item { 
+            padding: 10px 15px; cursor: pointer; font-size: 13px; transition: var(--transition);
+            border-bottom: 1px solid var(--border);
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover { background: var(--accent-bg); color: var(--accent); }
+
+        /* TOAST */
+        .toast { 
+            position: fixed; bottom: 20px; right: 20px; background: var(--text); color: var(--button-text);
+            padding: 12px 20px; border-radius: 6px; font-size: 13px; z-index: 2000;
+            box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sidebar { width: 250px; }
+            .content-wrapper { padding: 30px; }
+            h1 { font-size: 24px; }
+            h2 { font-size: 18px; }
+        }
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+            .main-content { height: 60vh; }
+            .content-wrapper { padding: 20px; }
+            h1 { font-size: 20px; }
+            h2 { font-size: 16px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .color-picker { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="toc-title">Contents</div>
+            <ul class="toc-list">
+                <li><span class="toc-link" data-toc-id="h1-1">THE BAIGA TRIBE</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-1">1. MACRO CLASSIFICATION & REGIONAL IDENTITY</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-2">2. IDENTITY MATRIX</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-3">3. CULTURE, BELIEFS & LITERATURE</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-4">4. ORIGIN MYTH</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-5">5. DEMOGRAPHICS & HISTORY</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-6">6. GEOGRAPHICAL DISTRIBUTION</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-7">7. PHYSICAL CHARACTERISTICS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-8">8. SUB-TRIBES</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-9">9. CLAN (GOTRA) & GARH SYSTEM</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-10">10. SOCIAL STRUCTURE & FAMILY SYSTEM</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-11">11. THE MANDI: BAIGA PANCHAYAT SYSTEM</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-12">12. VILLAGE ARCHITECTURE</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-13">13. TRADITIONAL ATTIRE</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-14">14. CULINARY TRADITIONS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-15">15. SACRED BIRTH RITUALS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-16">16. MARRIAGE RULES & CUSTOMS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-17">17. DEATH RITUALS & FINAL RITES</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-18">18. FOUNDATIONAL BELIEFS & RELIGION</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-19">19. MAP OF DEITIES</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-20">20. SHAMANS & SPIRITUAL LEADERS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-21">21. DISEASE, WITCHCRAFT & MAGIC</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-22">22. FESTIVALS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-23">23. DANCE TRADITIONS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-24">24. ECONOMIC FOUNDATIONS: BEWAR AGRICULTURE</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-25">25. CRAFT ARTS & DAILY LIFE</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-26">26. HUNTING TRAPS: DIAGNOSTIC MATRIX</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-27">27. LANGUAGE & ORAL TRADITIONS</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-28">28. DISTINCTIVE CULTURAL IDENTITY</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-29">29. MODERN PRIDE: PADMA SHRI AWARDEES</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-30">30. MASTER GLOSSARY</span></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1 class="banner-title">Demo 18</h1>
+            </div>
+            <div class="toolbar">
+                <button class="btn" onclick="toggleTheme()">🌙 Theme</button>
+                <button class="btn" onclick="applyBold()">Bold</button>
+                <button class="btn" onclick="applyItalic()">Italic</button>
+                <button class="btn" onclick="applyUnderline()">Underline</button>
+                <button class="btn" onclick="clearMarkup()">Clear</button>
+                <div class="color-picker">
+                    <button class="color-btn yellow" onclick="highlightSelection('yellow')" title="Yellow"></button>
+                    <button class="color-btn pink" onclick="highlightSelection('pink')" title="Pink"></button>
+                    <button class="color-btn blue" onclick="highlightSelection('blue')" title="Blue"></button>
+                    <button class="color-btn green" onclick="highlightSelection('green')" title="Green"></button>
+                </div>
+            </div>
+            <div class="content-wrapper">
+                <div id="noteContent">
+                    <h1 data-toc-id="h1-1">THE BAIGA TRIBE</h1>
+                    <p><strong>Sons of the Forest</strong></p>
+                    <p>Comprehensive Study Notes for M.P. PSC / UPSC</p>
+
+                    <h2 data-toc-id="h2-1">1. MACRO CLASSIFICATION & REGIONAL IDENTITY</h2>
+                    
+                    <h3 data-toc-id="h3-1">1.1 Racial & Community Classification</h3>
+                    <ul>
+                        <li>Race: <strong>Dravidian Community</strong></li>
+                        <li>Sub-race: <strong>Proto-Australoid Race</strong></li>
+                        <li>Tribal affiliation: <strong>Sub-species / branch of the Gond tribe</strong></li>
+                        <li>The Baiga are considered a distinct sub-tribe that evolved from the Gond community</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-2">1.2 Primary Region</h3>
+                    <ul>
+                        <li>Most important tribe in the <strong>Southern / Eastern Madhya Pradesh region</strong></li>
+                        <li>Concentrated in the Eastern Satpura range, between the Satpura and Maikal mountain ranges</li>
+                        <li>Key districts: <strong>Mandla, Dindori, Balaghat, Sidhi</strong></li>
+                        <li>The primary <strong>Baiga</strong> settlement area within Dindori district is called <strong>Baigachak</strong></li>
+                        <li>Their entire geographical zone is heavily covered with <strong>Sal (Saj) trees</strong></li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-2">2. IDENTITY MATRIX</h2>
+                    
+                    <h3 data-toc-id="h3-3">2.1 Official Status</h3>
+                    <ul>
+                        <li><strong>Declared a Backward / Primitive Tribe by the Government of India</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-4">2.2 Self-Identity & Alternative Names</h3>
+                    <ul>
+                        <li><strong>King of the Forest / Son of Nature</strong> (Jungle ke Raja / Prakriti ke Putra)</li>
+                        <li>Dharti Putra <strong>(Son of the Earth)</strong></li>
+                        <li><strong>Bichhawar</strong></li>
+                        <li><strong>Aadiswami</strong> / Aboriginals (as described <strong>by Verrier Elwin)</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-5">2.3 Roles & Titles within the Community</h3>
+                    <ul>
+                        <li>Priest (Purohit / Pujari): serves as village priest and doctor</li>
+                        <li><strong>Panda:</strong> sub-role under the Priest</li>
+                        <li><strong>Bewat:</strong> sub-role under the Priest</li>
+                        <li>The priest figure (Panda/Bewat) serves dual roles - both Village Priest and Doctor</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-3">3. CULTURE, BELIEFS & LITERATURE</h2>
+                    
+                    <h3 data-toc-id="h3-6">3.1 Supreme Deity</h3>
+                    <ul>
+                        <li>Name: <strong>Thakur Dev</strong></li>
+                        <li>Role: Creator of the Universe according to Baiga tradition</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-7">3.2 Key Literature</h3>
+                    <ul>
+                        <li>Book Title: <strong>'The Baiga'</strong></li>
+                        <li>Author: <strong>Verrier Elwin</strong></li>
+                        <li>Other descriptions of Baigas in the book: <strong>Magicians or Physicians</strong> (Jadoogar ya Chikitsak)</li>
+                        <li>Also referred to as <strong>Aadiswami</strong> / Aboriginals</li>
+                        <li>Note: Another famous work by <strong>Verrier Elwin is 'Muria and Their Ghotul'</strong></li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-4">4. ORIGIN MYTH (According to Russell & Hiralal)</h2>
+                    
+                    <h3 data-toc-id="h3-8">4.1 Creation Lineage Flowchart</h3>
+                    <ul>
+                        <li>God (Ishwar) <strong>created Nag Baiga & Nagi Bagin</strong></li>
+                        <li>First child of Nag Baiga & Nagi Bagin = Baiga</li>
+                        <li>Second child = Gond</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-9">4.2 Human Race Origin</h3>
+                    <ul>
+                        <li>First couple from creation = Baigas</li>
+                        <li>Second couple from creation = Gonds</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-10">4.3 Cliffhanger Lore</h3>
+                    <ul>
+                        <li>Naga Baiga sent <strong>Crow Kunwar</strong> (Kag Kunwar) to find the earth (dharti)</li>
+                        <li>The crow is given special respect / sacred status by the Baiga people</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-5">5. DEMOGRAPHICS & HISTORY</h2>
+                    
+                    <h3 data-toc-id="h3-11">5.1 Census & Historical Classification</h3>
+                    <ul>
+                        <li>Census 1931: Officially recorded as <strong>'Animists' (Jeevvadi)</strong></li>
+                        <li>Census 1941: Classified as Hindus</li>
+                        <li>Russell & Hiralal classified them as tribes from Bengal & Bihar</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-12">5.2 Population Statistics (2011 Census)</h3>
+                    <ul>
+                        <li>Total Population: <strong>4.15 Lakh</strong> (approx.)</li>
+                        <li>Percentage of total ST (Scheduled Tribe) population: <strong>2.71%</strong></li>
+                        <li>Highest population district: <strong>Mandla District</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-13">5.3 Heritage & Sacred Beliefs</h3>
+                    <ul>
+                        <li><strong>Naga Baiga</strong> is known as <strong>'Bhumik'</strong> (Creator of the Earth)</li>
+                        <li>The Baiga believe <strong>the Earth is their daughter</strong>; hence they refuse to plow the land</li>
+                        <li>Special reverence / sacred respect given to crows</li>
+                        <li>Honorific words within the community: <strong>Dewar and Devarin</strong></li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-6">6. GEOGRAPHICAL DISTRIBUTION</h2>
+                    
+                    <h3 data-toc-id="h3-14">6.1 Key Regions</h3>
+                    <ul>
+                        <li><strong>Eastern Satpura</strong> (Purvi Satpura): Dense settlement between the Satpura and Maikal mountain ranges</li>
+                        <li><strong>Baigachak</strong>: Primary settlement zone located in <strong>Dindori district</strong></li>
+                        <li>Sal Forests (Sal Van): The entire geographic area is heavily covered with <strong>Sal trees</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-15">6.2 Key Districts</h3>
+                    <ul>
+                        <li><strong>Dindori</strong></li>
+                        <li><strong>Mandla</strong></li>
+                        <li><strong>Balaghat</strong></li>
+                        <li><strong>Sidhi</strong></li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-7">7. PHYSICAL CHARACTERISTICS</h2>
+                    <ul>
+                        <li>Height: Medium (Madhyam kad)</li>
+                        <li>Hair: Straight (Seedhe baal)</li>
+                        <li>Nose: Flat (Chapti naak)</li>
+                        <li>Complexion: Dark / Black (Kaala rang)</li>
+                        <li>Body: Well-built (Sugathit sharir)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-8">8. SUB-TRIBES (According to Russell)</h2>
+                    
+                    <h3 data-toc-id="h3-16">8.1 Bharotiya — Highest Position</h3>
+                    <ul>
+                        <li>Meaning of name: '<strong>Sustainer</strong>' (Poshan karne wala)</li>
+                        <li>Are in their original / most primitive state</li>
+                        <li><strong>Do NOT use ploughs</strong></li>
+                        <li>Distinctive feature: Keep long hair</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-17">8.2 Binjhwar — Most Civilized</h3>
+                    <ul>
+                        <li>Are the most civilized sub-group</li>
+                        <li>Big landlords</li>
+                        <li>Call themselves <strong>'Vindhyanchal' or 'Vindhwaar'</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-18">8.3 Kathamaina / Kodavan</h3>
+                    <ul>
+                        <li>Woodworkers (Lakdi ka kaam karne wale)</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-19">8.4 Mundipa</h3>
+                    <ul>
+                        <li>Those who keep a clean moustache (Saaf moonch rakhne wale)</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-20">8.5 Gondmaina — Lowest Position</h3>
+                    <ul>
+                        <li><strong>Lowest position in the tribe's hierarchy</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-21">8.6 Other Sub-tribes</h3>
+                    <ul>
+                        <li>Narotiya</li>
+                        <li>Ramena</li>
+                        <li>Nahar</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-9">9. CLAN (GOTRA) & GARH SYSTEM</h2>
+                    <p>The Baiga are organized as a branch of Baiga Bhumiya.</p>
+                    
+                    <h3 data-toc-id="h3-22">9.1 Major Gotras (Clans)</h3>
+                    <ul>
+                        <li><strong>Maravi</strong></li>
+                        <li><strong>Dhruve</strong></li>
+                        <li><strong>Markam</strong></li>
+                        <li><strong>Parteti</strong></li>
+                        <li><strong>Tekam</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-23">9.2 Classification Basis</h3>
+                    <ul>
+                        <li><strong>Jaat Karma:</strong> Hada-Rathudiya (work / occupation-based)</li>
+                        <li><strong>Qualities (Gun):</strong> Nidhuniya</li>
+                        <li><strong>Residence:</strong> Ghangharia</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-24">9.3 Strongholds / Major Garhs</h3>
+                    <ul>
+                        <li>Deori: Rice-eating hunter</li>
+                        <li>Sailatala: Sarai tree</li>
+                        <li>Koshiyari Khusru: Owl bird</li>
+                        <li>Ghata, Tantar, Bangar, Bhusando, Kakaria, Chada, Talia</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-10">10. SOCIAL STRUCTURE & FAMILY SYSTEM</h2>
+                    
+                    <h3 data-toc-id="h3-25">10.1 Core Family Features</h3>
+                    <ul>
+                        <li><strong>Patriarchal Society</strong>: Baiga society is predominantly male-dominated</li>
+                        <li><strong>Nuclear Families</strong>: Baigas mostly prefer to live in nuclear family units</li>
+                        <li><strong>Separate Residence</strong>: When a son marries, he builds another house nearby (separate from the father's)</li>
+                        <li><strong>Respect for Elders</strong>: Parents willingly live with any son; younger ones always obey their elders</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-26">10.2 Core Values Regarding Women</h3>
+                    <ul>
+                        <li><strong>Men make the rules of society</strong></li>
+                        <li>However, women hold <strong>HIGH social standing</strong></li>
+                        <li>Disrespecting a woman = Disrespecting the entire Baiga community</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-11">11. THE MANDI: BAIGA PANCHAYAT SYSTEM</h2>
+                    <p>The internal social organization of the Baiga is highly structured. The meeting/assembly of the Panchas is called the Mandi.</p>
+                    
+                    <h3 data-toc-id="h3-27">11.1 Governance Hierarchy</h3>
+                    <ul>
+                        <li><strong>Muqaddam (मुकद्दम) — Village Head (Hereditary):</strong> Chief manager; receives marriage baraats; handles all government functions</li>
+                        <li><strong>Diwan (दीवान) — Assistant to Muqaddam (Lineage-based):</strong> Convenes the Panchayat; invites people to marriages; entertains guests</li>
+                        <li><strong>Dewar (देवार) — Priest / Panda (Bhumiya):</strong> Performs all religious worship and Bidri puja</li>
+                        <li><strong>Samrath (समरथ):</strong> Arranges rations for social functions, guests, and government officers</li>
+                        <li><strong>Kotwar (कोटवार) — Government Servant (any caste):</strong> Responsible for village security; announces Muqaddam's decisions; reports births and deaths</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-12">12. VILLAGE ARCHITECTURE</h2>
+                    <p>Villages are located in upper mountains and forest banks (Paharon ke upari hisson aur janglon ke kinare)</p>
+                    
+                    <h3 data-toc-id="h3-28">12.1 Key Architectural Terms</h3>
+                    <ul>
+                        <li><strong>Tola or Purva (टोला या पुरवा):</strong> The circular-shaped village settlement pattern</li>
+                        <li><strong>Mero (मेरो):</strong> A protective wall made of vertical sticks surrounding the village/house</li>
+                        <li><strong>Bangla (बंगला):</strong> The main house used for living and meetings; includes a front shed for animals and a chicken coop</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-13">13. TRADITIONAL ATTIRE</h2>
+                    
+                    <h3 data-toc-id="h3-29">13.1 Men's Clothing</h3>
+                    <ul>
+                        <li>Garments: Dhoti (धोती), Shirt (शर्ट), Bandi (बंडी), Turban (पगड़ी)</li>
+                        <li>Special cloth: Patka or Langoti (पटका या लंगोटी)</li>
+                        <li>Accessories: Bracelets (Kangan) and Earrings (Jhumke)</li>
+                        <li>Grooming: Big hair like women, but with less beard and moustache</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-30">13.2 Women's Clothing</h3>
+                    <ul>
+                        <li>Main garment: <strong>Kapchi</strong> (कपची) — a saree wrapped from the waist to above the knees</li>
+                        <li>Traditional Lugdas (3 types): Mungi (मुंगी), Bigra (बिगरा), Chagadaria (छगदरिया)</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-31">13.3 Women's Ornaments</h3>
+                    <table>
+                        <tr><th>Body Part</th><th>Ornament Name</th></tr>
+                        <tr><td>Hair (Baal)</td><td>Kandri (कंदरी)</td></tr>
+                        <tr><td>Neck (Gardan)</td><td>Sutiya (सुतिया) & Havel (हवेली)</td></tr>
+                        <tr><td>Arms (Bhujayein)</td><td>Haraiya (हरैया)</td></tr>
+                        <tr><td>Waist (Kamar)</td><td>Waistband (कमरबंद)</td></tr>
+                        <tr><td>Feet (Pair)</td><td>Anklets (Payal) & Todal (टोडल)</td></tr>
+                    </table>
+                    <ul>
+                        <li><strong>Tarakul Jewellery (तरकुल आभूषण):</strong> A mandatory sign of marriage for married Baiga women (Suhaag ka anivarya prateek)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-14">14. CULINARY TRADITIONS (KHAN-PAAN)</h2>
+                    
+                    <h3 data-toc-id="h3-32">14.1 Diet Overview</h3>
+                    <ul>
+                        <li>Diet: Both vegetarian and non-vegetarian</li>
+                        <li>Favorite food: <strong>Fish</strong> (Machli)</li>
+                        <li>Observation (Dom Moraes): There is a lack of carbohydrates in their daily diet</li>
+                        <li>Meals are traditionally eaten on <strong>Mahlon leaves</strong>, which serve as both plate and bowl</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-33">14.2 Daily Diet Timeline</h3>
+                    <table>
+                        <tr><th>Meal</th><th>Name</th><th>Timing</th></tr>
+                        <tr><td>Morning</td><td><strong>Baasi</strong> (बासी)</td><td>Eaten in the morning</td></tr>
+                        <tr><td>Afternoon</td><td><strong>Pej</strong></td><td>Eaten in the afternoon</td></tr>
+                        <tr><td>Night</td><td><strong>Biyari</strong></td><td>Eaten at night</td></tr>
+                    </table>
+
+                    <h3 data-toc-id="h3-34">14.3 Pej (पेज) — The Main Beverage/Food</h3>
+                    <ul>
+                        <li>Pej is the main food/beverage of the Baiga people</li>
+                        <li>Prepared from: Kodo-Kutki grains and Maize (Kodo-Kutki aur Makka se nirmit)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-15">15. SACRED BIRTH RITUALS (PAVITR JANM SANSKAR)</h2>
+                    
+                    <h3 data-toc-id="h3-35">15.1 Birth Ritual Steps in Order</h3>
+                    <ul>
+                        <li><strong>Step 1 — Sunamai (सुनामाई):</strong> The elder lady of the village/house who assists in the birth (acts as midwife)</li>
+                        <li><strong>Step 2 — Jhalar (झालर):</strong> The child's father cuts the hair on the child's head</li>
+                        <li><strong>Step 3 — Bardina (बरदीना):</strong> All types of paddy are kept together at the time of birth</li>
+                        <li><strong>Step 4 — Mand Celebration (मांड का जश्न):</strong> The house owner orders 1-2 casks of 'Mand' (pure liquor made from Mahua) to celebrate the birth</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-16">16. MARRIAGE RULES & CUSTOMS</h2>
+                    
+                    <h3 data-toc-id="h3-36">16.1 Marriage Rules</h3>
+                    <ul>
+                        <li>Same caste / same sub-tribe marriage: PROHIBITED (Nishedh)</li>
+                        <li><strong>Same Gotra / Clan marriage: ALLOWED</strong> (Sweekriit)</li>
+                        <li>Polygamy (Bahupani Pratha): Multiple wives are permitted</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-37">16.2 The Groom's Ride Tradition</h3>
+                    <ul>
+                        <li><strong>Grooms traditionally prefer riding an elephant</strong> (haathi) during the marriage procession</li>
+                        <li>If a real elephant is unavailable, an artificial elephant is made from a charpai (Charpai se naqli haathi banaya jaata hai)</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-38">16.3 Sacred Marriage Symbol</h3>
+                    <ul>
+                        <li><strong>Karas Kaua</strong> (करस कौआ): A sacred symbol/deity specially established during the Baiga marriage ceremony</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-39">16.4 Six Types of Baiga Marriages</h3>
+                    <ul>
+                        <li><strong>1. Mangni / Chad (मंगनी या चढ़ विवाह):</strong> The boy's father visits the girl's courtyard and asks for acceptance through symbols. Features Bilma & Dadriya songs and Karma & Pardhani dances. Special ritual: Matikhnauni (माटिखनौनी) — tradition of Mangarmati on Tuesday morning</li>
+                        <li><strong>2. Uthwa (उठवा विवाह):</strong> The bride's side participates but the groom's side bears the entire expense</li>
+                        <li><strong>3. Chor (चोर विवाह):</strong> Elopement. The boy and girl run away with mutual consent</li>
+                        <li><strong>4. Paithul (पैठुल विवाह):</strong> An unmarried girl enters the boy's house of her own free will</li>
+                        <li><strong>5. Lamsena (लमसेना विवाह):</strong> Service marriage. If the boy's family cannot afford the marriage expenses, the boy lives at and serves the girl's father's home. The groom is called 'Lamsena' or 'son-in-law of the house'</li>
+                        <li><strong>6. Udhriya (उधरिया विवाह):</strong> Marriage facilitated by a known relative without the approval of parents from both sides</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-17">17. DEATH RITUALS & FINAL RITES</h2>
+                    
+                    <h3 data-toc-id="h3-40">17.1 General Death</h3>
+                    <ul>
+                        <li>Tradition permits both burying (dafnaana) and burning (jalaana)</li>
+                        <li><strong>Final death rites are decided in the Mandi</strong> (meeting of the Panchas)</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-41">17.2 If a Sick Person Dies</h3>
+                    <ul>
+                        <li>The body is strictly buried (Dafnaaya jaata hai) — burning is NOT permitted</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-42">17.3 Key Death Rituals</h3>
+                    <ul>
+                        <li><strong>Samra Pratha (समरा प्रथा):</strong> For soul peace, a gold or silver coin mixed with curd is placed in the dying person's mouth</li>
+                        <li><strong>Nahawal (नहावल):</strong> Mandatory playing of drums during the last rites (Dhol bajana anivarya)</li>
+                        <li><strong>Post-rites celebration:</strong> The house owner serves Mand (Mahua liquor), known in this context as <strong>Uthiyar-Suthiyar</strong> liquor (उठियार-सुठियार शराब)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-18">18. FOUNDATIONAL BELIEFS & RELIGION</h2>
+                    
+                    <h3 data-toc-id="h3-43">18.1 Core Belief System</h3>
+                    <ul>
+                        <li><strong>Polytheism & Nature Worship</strong>: They are polytheists and nature worshippers</li>
+                        <li><strong>Adi Purush Nanga Baiga</strong> (आदि पुरुष नंगा बैगा): An ancient figure who lived in Jambu Island, worshipped deeply</li>
+                        <li><strong>Hindu Integration</strong>: They also worship major Hindu deities</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-44">18.2 Hindu Deities Worshipped</h3>
+                    <ul>
+                        <li>Brahma, Vishnu, Mahadev, Parvati, Ram, Krishna, Hanuman, Shankar, Ganesh</li>
+                        <li>Lakshmi: Goddess of Wealth</li>
+                        <li>Durga: Worshipped during Navratri</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-45">18.3 The Sacred Saj (Sal) Tree</h3>
+                    <ul>
+                        <li><strong>The Saj (Sal) tree is the most favorite and sacred tree of the Baiga</strong></li>
+                        <li>It is the residence of <strong>Budha Dev</strong> (their principal deity)</li>
+                        <li>Ultimate Oath: If Saj leaves are placed in their palms, a Baiga will never tell a lie</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-19">19. MAP OF DEITIES</h2>
+                    
+                    <h3 data-toc-id="h3-46">19.1 Protector Deities</h3>
+                    <table>
+                        <tr><th>Deity</th><th>Domain</th><th>Residence</th><th>Ritual</th></tr>
+                        <tr><td><strong>Thakur Dev (ठाकुर देव)</strong></td><td>Village & Land Protector</td><td><strong>Sarai or Mahua tree</strong></td><td><strong>Worshipped every 3 years; white goat sacrificed</strong></td></tr>
+                        <tr><td><strong>Budha Dev (बूढ़ा देव)</strong></td><td>Protector of Generations</td><td><strong>Saj (Sal) Tree</strong></td><td><strong>Goat sacrifice</strong></td></tr>
+                        <tr><td><strong>Narayan Dev (नारायण देव)</strong></td><td>Family Deity (installed at doors)</td><td><strong>Doorway</strong></td><td><strong>Worshipped every 3, 7, and 12 years; pig sacrificed</strong></td></tr>
+                    </table>
+
+                    <h3 data-toc-id="h3-47">19.2 Nature & Health Deities</h3>
+                    <ul>
+                        <li><strong>Bageshwar Dev (बाघेश्वर देव):</strong> God of agriculture (Bevaradh); worshipped while cutting Kutki</li>
+                        <li><strong>Nag Dev (नाग देव):</strong> Known as Baiga Nageshwar</li>
+                        <li><strong>Khair Mai / Maharin Devi (खैर माई / महारिन देवी):</strong> Village goddess; protects from diseases</li>
+                        <li><strong>Banjarin Mai (बंजारिन माई):</strong> Goddess of the forest (Vanadevi); protects from wild animals</li>
+                        <li><strong>Dulha Dev (दूल्हा देव):</strong> Protector from diseases</li>
+                        <li><strong>Ratri Goddess (रात्रि देवी):</strong> Protects the Baigas at night</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-20">20. SHAMANS & SPIRITUAL LEADERS</h2>
+                    <p>Shaman (Shaman): A person performing necessary religious activities.</p>
+                    
+                    <h3 data-toc-id="h3-48">20.1 Types of Shamans</h3>
+                    <ul>
+                        <li><strong>The 'Veer' (Shahdol / वीर):</strong> A common man acting as a Shaman. Specialty: Performs mantras to subdue gods during Diwali and Dussehra</li>
+                        <li><strong>Guniya or Dewar (गुनिया या देवार):</strong> Specialists in medical and magical healing (Chikitsa aur Jadui upchaar ke visheshagya)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-21">21. DISEASE, WITCHCRAFT & MAGIC</h2>
+                    
+                    <h3 data-toc-id="h3-49">21.1 Core Belief on Disease</h3>
+                    <ul>
+                        <li>The cause of all diseases is the anger of a God or Goddess</li>
+                        <li>Treatment: Regular sacrifices are organized to please the gods and avoid disease</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-50">21.2 Disease & Sacrifice Matrix</h3>
+                    <table>
+                        <tr><th>Deity / Cause</th><th>Symptom / Disease</th><th>Sacrifice Required</th></tr>
+                        <tr><td><strong>Maharani Devi (महारानी देवी)</strong></td><td>Dizziness (Chakkar aana)</td><td>Goat sacrifice</td></tr>
+                        <tr><td><strong>Budha Dev (बूढ़ा देव)</strong></td><td>General protection</td><td>Goat sacrifice</td></tr>
+                        <tr><td><strong>Mhara Dev (म्हारा देव)</strong></td><td>Vomiting (Ulti)</td><td>Pig sacrifice</td></tr>
+                        <tr><td><strong>Deshavari Devi (देशावरी देवी)</strong></td><td>Vomiting (Ulti)</td><td>Cock sacrifice</td></tr>
+                    </table>
+
+                    <h3 data-toc-id="h3-51">21.3 Magic Methods (Jaadu ke Tarike)</h3>
+                    <ul>
+                        <li><strong>Supa-Tuma (सूपा-तूमा):</strong> The most important method of magic among the Baiga tribe</li>
+                        <li><strong>Chirbari Grass (चिरबारी घास):</strong> Used by the Guniya to treat patients</li>
+                        <li><strong>Mooth (मूठ):</strong> Baiga term for destructive magic, also called 'Mar' (मार)</li>
+                        <li><strong>Guggu (गुग्गू):</strong> A special magical mantra; 'Guggu' is also another name for the owl bird</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-22">22. FESTIVALS (TYOHAR)</h2>
+                    
+                    <h3 data-toc-id="h3-52">22.1 Festival Timeline</h3>
+                    <ul>
+                        <li><strong>Bidri (बिदरी)</strong> — Pre-sowing Phase: Festival held before sowing seeds; worship for a good harvest</li>
+                        <li><strong>Nava Fasal (नवा फसल)</strong> — Harvest Phase: Harvest festival; new crops are first offered to ancestors</li>
+                        <li><strong>Chherta (छेरता)</strong> — Children's Festival: Children pretend to be saints and ask for Chherta (donations)</li>
+                        <li><strong>Jawara Devi (जवारा देवी):</strong> A dedicated religious festival</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-53">22.2 Spotlight: Rasnava — The Honey Festival</h3>
+                    <ul>
+                        <li>Also known as: <strong>Ratauna</strong> (रतौना)</li>
+                        <li>Main Location: <strong>Mandla District</strong> (मंडला जिला)</li>
+                        <li>Dedicated to: <strong>Adi Purush Nanga Baiga</strong> (आदि पुरुष नंगा बैगा)</li>
+                        <li>Special feature: <strong>Worship of bees on the 9th day of the festival</strong></li>
+                        <li>Celebrated widely as the <strong>'Honey Festival'</strong> (Shahad Mahotsav)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-23">23. DANCE TRADITIONS</h2>
+                    
+                    <h3 data-toc-id="h3-54">23.1 Karma Dance (कर्मा नृत्य)</h3>
+                    <ul>
+                        <li><strong>Main traditional dance of the Baiga</strong></li>
+                        <li>Performed from <strong>Vijayadashami to the Rainy Season</strong> (Varsha Ritu)</li>
+                        <li>Performed on the beat of the <strong>Maandar drum</strong></li>
+                        <li>Types of Karma dance depend on the movement of the feet:
+                            <ul>
+                                <li><strong>Karma Khap (कर्मा खाप)</strong></li>
+                                <li><strong>Karma Lahki (कर्मा लहकी)</strong></li>
+                                <li><strong>Karma Jhulni (कर्मा झुलनी)</strong></li>
+                                <li><strong>Karma Khari (कर्मा खरी)</strong></li>
+                            </ul>
+                        </li>
+                        <li>Baigas also sing the <strong>Laadu song during Karma</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-55">23.2 Social & Seasonal Dances</h3>
+                    <table>
+                        <tr><th>Dance Name</th><th>Description</th></tr>
+                        <tr><td>Jharpat (झरपट)</td><td>Part of Karma; man and woman face each other in different directions</td></tr>
+                        <tr><td><strong>Reena</strong> (रीना)</td><td>Mainly a ladies' dance; face to face in a circle (to beats of Mandar & Timki)</td></tr>
+                        <tr><td><strong>Saila</strong> (सैला)</td><td>Performed in moonlight to please Adidev</td></tr>
+                        <tr><td><strong>Bilma</strong></td><td>Performed at the time of departure of the marriage Baarat</td></tr>
+                        <tr><td><strong>Pardhoni</strong></td><td>Performed by women to welcome the wedding Baarat</td></tr>
+                    </table>
+
+                    <h2 data-toc-id="h2-24">24. ECONOMIC FOUNDATIONS: BEWAR AGRICULTURE</h2>
+                    
+                    <h3 data-toc-id="h3-56">24.1 Philosophy</h3>
+                    <ul>
+                        <li>Baigas consider the Earth as their mother (Dharti Mata)</li>
+                        <li>Because of this belief, they do NOT plow (hal nhi chalate dharti par) the land to grow crops</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-57">24.2 Practice: Bewar Cultivation (Shifting Cultivation)</h3>
+                    <ul>
+                        <li>Practice shifting cultivation called <strong>'Bewar' or 'Pondu'</strong></li>
+                        <li><strong>'Kandabadi'</strong> (कंडाबाड़ी) is also a similar practice to Bewar</li>
+                        <li>Land is cleared by burning; crops are grown in the ash-enriched soil</li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-58">24.3 Poda Pratha (पोड़ा प्रथा)</h3>
+                    <ul>
+                        <li>A cooperative farming arrangement</li>
+                        <li>Baigas take bulls from other people and in return give them half of the produce (Upaj ka aadha hissa)</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-25">25. CRAFT ARTS & DAILY LIFE</h2>
+                    <p>The primary craft center is the Baigachak area of Mandla.</p>
+                    <table>
+                        <tr><th>Raw Material</th><th>Product Made</th></tr>
+                        <tr><td><strong>Guneri grass (गुनेरी घास)</strong></td><td>Beautiful chain-like garlands (Sundar malaein / Janjeer)</td></tr>
+                        <tr><td><strong>Metal / Wood (Dhatu / Lakdi)</strong></td><td>Tarki — jewel worn in the ears (Kaan ka aabhooshan)</td></tr>
+                        <tr><td><strong>Mahlon leaves (माहुल के पत्ते)</strong></td><td>Dona — leaf bowls for eating and serving</td></tr>
+                    </table>
+
+                    <h2 data-toc-id="h2-26">26. HUNTING TRAPS: DIAGNOSTIC MATRIX</h2>
+                    <table>
+                        <tr><th>Trap Name</th><th>Target Animal</th></tr>
+                        <tr><td>Khujji (खुज्जी फंदा)</td><td>Cock, Hen, Peacock (Murga, Murgi, Mor)</td></tr>
+                        <tr><td>Dalga (दलगा फंदा)</td><td>Rabbit, Chital, Sambar (Khargosh, Chital, Sambhar)</td></tr>
+                        <tr><td>Thonga (ठोंगा फंदा)</td><td>Cheetah (Cheeta)</td></tr>
+                        <tr><td><strong>Dabka (दबका फंदा)</strong></td><td><strong>Rats in Bewar agriculture fields</strong></td></tr>
+                        <tr><td>Suri (सूरी फंदा)</td><td>Lion (Sher)</td></tr>
+                        <tr><td>Chep (चेप फंदा)</td><td>Birds (using cheap adhesive substance)</td></tr>
+                        <tr><td>Malanda (मलंदा)</td><td>Special snare for birds</td></tr>
+                    </table>
+
+                    <h2 data-toc-id="h2-27">27. LANGUAGE & ORAL TRADITIONS</h2>
+                    <p>Reference: Russell & Hiralal's book 'Tribes and Castes'.</p>
+                    
+                    <h3 data-toc-id="h3-59">27.1 The Baiga Dialect</h3>
+                    <ul>
+                        <li>The Baiga dialect is a combination of two main influences:</li>
+                        <li>Distorted / modified <strong>Chhattisgarhi</strong></li>
+                        <li><strong>Gondi words</strong></li>
+                    </ul>
+
+                    <h3 data-toc-id="h3-60">27.2 Oral Literature</h3>
+                    <ul>
+                        <li><strong>Kissa (किस्सा):</strong> Stories in the Baiga community (Baigani Koli) are called 'Kissa'</li>
+                        <li><strong>Chakwa-Chakvi (चकवा-चकवी):</strong> A famous story obtained from the unpublished collection of <strong>Shri Sheikh Gulab</strong></li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-28">28. DISTINCTIVE CULTURAL IDENTITY</h2>
+                    <ul>
+                        <li><strong>Noh-Dora (नोह-डोरा):</strong> Wall painting made with clay while building a new house (Naya ghar banate samay mitti se deewaaron par chitrakari)</li>
+                        <li><strong>Tattoos / Godna (गोदना):</strong> The Baiga are known as the most tattoo-loving tribe in the world</li>
+                        <li><strong>Pig Worship (Suar Palan):</strong> Pig worshippers; a pig sacrifice ceremony is organized once every 12 years</li>
+                        <li><strong>Kukda Pat (कुकड़ा पाट):</strong> A game played together by both boys and girls</li>
+                    </ul>
+
+                    <h2 data-toc-id="h2-29">29. MODERN PRIDE: PADMA SHRI AWARDEES</h2>
+                    <table>
+                        <tr><th>Name</th><th>Field</th><th>District</th><th>Year</th></tr>
+                        <tr><td><strong>Arjun Singh Dhurve (अर्जुन सिंह धुर्वे)</strong></td><td><strong>Dance Artist (Nritya Kalakar)</strong></td><td><strong>Dindori (डिंडोरी)</strong></td><td><strong>2022</strong></td></tr>
+                        <tr><td><strong>Jodhaiya Bai (Baiga tribe)</strong></td><td><strong>Painter (Chitrakaar)</strong></td><td><strong>Umaria (उमरिया)</strong></td><td><strong>2023</strong></td></tr>
+                    </table>
+
+                    <h2 data-toc-id="h2-30">30. MASTER GLOSSARY (QUICK REVISION)</h2>
+                    <table>
+                        <tr><th>Term</th><th>Definition</th></tr>
+                        <tr><td><strong>Mandi (मंडी)</strong></td><td>Panchayat Meeting / assembly of Panchas</td></tr>
+                        <tr><td><strong>Muqaddam (मुकद्दम)</strong></td><td>Village Head (hereditary)</td></tr>
+                        <tr><td><strong>Tola / Purva (टोला / पुरवा)</strong></td><td>Circular Village Settlement</td></tr>
+                        <tr><td><strong>Mero (मेरो)</strong></td><td>Protective wooden wall of vertical sticks</td></tr>
+                        <tr><td><strong>Bangla (बंगला)</strong></td><td>Living and Meeting House</td></tr>
+                        <tr><td><strong>Kapchi (कपची)</strong></td><td>Women's waist-to-knee saree</td></tr>
+                        <tr><td><strong>Tarakul (तरकुल)</strong></td><td>Mandatory wedding jewelry for married women</td></tr>
+                        <tr><td><strong>Pej (पेज)</strong></td><td>Main Kodo-Kutki beverage (afternoon meal)</td></tr>
+                        <tr><td><strong>Biyari (बियारी)</strong></td><td>Night food</td></tr>
+                        <tr><td><strong>Baasi (बासी)</strong></td><td>Morning food</td></tr>
+                        <tr><td><strong>Sunamai (सुनामाई)</strong></td><td>Elder midwife / elder lady assisting at birth</td></tr>
+                        <tr><td><strong>Jhalar (झालर)</strong></td><td>Father cutting child's hair at birth</td></tr>
+                        <tr><td><strong>Bardina (बरदीना)</strong></td><td>Paddy kept together at time of birth</td></tr>
+                        <tr><td><strong>Lamsena (लमसेना)</strong></td><td>Service-based son-in-law (lives and serves at girl's home)</td></tr>
+                        <tr><td><strong>Karas Kaua (करस कौआ)</strong></td><td>Sacred deity / symbol established during marriage ceremony</td></tr>
+                        <tr><td><strong>Samra Pratha (समरा प्रथा)</strong></td><td>Placing coin/curd in dying person's mouth for soul peace</td></tr>
+                        <tr><td><strong>Nahawal (नहावल)</strong></td><td>Mandatory drum-playing during last rites</td></tr>
+                        <tr><td><strong>Uthiyar-Suthiyar (उठियार-सुठियार)</strong></td><td>Mahua liquor served after death rites</td></tr>
+                        <tr><td><strong>Bewar / Pondu</strong></td><td>Shifting / slash-and-burn cultivation</td></tr>
+                        <tr><td><strong>Poda Pratha (पोड़ा प्रथा)</strong></td><td>Cooperative farming (borrow bulls, give half produce)</td></tr>
+                        <tr><td><strong>Mooth (मूठ)</strong></td><td>Destructive magic, also called 'Mar' (मार)</td></tr>
+                        <tr><td><strong>Guggu (गुग्गू)</strong></td><td>Special magical mantra; also means owl</td></tr>
+                        <tr><td><strong>Supa-Tuma (सूपा-तूमा)</strong></td><td>Most important magic method of the Baiga</td></tr>
+                        <tr><td><strong>Bidri (बिदरी)</strong></td><td>Pre-sowing festival</td></tr>
+                        <tr><td><strong>Rasnava / Ratauna</strong></td><td>Honey Festival in Mandla district</td></tr>
+                        <tr><td><strong>Karma (कर्मा)</strong></td><td>Main Baiga dance tradition (Vijayadashami to rainy season)</td></tr>
+                        <tr><td><strong>Noh-Dora (नोह-डोरा)</strong></td><td>Clay wall painting on new houses</td></tr>
+                        <tr><td><strong>Godna (गोदना)</strong></td><td>Tattoos — most tattoo-loving tribe in the world</td></tr>
+                        <tr><td><strong>Kissa (किस्सा)</strong></td><td>Stories in Baigani Koli oral tradition</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contextMenu">
+        <div class="menu-item" onclick="applyHighlightFromMenu('yellow')">Highlight Yellow</div>
+        <div class="menu-item" onclick="applyHighlightFromMenu('pink')">Highlight Pink</div>
+        <div class="menu-item" onclick="applyHighlightFromMenu('blue')">Highlight Blue</div>
+        <div class="menu-item" onclick="applyHighlightFromMenu('green')">Highlight Green</div>
+        <div class="menu-item" onclick="applyBoldFromMenu()">Bold</div>
+        <div class="menu-item" onclick="applyItalicFromMenu()">Italic</div>
+        <div class="menu-item" onclick="clearMarkupFromMenu()">Clear Formatting</div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDlpU04PkD1xvR0pJ0mQ_Jz2r5I4KQo3Vg",
+            authDomain: "gyaan-portal.firebaseapp.com",
+            databaseURL: "https://gyaan-portal-default-rtdb.firebaseio.com",
+            projectId: "gyaan-portal",
+            storageBucket: "gyaan-portal.appspot.com",
+            messagingSenderId: "461959873160",
+            appId: "1:461959873160:web:f1e3c9c7e5b8d2a1c4e9f"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        const topicName = "Demo 18";
+        const FIREBASE_KEY = "demo_18";
+        
+        const annotationKeys = {
+            highlights: `${FIREBASE_KEY}/highlights`,
+            bold: `${FIREBASE_KEY}/bold`,
+            italic: `${FIREBASE_KEY}/italic`,
+            underline: `${FIREBASE_KEY}/underline`,
+            notes: `${FIREBASE_KEY}/notes`
+        };
+
+        let lastTouchTime = 0;
+        let currentTheme = localStorage.getItem('theme') || 'default';
+        let currentMode = localStorage.getItem('mode') || 'light';
+
+        // Initialize theme
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (currentMode === 'dark') document.documentElement.classList.add('dark');
+
+        function toggleTheme() {
+            const themes = ['default', 'ocean', 'forest', 'sunset', 'cherry', 'indigo'];
+            const currentIndex = themes.indexOf(currentTheme);
+            currentTheme = themes[(currentIndex + 1) % themes.length];
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('theme', currentTheme);
+
+            const isDark = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('mode', isDark ? 'light' : 'dark');
+        }
+
+        // TOC Navigation
+        document.querySelectorAll('.toc-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const tocId = link.getAttribute('data-toc-id');
+                const element = document.querySelector(`[data-toc-id="${tocId}"]`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        function showContextMenu(x, y, selection) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.classList.add('visible');
+        }
+
+        async function highlightSelection(color) {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                await applyHighlight(range, color);
+                hideContextMenu();
+            }
+        }
+
+        async function applyHighlightFromMenu(color) {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                await applyHighlight(range, color);
+            }
+            hideContextMenu();
+        }
+
+        function applyBold() {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                applyFormatting(range, 'strong', 'markup-bold', 'bold');
+            }
+        }
+
+        function applyBoldFromMenu() {
+            applyBold();
+            hideContextMenu();
+        }
+
+        function applyItalic() {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                applyFormatting(range, 'em', 'markup-italic', 'italic');
+            }
+        }
+
+        function applyItalicFromMenu() {
+            applyItalic();
+            hideContextMenu();
+        }
+
+        function applyUnderline() {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                applyFormatting(range, 'u', 'markup-underline', 'underline');
+            }
+        }
+
+        function clearMarkup() {
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                clearFormatting(range);
+            }
+        }
+
+        function clearMarkupFromMenu() {
+            clearMarkup();
+            hideContextMenu();
+        }
+
+        async function applyHighlight(range, color) {
+            try {
+                const contents = range.extractContents();
+                const div = document.createElement('div');
+                div.appendChild(contents);
+                
+                div.querySelectorAll('.markup-highlight').forEach(el => {
+                    const text = el.textContent;
+                    const textNode = document.createTextNode(text);
+                    el.parentNode.replaceChild(textNode, el);
+                });
+                
+                range.insertNode(div.firstChild);
+                
+                const span = document.createElement('mark');
+                span.className = `markup-highlight ${color}`;
+                range.surroundContents(span);
+                
+                const text = span.textContent;
+
+                await db.ref(`${annotationKeys.highlights}/${btoa(text)}`).set({
+                    text: text,
+                    color: color,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                showToast(`✓ Highlighted in ${color}`);
+            } catch (e) {
+                console.warn('Error:', e);
+            }
+        }
+
+        async function applyFormatting(range, tagName, className, dbKey) {
+            const span = document.createElement(tagName);
+            span.className = className;
+            
+            try {
+                range.surroundContents(span);
+                const text = span.textContent;
+
+                await db.ref(`${annotationKeys[dbKey]}/${btoa(text)}`).set({
+                    text: text,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                showToast(`✓ Applied ${tagName}`);
+            } catch (e) {
+                console.warn('Error:', e);
+            }
+        }
+
+        async function clearFormatting(range) {
+            try {
+                const contents = range.extractContents();
+                const div = document.createElement('div');
+                div.appendChild(contents);
+                
+                div.querySelectorAll('[class*="markup-"]').forEach(el => {
+                    const text = el.textContent;
+                    const textNode = document.createTextNode(text);
+                    el.parentNode.replaceChild(textNode, el);
+                });
+                
+                range.insertNode(div.firstChild);
+                showToast('✓ Formatting cleared');
+            } catch (e) {
+                console.warn('Error:', e);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').classList.remove('visible');
+        }
+
+        // Right-click handling
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.closest('#noteContent')) {
+                e.preventDefault();
+                const sel = window.getSelection();
+                if (sel && !sel.isCollapsed) {
+                    showContextMenu(e.clientX, e.clientY, sel);
+                } else {
+                    hideContextMenu();
+                }
+            }
+        });
+
+        // Double-tap on mobile
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapInterval = currentTime - lastTouchTime;
+            if (tapInterval < 300 && tapInterval > 0) {
+                if (e.target.closest('#noteContent')) {
+                    e.preventDefault();
+                    const sel = window.getSelection();
+                    if (sel && !sel.isCollapsed) {
+                        const touch = e.changedTouches[0];
+                        showContextMenu(touch.clientX, touch.clientY, sel);
+                    }
+                }
+            }
+            lastTouchTime = currentTime;
+        }, { passive: false });
+
+        // Click outside to clear selection
+        document.addEventListener('mouseup', (e) => {
+            if (!e.target.closest('#noteContent')) {
+                window.getSelection().removeAllRanges();
+                hideContextMenu();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#contextMenu')) {
+                hideContextMenu();
+            }
+        });
+
+        // Firebase initialization
+        (async () => {
+            try {
+                await auth.signInAnonymously();
+            } catch (e) {
+                console.warn('Auth error:', e);
+            }
+        })();
+
+        if (!sessionStorage.getItem('gyaan_portal_previous_page')) {
+            const referrer = document.referrer;
+            if (referrer) {
+                sessionStorage.setItem('gyaan_portal_previous_page', referrer);
+            }
+        }
+    </script>
+</body>
+</html>
