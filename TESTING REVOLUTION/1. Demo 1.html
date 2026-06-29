@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo 9</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <style>
+        /* ===== THEME VARIABLES ===== */
+        :root {
+            --bg: #f4f6fa;
+            --surface: #ffffff;
+            --surface-2: #f8f9fa;
+            --surface-3: #eef2f6;
+            --border: rgba(0,0,0,0.06);
+            --border-2: rgba(0,0,0,0.1);
+            --text: #1e293b;
+            --text-2: #475569;
+            --text-3: #64748b;
+            --accent: #f97316;
+            --accent-dark: #ea580c;
+            --accent-bg: #fff7ed;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 8px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 25px -8px rgba(0,0,0,0.1);
+            --radius-card: 20px;
+            --transition: all 0.25s ease;
+            --button-text: #ffffff;
+            --link-color: #0284c7;
+        }
+        
+        /* LIGHT THEMES */
+        html[data-theme="default"] { --bg: #f4f6fa; --surface: #ffffff; --text: #1e293b; --accent: #f97316; }
+        html[data-theme="ocean"] { --bg: #e0f2fe; --surface: #ffffff; --text: #082f49; --accent: #0284c7; }
+        html[data-theme="forest"] { --bg: #f0fdf4; --surface: #ffffff; --text: #14532d; --accent: #16a34a; }
+        html[data-theme="sunset"] { --bg: #fff1f2; --surface: #ffffff; --text: #881337; --accent: #e11d48; }
+        html[data-theme="cherry"] { --bg: #fce7f3; --surface: #ffffff; --text: #740550; --accent: #ec4899; }
+        html[data-theme="indigo"] { --bg: #eef2ff; --surface: #ffffff; --text: #312e81; --accent: #4f46e5; }
+        
+        /* DARK THEMES */
+        html[data-theme="default"].dark { --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --accent: #fb923c; }
+        html[data-theme="ocean"].dark { --bg: #082f49; --surface: #0c4a6e; --text: #e0f2fe; --accent: #38bdf8; }
+        html[data-theme="forest"].dark { --bg: #052e16; --surface: #14532d; --text: #f0fdf4; --accent: #4ade80; }
+        html[data-theme="sunset"].dark { --bg: #4c0519; --surface: #881337; --text: #fff1f2; --accent: #fb7185; }
+        html[data-theme="cherry"].dark { --bg: #500724; --surface: #740550; --text: #fce7f3; --accent: #f472b6; }
+        html[data-theme="indigo"].dark { --bg: #1e1b4b; --surface: #312e81; --text: #eef2ff; --accent: #818cf8; }
+
+        /* BASE STYLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: clamp(14px, 16px * var(--font-scale, 1), 24px);
+            --font-scale: 1;
+            display: flex;
+            flex-direction: column;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        /* TOP BANNER */
+        .top-banner {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-2);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+            height: 60px;
+        }
+
+        .banner-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .banner-toggle-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text); padding: 8px; border-radius: 8px; transition: var(--transition); }
+        .banner-toggle-btn:hover { background: var(--surface-2); }
+        .banner-title { font-size: 1.1rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .banner-right { display: flex; align-items: center; gap: 12px; }
+        .banner-btn { padding: 10px 16px; background: var(--accent); color: var(--button-text); border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+        .banner-btn:hover { background: var(--accent-dark); }
+        .banner-settings-btn { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text); padding: 8px; border-radius: 8px; transition: var(--transition); }
+        .banner-settings-btn:hover { background: var(--surface-2); }
+
+        /* MAIN CONTAINER */
+        .main-container { display: flex; flex: 1; gap: 0; overflow: hidden; min-height: 0; }
+        @media (max-width: 1023px) {
+            .main-container { flex-direction: column; }
+            #sidebar { position: fixed; left: 0; top: 60px; width: 280px; height: calc(100vh - 60px); background: var(--surface); z-index: 1000; transform: translateX(-100%); transition: transform 0.3s ease; box-shadow: 2px 0 8px rgba(0,0,0,0.1); }
+            #sidebar.open { transform: translateX(0); }
+        }
+
+        /* SIDEBAR */
+        #sidebar { background: var(--surface); border-right: 1px solid var(--border-2); overflow-y: auto; padding: 20px; flex-shrink: 0; width: 280px; display: flex; flex-direction: column; }
+        #sidebar::-webkit-scrollbar { width: 6px; }
+        #sidebar::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+        .sidebar-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
+        .toc-list { list-style: none; flex: 1; overflow-y: auto; }
+
+        .toc-link {
+            display: block;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-2);
+            transition: var(--transition);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
+        }
+        .toc-link:hover { background: var(--surface-2); color: var(--accent); border-left-color: var(--accent); }
+        .toc-link.active { background: var(--accent-bg); color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+        .toc-h2 { padding-left: 10px; font-size: 0.95rem; }
+        .toc-h3 { padding-left: 20px; font-size: 0.9rem; }
+
+        /* CONTENT AREA */
+        #contentArea { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+        #noteContent { flex: 1; overflow-y: auto; padding: 40px; background: var(--bg); user-select: text; -webkit-user-select: text; min-height: 0; }
+        @media (max-width: 768px) { #noteContent { padding: 20px; } }
+        #noteContent::-webkit-scrollbar { width: 8px; }
+        #noteContent::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+        /* HEADINGS & TEXT */
+        h1, h2, h3, h4, h5, h6 { margin-top: 24px; margin-bottom: 12px; font-weight: 700; line-height: 1.4; scroll-margin-top: 80px; }
+        h1 { font-size: clamp(1.5rem, 2rem * var(--font-scale), 2.5rem); color: var(--text); border-bottom: 2px solid var(--accent); padding-bottom: 12px; }
+        h2 { font-size: clamp(1.3rem, 1.6rem * var(--font-scale), 2rem); color: var(--text); margin-top: 32px; }
+        h3 { font-size: clamp(1.1rem, 1.3rem * var(--font-scale), 1.5rem); color: var(--text-2); margin-top: 24px; }
+        p { margin-bottom: 16px; line-height: 1.7; color: var(--text); }
+        a { color: var(--link-color); text-decoration: underline; }
+        a:hover { opacity: 0.8; }
+        strong { font-weight: 700; }
+        em { font-style: italic; }
+        u { text-decoration: underline; }
+        ul, ol { margin-left: 24px; margin-bottom: 16px; }
+        li { margin-bottom: 8px; line-height: 1.6; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border-2); border-radius: 8px; }
+        th, td { padding: 12px; text-align: left; border: 1px solid var(--border); }
+        thead { background: var(--surface-2); font-weight: 700; }
+        tbody tr:hover { background: var(--surface-2); }
+        img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; border: 1px solid var(--border-2); }
+
+        /* MODAL OVERLAY */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.3s ease; }
+        .modal-overlay.open { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* SETTINGS MODAL */
+        .settings-modal { background: var(--surface); border-radius: var(--radius-card); padding: 24px; max-width: 500px; width: 100%; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .settings-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+        .settings-group { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-2); }
+        .settings-group:last-child { border-bottom: none; margin-bottom: 0; }
+        .settings-label { display: block; font-weight: 600; margin-bottom: 12px; color: var(--text); font-size: 0.95rem; }
+        .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+        .theme-option { padding: 12px; border: 2px solid var(--border-2); border-radius: 8px; cursor: pointer; transition: var(--transition); text-align: center; font-weight: 600; font-size: 0.9rem; color: var(--text); }
+        .theme-option:hover { border-color: var(--accent); background: var(--surface-2); }
+        .theme-option.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+        .font-size-control { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .font-btn { width: 40px; height: 40px; border: 1px solid var(--border-2); background: var(--surface-2); color: var(--text); border-radius: 8px; font-size: 1.2rem; cursor: pointer; transition: var(--transition); }
+        .font-btn:hover { background: var(--accent); color: var(--button-text); border-color: var(--accent); }
+        .font-display { flex: 1; text-align: center; font-weight: 600; color: var(--accent); }
+        .settings-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); font-size: 0.95rem; margin-bottom: 8px; }
+        .settings-btn:last-child { margin-bottom: 0; }
+        .btn-primary { background: var(--accent); color: var(--button-text); }
+        .btn-primary:hover { background: var(--accent-dark); }
+        .btn-danger { background: #ef4444; color: #ffffff; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-2); }
+        .btn-secondary:hover { background: var(--surface-3); }
+
+        /* CONFIRMATION MODAL */
+        .confirmation-modal { background: var(--surface); border-radius: var(--radius-card); padding: 28px; max-width: 400px; width: 100%; box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease; text-align: center; }
+        .confirmation-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+        .confirmation-message { font-size: 0.95rem; color: var(--text-2); margin-bottom: 20px; line-height: 1.6; }
+        .confirmation-buttons { display: flex; gap: 12px; }
+        .confirmation-buttons button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+        .btn-yes { background: #ef4444; color: #ffffff; }
+        .btn-yes:hover { background: #dc2626; }
+        .btn-no { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-2); }
+        .btn-no:hover { background: var(--surface-3); }
+
+        /* CONTEXT MENU */
+        .context-menu { position: fixed; background: var(--surface); border: 1px solid var(--border-2); border-radius: 8px; padding: 8px 0; box-shadow: var(--shadow-lg); z-index: 10000; min-width: 240px; display: none; animation: popIn 0.2s ease; }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .context-menu.visible { display: block; }
+        .context-menu-item { padding: 10px 16px; cursor: pointer; transition: var(--transition); border: none; background: none; width: 100%; text-align: left; color: var(--text); font-size: 0.95rem; }
+        .context-menu-item:hover { background: var(--surface-2); color: var(--accent); }
+        .context-menu-divider { height: 1px; background: var(--border); margin: 6px 0; }
+        .color-picker { display: flex; gap: 6px; padding: 8px 16px; flex-wrap: wrap; }
+        .color-option { width: 24px; height: 24px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; transition: var(--transition); }
+        .color-option:hover { border-color: var(--text); }
+        .color-option.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+        .color-yellow { background: #fef3c7; }
+        .color-cyan { background: #cffafe; }
+        .color-green { background: #dcfce7; }
+        .color-pink { background: #fbcfe8; }
+        .color-orange { background: #fed7aa; }
+
+        /* ===== FORMATTED TEXT STYLES ===== */
+        .markup-highlight {
+            background-color: #fef3c7;
+            padding: 0 4px;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .markup-highlight:hover { opacity: 0.8; }
+        .markup-highlight.cyan { background-color: #cffafe; }
+        .markup-highlight.green { background-color: #dcfce7; }
+        .markup-highlight.pink { background-color: #fbcfe8; }
+        .markup-highlight.orange { background-color: #fed7aa; }
+
+        .markup-underline {
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+            cursor: pointer;
+        }
+
+        .markup-bold {
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .markup-italic {
+            font-style: italic;
+            cursor: pointer;
+        }
+
+        /* DARK MODE TOGGLE */
+        .dark-mode-toggle { display: flex; align-items: center; gap: 12px; }
+        .dark-mode-toggle input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 16px 20px; background: var(--accent); color: var(--button-text); border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 999; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        @media print {
+            .top-banner, #sidebar { display: none; }
+            .main-container { flex-direction: column; }
+            #noteContent { overflow: visible; padding: 0; }
+        }
+    </style>
+</head>
+<body data-theme="default">
+    <!-- TOP BANNER -->
+    <div class="top-banner">
+        <div class="banner-left">
+            <button class="banner-toggle-btn" id="bannerToggleBtn">☰</button>
+            <div class="banner-title">Demo 9</div>
+        </div>
+        <div class="banner-right">
+            <button class="banner-btn" id="testBtn">Test</button>
+            <button class="banner-settings-btn" id="bannerSettingsBtn">⚙️</button>
+        </div>
+    </div>
+
+    <!-- TEST MENU -->
+    <div class="modal-overlay" id="testMenuOverlay">
+        <div class="confirmation-modal" style="max-width: 320px;">
+            <div class="confirmation-title">Select Option</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="settings-btn btn-primary" id="testChapterBtn">Test This Chapter</button>
+                <button class="settings-btn btn-secondary" id="testPYQBtn">Test PYQ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLEAR CONFIRMATION -->
+    <div class="modal-overlay" id="clearConfirmOverlay">
+        <div class="confirmation-modal">
+            <div class="confirmation-title">Clear All Annotations?</div>
+            <div class="confirmation-message">This will delete all highlights, bold, italic, and underline formatting. This action cannot be undone.</div>
+            <div class="confirmation-buttons">
+                <button class="btn-yes" id="confirmClearYes">YES</button>
+                <button class="btn-no" id="confirmClearNo">NO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsOverlay">
+        <div class="settings-modal">
+            <h2 class="settings-title">⚙️ Settings</h2>
+            
+            <div class="settings-group">
+                <label class="settings-label">📚 Theme</label>
+                <div class="theme-grid" id="themeGrid">
+                    <div class="theme-option active" data-theme="default">Default</div>
+                    <div class="theme-option" data-theme="ocean">Ocean</div>
+                    <div class="theme-option" data-theme="forest">Forest</div>
+                    <div class="theme-option" data-theme="sunset">Sunset</div>
+                    <div class="theme-option" data-theme="cherry">Cherry</div>
+                    <div class="theme-option" data-theme="indigo">Indigo</div>
+                </div>
+                <div class="dark-mode-toggle">
+                    <input type="checkbox" id="darkModeToggle">
+                    <label for="darkModeToggle" style="margin: 0; font-weight: 600; cursor: pointer;">🌙 Dark Mode</label>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label class="settings-label">🔤 Font Size</label>
+                <div class="font-size-control">
+                    <button class="font-btn" id="fontDecreaseBtn">−</button>
+                    <div class="font-display" id="fontDisplay">100%</div>
+                    <button class="font-btn" id="fontIncreaseBtn">+</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <button class="settings-btn btn-danger" id="clearAnnotationsBtn">🗑️ Clear All Annotations</button>
+            </div>
+
+            <div class="settings-group">
+                <button class="settings-btn btn-secondary" id="exitBtn">← Exit Chapter</button>
+            </div>
+
+            <button class="settings-btn btn-primary" id="closeSettingsBtn">Close</button>
+        </div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div class="context-menu" id="contextMenu">
+        <div id="contextMenuContent"></div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+        <aside id="sidebar">
+            <div class="sidebar-title">📖 Contents</div>
+            <ul class="toc-list" id="tocList">
+                <li><span class="toc-link" data-toc-id="h1-1">Sons of the Forest: The Baiga Tribe</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-1">1. Identity & Origin</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-1">Macro Classification & Region</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-2">The Identity Matrix</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-3">The Origin Myth</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-2">2. Demographics & Geography</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-4">Demographics & History</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-5">Geographical Distribution</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-6">Physical Characteristics</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-3">3. Social Structure & Governance</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-7">Sub-Tribes & Clans (Gotras)</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-8">Family System</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-9">The Mandi: Panchayat System</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-4">4. Lifestyle & Culture</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-10">Village Architecture</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-11">Traditional Attire & Ornaments</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-12">Culinary Traditions (Daily Diet)</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-13">Craft Arts & Daily Life</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-5">5. Life Events & Rituals</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-14">Sacred Birth Rituals</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-15">Marriage Rules & Customs</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-16">6 Types of Baiga Marriages</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-17">Death & Final Rites</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-6">6. Religion, Magic & Health</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-18">Foundational Beliefs & Deities</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-19">Shamans, Magic & Disease</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-7">7. Economy & Agriculture</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-20">Bewar Agriculture</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-21">Hunting Traps</span></li>
+                <li><span class="toc-link toc-h2" data-toc-id="h2-8">8. Arts, Festivals & Modern Pride</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-22">Dance Traditions & Festivals</span></li>
+                <li><span class="toc-link toc-h3" data-toc-id="h3-23">Cultural Identity & Padma Shri Awardees</span></li>
+            </ul>
+        </aside>
+
+        <div id="contentArea">
+            <div id="noteContent">
+                <h1 data-toc-id="h1-1">Sons of the Forest: The Baiga Tribe</h1>
+                <p>The Baiga tribe (बैगा जनजाति) is a prominent indigenous community, often recognized as the "Sons of Nature" and the most important tribe in the Southern region of Madhya Pradesh. This reference comprehensively outlines their identity, culture, lifestyle, and traditions.</p>
+
+                <h2 data-toc-id="h2-1">1. Identity & Origin</h2>
+                
+                <h3 data-toc-id="h3-1">Macro Classification & Region</h3>
+                <ul>
+                    <li><strong>Community:</strong> Dravidian Community (द्रविड़ समुदाय)</li>
+                    <li><strong>Race:</strong> Proto-Australoid Race (प्रोटो-ऑस्ट्रेलॉइड प्रजाति)</li>
+                    <li><strong>Lineage:</strong> Recognized as a Subspecies of the Gond (गोंड की उपजाति) tribe.</li>
+                    <li><strong>Primary Region:</strong> South-Eastern Madhya Pradesh, heavily concentrated in the districts of Balaghat, Dindori, and Mandla.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-2">The Identity Matrix</h3>
+                <ul>
+                    <li><strong>Official Status:</strong> Declared a "Backward Tribe" by the Government of India.</li>
+                    <li><strong>Self-Identity:</strong> They proudly identify as <strong>King of the Forest</strong>, <strong>Son of Nature</strong>, <strong>Dharti Putra</strong> (धरती पुत्र), and <strong>Bichhawar</strong> (बिछावर).</li>
+                    <li><strong>Titles & Roles:</strong> They serve as both village priests and doctors. Key roles include <strong>Panda</strong> (पंडा) and <strong>Bewat</strong> (बेवत) acting as priests (पुरोहित/पुजारी).</li>
+                    <li><strong>Supreme Deity:</strong> <strong>Thakur Dev</strong> (ठाकुर देव) – recognized as the creator of the universe according to Baiga tradition.</li>
+                    <li><strong>Key Literature:</strong> Detailed extensive studies exist in the book <em>'The Baiga'</em> authored by Verrier Elwin (वेरियर एल्विन).</li>
+                </ul>
+
+                <h3 data-toc-id="h3-3">The Origin Myth</h3>
+                <p>According to anthropologists Russell and Hiralal, the origin stems directly from God (ईश्वर):</p>
+                <ul>
+                    <li>The <strong>First Child</strong> was a Baiga (बैगा). From the first couple, the Baigas originated.</li>
+                    <li>The <strong>Second Child</strong> was a Gond (गोंड). From the second couple, the Gonds originated.</li>
+                    <li><strong>Ancestors:</strong> Nag Baiga (नाग बैगा) & Nagi Bagin (नागी बाघिन). Note: Myth says Naga Baiga sent Crow Kunwar (काग कुंवर) to find the Lath.</li>
+                    <li><strong>Sacred Beliefs:</strong> The Earth is considered their daughter; hence, they never plow. They also hold special respect for crows.</li>
+                </ul>
+
+                <h2 data-toc-id="h2-2">2. Demographics & Geography</h2>
+                
+                <h3 data-toc-id="h3-4">Demographics & History</h3>
+                <ul>
+                    <li><strong>1931 Census:</strong> Officially recorded as 'Animists' (जीववादी).</li>
+                    <li><strong>1941 Census:</strong> Re-classified as Hindus.</li>
+                    <li><strong>Historical Connection:</strong> Russell & Hiralal considered them to be a branch of tribes from Bengal & Bihar.</li>
+                    <li><strong>Total Population (2011):</strong> 4.15 Lakh (comprising 2.71% of the total ST Population).</li>
+                    <li><strong>Highest Population Density:</strong> Mandla District.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-5">Geographical Distribution</h3>
+                <ul>
+                    <li><strong>Eastern Satpura:</strong> They maintain dense settlements between the Satpura and Maikal mountain ranges.</li>
+                    <li><strong>Baigachak:</strong> This primary cultural hub is located in the Dindori district.</li>
+                    <li><strong>Sal Forests:</strong> Their entire geographical area is heavily covered with Sal trees, reinforcing their strong connection to the forest.</li>
+                    <li><strong>Key Districts:</strong> Dindori, Sidhi, Mandla, Balaghat.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-6">Physical Characteristics</h3>
+                <p>Baiga tribal members generally possess distinct physical traits: Medium height (मध्यम कद), Flat nose (चपटी नाक), Black complexion (काला रंग), Straight hair (सीधे बाल), and a Well-built body (सुगठित शरीर).</p>
+
+                <h2 data-toc-id="h2-3">3. Social Structure & Governance</h2>
+
+                <h3 data-toc-id="h3-7">Sub-Tribes & Clans (Gotras)</h3>
+                <p>According to Russell, the tribe is divided into several sub-groups:</p>
+                <ul>
+                    <li><strong>Bharotiya (भरौतिया):</strong> Highest position. They exist in an original state and do not use ploughs. Their name means 'Sustainer' and they keep long hair.</li>
+                    <li><strong>Binjhwar (बिंझवार):</strong> Most civilized sub-tribe. They are big landlords and call themselves Vindhyanchal or Vindhwaar.</li>
+                    <li><strong>Kathamaina (कठमैना / Kodavan):</strong> Woodworkers.</li>
+                    <li><strong>Mundipa (मुंडिपा):</strong> Those who keep a clean moustache.</li>
+                    <li><strong>Gondmaina (गोंडमैना):</strong> Holds the lowest position in the tribe hierarchy.</li>
+                    <li><strong>Others:</strong> Narotiya (नरोतिया), Ramena (रमैना), Nahar (नाहर).</li>
+                </ul>
+                <p><strong>Major Gotras:</strong> Maravi (मरावी), Dhruve (धुर्वे), Markam (मरकाम), Parteti (परतेती), Tekam (टेकाम).</p>
+
+                <h3 data-toc-id="h3-8">Family System</h3>
+                <ul>
+                    <li><strong>Patriarchal:</strong> The Baiga society is predominantly male-dominated where men make the rules.</li>
+                    <li><strong>Women's Respect:</strong> Despite being patriarchal, women hold a high social standing. Disrespecting ladies is equated to disrespecting the entire Baiga community.</li>
+                    <li><strong>Nuclear Families:</strong> They prefer nuclear families. Upon marriage, the son separates from his father and builds another house nearby.</li>
+                    <li><strong>Respect for Elders:</strong> Parents willingly live with any of their sons. Younger members always obey their elders' orders.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-9">The Mandi: Panchayat System</h3>
+                <p>Their internal social organization is highly structured. The meeting of Panchas is called <strong>Mandi</strong> (मंडी). The hierarchy includes:</p>
+                <ul>
+                    <li><strong>Muqaddam (मुकद्दम):</strong> Village Head (Hereditary). He is the chief manager, receives the Baarat, and handles government functions.</li>
+                    <li><strong>Diwan (दीवान):</strong> Assistant to Muqaddam (Lineage-based). He convenes the Panchayat, invites for marriages, and entertains guests.</li>
+                    <li><strong>Dewar (देवार):</strong> Priest/Panda (Bhumiya). Performs religious worship and the Bidri puja.</li>
+                    <li><strong>Samrath (समरथ):</strong> Arranges rations for social functions, guests, and government officers.</li>
+                    <li><strong>Kotwar (कोटवार):</strong> Government servant (can be of any caste). Manages village security, announces the Muqaddam's decisions, and reports births/deaths.</li>
+                </ul>
+
+                <h2 data-toc-id="h2-4">4. Lifestyle & Culture</h2>
+
+                <h3 data-toc-id="h3-10">Village Architecture</h3>
+                <p>Villages are located in upper mountains and forest banks.</p>
+                <ul>
+                    <li><strong>Tola or Purva (टोला या पुरवा):</strong> The traditional circular-shaped village settlement.</li>
+                    <li><strong>Mero (मेरो):</strong> A protective wall made of vertical sticks surrounding the village or individual house.</li>
+                    <li><strong>Bangla (बंगला):</strong> The house used for living and meetings. It includes a front shed for animals and a chicken coop.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-11">Traditional Attire & Ornaments</h3>
+                <ul>
+                    <li><strong>Men:</strong> Wear Dhoti, Shirt, Bandi, and Turban. A special cloth called <strong>Patka or Langoti</strong> is also worn. They groom their hair long like women, but maintain less beard and moustache.</li>
+                    <li><strong>Women:</strong> Wear <strong>Kapchi</strong> (a saree wrapped from the waist to above the knees). They use traditional Lugdas (3 Types: Mungi, Bigra, Chagadaria).</li>
+                    <li><strong>Ornaments:</strong> Hair (Kandri), Neck (Sutiya & Havel), Arms (Haraiya), Waist (Waistband), Feet (Anklets & Todal).</li>
+                    <li><strong>Tarakul (तरकुल):</strong> A mandatory sign of a wedding/marriage jewelry for married Baiga women.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-12">Culinary Traditions (Daily Diet)</h3>
+                <p>Their diet is both Vegetarian and Non-Vegetarian (they especially love fish). According to observer Dom Moraes, there is typically a lack of carbohydrates in their diet.</p>
+                <ul>
+                    <li><strong>Baasi (बासी):</strong> Eaten in the morning.</li>
+                    <li><strong>Pej (पेज):</strong> The main food/beverage eaten in the afternoon. Made from Kodo-Kutki and Maize.</li>
+                    <li><strong>Biyari (बियारी):</strong> Eaten at night.</li>
+                </ul>
+                <p>They always eat using <strong>Mahlon Leaves</strong> which serve as both plates and bowls.</p>
+
+                <h3 data-toc-id="h3-13">Craft Arts & Daily Life</h3>
+                <p>In the Baigachak area of Mandla, they specialize in various crafts:</p>
+                <ul>
+                    <li><strong>Guneri grass:</strong> Woven into beautiful chain-like garlands.</li>
+                    <li><strong>Metal/Wood:</strong> Used to make <strong>Tarki</strong> (jewels worn in the ears).</li>
+                    <li><strong>Mahlon leaves:</strong> Used to make <strong>Dona</strong> (leaf bowls).</li>
+                </ul>
+
+                <h2 data-toc-id="h2-5">5. Life Events & Rituals</h2>
+
+                <h3 data-toc-id="h3-14">Sacred Birth Rituals</h3>
+                <ul>
+                    <li><strong>Sunamai (सुनामाई):</strong> The elder lady of the village/house who acts as a midwife and assists in the birth.</li>
+                    <li><strong>Jhalar (झालर):</strong> The ritual where the child's father cuts the hair on the child's head.</li>
+                    <li><strong>Bardina (बरदीना):</strong> The practice of keeping all types of 'paddy' together at the time of birth.</li>
+                    <li><strong>Mand Celebration:</strong> The house owner orders 1-2 casks of 'Mand' (pure liquor made from Mahua) to celebrate the new birth.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-15">Marriage Rules & Customs</h3>
+                <ul>
+                    <li><strong>Rules:</strong> Same caste marriage is Prohibited. However, marriage within the Same Gotra/Clan is Allowed. Polygamy (having multiple wives) is permitted.</li>
+                    <li><strong>The Groom's Ride:</strong> Grooms desire to ride an elephant during marriage. If a real elephant is unavailable, a fake one is constructed from a Charpai (four-legged cot).</li>
+                    <li><strong>Karas Kaua (करस कौआ):</strong> A sacred symbol or deity that is specially established during the Baiga marriage ceremony.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-16">6 Types of Baiga Marriages</h3>
+                <ol>
+                    <li><strong>Mangni / Chad (मंगनी या चढ़):</strong> Boy's father asks for acceptance in the girl's courtyard via symbols. Features Bilma & Dadriya songs + Karma & Pardhani dances. Special Ritual: Matikhnauni (Tradition of Mangarmati on Tuesday morning).</li>
+                    <li><strong>Uthwa (उठवा):</strong> The bride's side participates, but the groom's side bears the entire expense.</li>
+                    <li><strong>Chor (चोर):</strong> Elopement. Boy and girl run away with mutual consent.</li>
+                    <li><strong>Paithul (पैठुल):</strong> An unmarried girl enters the boy's house of her own free will.</li>
+                    <li><strong>Lamsena (लमसेना):</strong> Service marriage. If the boy's father cannot pay the expenses, the boy lives at and serves the girl's father. The groom is called Lamsena (service-based son-in-law).</li>
+                    <li><strong>Udhriya (उधरिया):</strong> Marriage facilitated by a known relative without the approval of parents from both sides.</li>
+                </ol>
+
+                <h3 data-toc-id="h3-17">Death & Final Rites</h3>
+                <ul>
+                    <li><strong>General Death:</strong> Tradition allows both Burying (दफनाना) and Burning (जलाना). The final death rites are decided in the Mandi (Meeting of the Panchas).</li>
+                    <li><strong>Sick Person Dies:</strong> If a person dies from sickness, they are strictly Buried.</li>
+                    <li><strong>Samra Pratha (समरा प्रथा):</strong> For soul peace, a gold/silver coin mixed with curd is placed in the dying person's mouth.</li>
+                    <li><strong>Nahawal (नहावल):</strong> Mandatory playing of drums during the last rites. Afterward, the house owner serves Mand (Mahua liquor) known as Uthiyar-Suthiyar (उठियार-सुठियार).</li>
+                </ul>
+
+                <h2 data-toc-id="h2-6">6. Religion, Magic & Health</h2>
+
+                <h3 data-toc-id="h3-18">Foundational Beliefs & Deities</h3>
+                <p>The Baiga are polytheists and nature worshippers, but they also integrate Hindu worship (Brahma, Vishnu, Mahadev, Parvati, Ram, Krishna, Hanuman, Shankar, Ganesh, Lakshmi, Durga).</p>
+                <ul>
+                    <li><strong>Adi Purush Nanga Baiga (आदि पुरुष नंगा बैगा):</strong> Ancient figure who lived in Jambu Island. He is worshipped deeply.</li>
+                    <li><strong>The Sacred Saj Tree:</strong> The most favorite and sacred tree of the Baiga. It is the residence of <strong>Budha Dev</strong> (their principal deity). <em>The Ultimate Oath:</em> If Saj leaves are placed in their palms, a Baiga will never lie.</li>
+                    <li><strong>Thakur Dev:</strong> Village & Land Protector (resides in Sarai or Mahua Tree). Worshipped every 3 years with a white goat sacrifice.</li>
+                    <li><strong>Budha Dev:</strong> Protector of Generations.</li>
+                    <li><strong>Narayan Dev:</strong> Family Deity (Installed at doors). Worshipped every 3, 7, and 12 years with a pig sacrifice.</li>
+                    <li><strong>Other Protectors:</strong> Bageshwar Dev (God of agriculture), Khair Mai/Maharin Devi (Village goddess/diseases), Dulha Dev (Protector from diseases), Banjarin Mai (Goddess of the forest), Nag Dev (Baiga Nageshwar), Ratri Goddess (Protects at night).</li>
+                </ul>
+
+                <h3 data-toc-id="h3-19">Shamans, Magic & Disease</h3>
+                <p>The root cause of all diseases is believed to be the anger of Gods (offending the divine balance). To cure physical disease, regular sacrifices are organized to please the gods.</p>
+                <ul>
+                    <li>Maharani Devi/Budha Dev -> Dizziness -> Goat Sacrifice</li>
+                    <li>Mhara Dev -> Vomiting -> Pig Sacrifice</li>
+                    <li>Deshavari Devi -> Vomiting -> Cock Sacrifice</li>
+                </ul>
+                <p><strong>Spiritual Leaders:</strong></p>
+                <ul>
+                    <li><strong>The 'Veer' (वीर):</strong> A common man acting as a Shaman. Performs mantras to subdue gods on Diwali & Dussehra.</li>
+                    <li><strong>Guniya or Dewar (गुनिया या देवार):</strong> Specialists in medical and magical healing.</li>
+                </ul>
+                <p><strong>Magic Methods & Mantras:</strong></p>
+                <ul>
+                    <li><strong>Supa-Tuma (सूपा-तूमा):</strong> The most important method of magic among the Baiga tribe.</li>
+                    <li><strong>Chirbari Grass (चिरबारी घास):</strong> Used by the 'Guniya' to treat patients.</li>
+                    <li><strong>Mooth (मूठ):</strong> Baiga term for destructive magic, famously called 'Mar'.</li>
+                    <li><strong>Guggu (गुग्गू):</strong> A special magical mantra. 'Guggu' is also another name for the owl.</li>
+                </ul>
+
+                <h2 data-toc-id="h2-7">7. Economy & Agriculture</h2>
+
+                <h3 data-toc-id="h3-20">Bewar Agriculture</h3>
+                <ul>
+                    <li><strong>Philosophy:</strong> They consider the earth as a mother, hence they do not plow the land to grow crops.</li>
+                    <li><strong>Practice:</strong> They practice shifting cultivation called <strong>'Bewar'</strong> or <strong>'Pondu'</strong>. 'Kandabadi' is also a similar practice.</li>
+                    <li><strong>Poda Practice:</strong> Involves taking bulls from other people and giving them half the produce in return.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-21">Hunting Traps</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Trap Name</th>
+                            <th>Target Animal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Khujji (खुज्जी फंदा)</td>
+                            <td>Cock, Hen, Peacock</td>
+                        </tr>
+                        <tr>
+                            <td>Dalga, Thonga, Dabka</td>
+                            <td>Rabbit, Chital, Sambar, Cheetah, Rats (in bewar agriculture)</td>
+                        </tr>
+                        <tr>
+                            <td>Suri (सूरी फंदा)</td>
+                            <td>Lion</td>
+                        </tr>
+                        <tr>
+                            <td>Chep (चेप फंदा)</td>
+                            <td>Birds (using a sticky adhesive substance)</td>
+                        </tr>
+                        <tr>
+                            <td>Malanda (मलंदा)</td>
+                            <td>Special snare for birds</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 data-toc-id="h2-8">8. Arts, Festivals & Modern Pride</h2>
+
+                <h3 data-toc-id="h3-22">Dance Traditions & Festivals</h3>
+                <p><strong>Social & Seasonal Dances:</strong></p>
+                <ul>
+                    <li><strong>Karma (कर्मा):</strong> Dance performed from Vijayadashami to Rainy Season on the beat of Maander. Types include Karma Khari, Karma Khap, Karma Jhulni, Karma Lahki (depending on feet movement).</li>
+                    <li><strong>Jharpat (झरपट):</strong> Part of Karma where a man & woman face each other in different directions and sing the Laadu song.</li>
+                    <li><strong>Reena (रीना):</strong> Mainly a ladies' dance, performed face-to-face in a circle (beats of Mandar & Timki).</li>
+                    <li><strong>Saila (सैला):</strong> Performed in the moonlight to please Adidev.</li>
+                    <li><strong>Bilma (बिलमा):</strong> Performed at the time of departure of the baarat.</li>
+                    <li><strong>Pardhoni (परघौनी):</strong> Performed by women to welcome the wedding baarat.</li>
+                </ul>
+                <p><strong>The Festival Timeline:</strong></p>
+                <ul>
+                    <li><strong>Bidri (बिदरी):</strong> Pre-sowing Phase. Festival before sowing seeds. Worship for a good harvest.</li>
+                    <li><strong>Nava Fasal (नवा फसल):</strong> Harvest Phase. New crops are first offered to ancestors.</li>
+                    <li><strong>Chherta (छेरता):</strong> Children's festival. Kids pretend to be saints and ask for Chherta.</li>
+                    <li><strong>Jawara Devi (जवारा देवी):</strong> A dedicated religious festival.</li>
+                    <li><strong>Rasnava / Ratauna (रसनावा):</strong> The Honey Festival. Mainly in Mandla District. Dedicated to Adi Purush Nanga Baiga. Involves the worship of Bees on the 9th day.</li>
+                </ul>
+
+                <h3 data-toc-id="h3-23">Cultural Identity & Padma Shri Awardees</h3>
+                <p><strong>Distinctive Cultural Traits:</strong></p>
+                <ul>
+                    <li><strong>Noh-dora (नोह-डोरा):</strong> Wall painting made with clay while building a new house.</li>
+                    <li><strong>Tattoos (गोदना):</strong> They are known as the most tattoo-loving tribe in the world.</li>
+                    <li><strong>Pig Worship (सूअर पालन):</strong> Pig sacrifice ceremony organized once every 12 years.</li>
+                    <li><strong>Kukda Pat (कुकड़ा पाट):</strong> A traditional game played by both boys and girls together.</li>
+                    <li><strong>Language:</strong> They speak a distorted form of Chhattisgarhi Baiga containing Gondi words. Stories in Baigani dialect are called <strong>Kissa</strong> (e.g., the story of Chakwa-Chakvi).</li>
+                </ul>
+
+                <p><strong>Modern Pride: Padma Shri (पद्म श्री):</strong></p>
+                <ul>
+                    <li><strong>Arjun Singh Dhurve (अर्जुन सिंह धुर्वे):</strong> Awarded in 2022. Field: Dance Artist. District: Dindori.</li>
+                    <li><strong>Jodhaiya Bai (जोधइया बाई):</strong> Awarded in 2023. Field: Painter. District: Umaria.</li>
+                </ul>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== FIX #23: PROPER TITLE HANDLING (NO CACHING) =====
+        const topicName = document.querySelector('title').textContent || 'Unknown Chapter';
+        
+        const linkedQuizFile = "REPLACE_WITH_LINKED_QUIZ_NAME";
+        const linkedPYQFile = "REPLACE_WITH_LINKED_PYQ_FILE";
+
+        localStorage.removeItem('lastGeneratedFile');
+        localStorage.removeItem('previousFileName');
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxxxxxxxxxxxx",
+            authDomain: "gyaan-portal-xxxxx.firebaseapp.com",
+            databaseURL: "https://gyaan-portal-xxxxx.firebasedatabase.app",
+            projectId: "gyaan-portal-xxxxx",
+            storageBucket: "gyaan-portal-xxxxx.appspot.com",
+            messagingSenderId: "xxxxxxxxxxxxx",
+            appId: "xxxxxxxxxxxxx"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = localStorage.getItem('portal_current_user') || 'guest';
+        const safeTopicName = topicName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const userPrefix = `u_${currentUser}__`;
+
+        const annotationKeys = {
+            highlights: `note_annotations_${userPrefix}${safeTopicName}_highlights`,
+            underlines: `note_annotations_${userPrefix}${safeTopicName}_underlines`,
+            bolds: `note_annotations_${userPrefix}${safeTopicName}_bolds`,
+            italics: `note_annotations_${userPrefix}${safeTopicName}_italics`
+        };
+
+        // ===== THEME INITIALIZATION =====
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('quiz_theme') || 'default';
+            const isDark = localStorage.getItem('quiz_dark') === 'true';
+
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (isDark) document.documentElement.classList.add('dark');
+
+            document.querySelector(`[data-theme="${savedTheme}"]`)?.classList.add('active');
+            document.getElementById('darkModeToggle').checked = isDark;
+        }
+        initializeTheme();
+
+        // ===== FIX #26: PROPER SIDEBAR TOGGLE (CSS SPECIFICITY FIX) =====
+        function initMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const bannerToggle = document.getElementById('bannerToggleBtn');
+
+            // Toggle sidebar on button click
+            bannerToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+            });
+
+            // TOC link click: close sidebar and scroll to heading
+            document.querySelectorAll('.toc-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = link.getAttribute('data-toc-id');
+                    const heading = document.querySelector(`[data-toc-id="${id}"]`);
+                    if (heading) {
+                        // Only remove 'open' class; CSS handles the transition
+                        sidebar.classList.remove('open');
+                        // Remove any inline styles that might have been set accidentally
+                        sidebar.style.transform = '';
+                        sidebar.style.visibility = '';
+                        // Scroll after a tiny delay to allow the sidebar to close
+                        setTimeout(() => {
+                            heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 150);
+                    }
+                });
+            });
+
+            // Click outside on mobile: close sidebar
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 1023 &&
+                    !e.target.closest('#sidebar') &&
+                    !e.target.closest('#bannerToggleBtn')) {
+                    sidebar.classList.remove('open');
+                    sidebar.style.transform = '';
+                    sidebar.style.visibility = '';
+                }
+            });
+        }
+        initMobileSidebar();
+
+        // ===== TEST MENU =====
+        document.getElementById('testBtn').addEventListener('click', () => {
+            document.getElementById('testMenuOverlay').classList.add('open');
+        });
+
+        document.getElementById('testChapterBtn').addEventListener('click', () => {
+            if (linkedQuizFile && linkedQuizFile !== 'REPLACE_WITH_LINKED_QUIZ_NAME') {
+                window.open(linkedQuizFile, '_blank');
+            } else {
+                showToast('Quiz not available');
+            }
+            document.getElementById('testMenuOverlay').classList.remove('open');
+        });
+
+        document.getElementById('testPYQBtn').addEventListener('click', () => {
+            if (linkedPYQFile && linkedPYQFile !== 'REPLACE_WITH_LINKED_PYQ_FILE') {
+                window.open(linkedPYQFile, '_blank');
+            } else {
+                showToast('PYQ not available');
+            }
+            document.getElementById('testMenuOverlay').classList.remove('open');
+        });
+
+        document.getElementById('testMenuOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'testMenuOverlay') {
+                document.getElementById('testMenuOverlay').classList.remove('open');
+            }
+        });
+
+        // ===== SETTINGS =====
+        document.getElementById('bannerSettingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsOverlay').classList.add('open');
+        });
+
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsOverlay').classList.remove('open');
+        });
+
+        document.getElementById('settingsOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'settingsOverlay') {
+                document.getElementById('settingsOverlay').classList.remove('open');
+            }
+        });
+
+        // ===== THEME SELECTOR =====
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const theme = option.getAttribute('data-theme');
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('quiz_theme', theme);
+
+                document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+            });
+        });
+
+        // ===== DARK MODE =====
+        document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('quiz_dark', 'true');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('quiz_dark', 'false');
+            }
+        });
+
+        // ===== FONT SIZE =====
+        let fontScale = parseFloat(localStorage.getItem('note_fontsize') || '100') / 100;
+        document.body.style.setProperty('--font-scale', fontScale);
+        document.getElementById('fontDisplay').textContent = Math.round(fontScale * 100) + '%';
+
+        document.getElementById('fontDecreaseBtn').addEventListener('click', () => {
+            fontScale = Math.max(0.8, fontScale - 0.1);
+            document.body.style.setProperty('--font-scale', fontScale);
+            document.getElementById('fontDisplay').textContent = Math.round(fontScale * 100) + '%';
+            localStorage.setItem('note_fontsize', Math.round(fontScale * 100));
+        });
+
+        document.getElementById('fontIncreaseBtn').addEventListener('click', () => {
+            fontScale = Math.min(1.5, fontScale + 0.1);
+            document.body.style.setProperty('--font-scale', fontScale);
+            document.getElementById('fontDisplay').textContent = Math.round(fontScale * 100) + '%';
+            localStorage.setItem('note_fontsize', Math.round(fontScale * 100));
+        });
+
+        // ===== CLEAR ANNOTATIONS =====
+        document.getElementById('clearAnnotationsBtn').addEventListener('click', () => {
+            document.getElementById('clearConfirmOverlay').classList.add('open');
+        });
+
+        document.getElementById('confirmClearYes').addEventListener('click', async () => {
+            document.querySelectorAll('[class*="markup-"]').forEach(el => {
+                el.classList.remove('markup-highlight', 'markup-underline', 'markup-bold', 'markup-italic');
+                while (el.firstChild) {
+                    el.parentNode.insertBefore(el.firstChild, el);
+                }
+                el.parentNode.removeChild(el);
+            });
+
+            for (const key of Object.values(annotationKeys)) {
+                try {
+                    await db.ref(key).remove();
+                } catch (e) {
+                    console.warn('Firebase delete error:', e);
+                }
+            }
+
+            showToast('✓ All annotations cleared');
+            document.getElementById('clearConfirmOverlay').classList.remove('open');
+        });
+
+        document.getElementById('confirmClearNo').addEventListener('click', () => {
+            document.getElementById('clearConfirmOverlay').classList.remove('open');
+        });
+
+        document.getElementById('clearConfirmOverlay').addEventListener('click', (e) => {
+            if (e.target.id === 'clearConfirmOverlay') {
+                document.getElementById('clearConfirmOverlay').classList.remove('open');
+            }
+        });
+
+        // ===== EXIT BUTTON =====
+        document.getElementById('exitBtn').addEventListener('click', () => {
+            const previousPage = sessionStorage.getItem('gyaan_portal_previous_page');
+            if (previousPage) {
+                window.location.href = previousPage;
+            } else {
+                window.history.back();
+            }
+        });
+
+        // ===== UNIFIED CONTEXT MENU (FIX #27 & #28) =====
+        let currentSelection = null;
+        let currentHighlightColor = 'yellow';
+        let lastTouchTime = 0;
+
+        // Helper: check if a node or its ancestors have a given class
+        function hasMarkupClass(node, className) {
+            while (node && node.nodeType === Node.ELEMENT_NODE) {
+                if (node.classList && node.classList.contains(className)) return true;
+                node = node.parentNode;
+            }
+            return false;
+        }
+
+        // Helper: get all formatting types present in the selection
+        function getFormattingTypes(selection) {
+            if (!selection || selection.isCollapsed) return [];
+            const range = selection.getRangeAt(0);
+            const fragment = range.cloneContents();
+            const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_ELEMENT, {
+                acceptNode: node => {
+                    if (node.classList && node.classList.contains('markup-highlight')) return NodeFilter.FILTER_ACCEPT;
+                    if (node.classList && node.classList.contains('markup-bold')) return NodeFilter.FILTER_ACCEPT;
+                    if (node.classList && node.classList.contains('markup-italic')) return NodeFilter.FILTER_ACCEPT;
+                    if (node.classList && node.classList.contains('markup-underline')) return NodeFilter.FILTER_ACCEPT;
+                    return NodeFilter.FILTER_SKIP;
+                }
+            });
+            const types = new Set();
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.classList.contains('markup-highlight')) types.add('highlight');
+                if (node.classList.contains('markup-bold')) types.add('bold');
+                if (node.classList.contains('markup-italic')) types.add('italic');
+                if (node.classList.contains('markup-underline')) types.add('underline');
+            }
+            return [...types];
+        }
+
+        // Show the context menu at (x, y) for the given selection
+        function showContextMenu(x, y, selection) {
+            if (!selection || selection.isCollapsed) return;
+            currentSelection = selection;
+            const types = getFormattingTypes(selection);
+            const hasFormatting = types.length > 0;
+
+            const menu = document.getElementById('contextMenu');
+            const content = document.getElementById('contextMenuContent');
+            let html = '';
+
+            // --- Color picker for highlight (always shown) ---
+            html += '<div style="padding: 8px 16px; font-size: 0.85rem; color: var(--text-3); font-weight: 600;">Highlight Color:</div>';
+            html += '<div class="color-picker">';
+            const colors = ['yellow', 'cyan', 'green', 'pink', 'orange'];
+            colors.forEach(c => {
+                const active = c === currentHighlightColor ? ' active' : '';
+                html += `<div class="color-option color-${c}${active}" data-color="${c}"></div>`;
+            });
+            html += '</div>';
+            html += '<div class="context-menu-divider"></div>';
+
+            // --- If text already has formatting, show removal options ---
+            if (hasFormatting) {
+                if (types.includes('highlight')) {
+                    html += `<button class="context-menu-item" data-action="removeHighlight">❌ Remove Highlight</button>`;
+                }
+                if (types.includes('bold')) {
+                    html += `<button class="context-menu-item" data-action="removeBold">❌ Unbold</button>`;
+                }
+                if (types.includes('italic')) {
+                    html += `<button class="context-menu-item" data-action="removeItalic">❌ Remove Italic</button>`;
+                }
+                if (types.includes('underline')) {
+                    html += `<button class="context-menu-item" data-action="removeUnderline">❌ Remove Underline</button>`;
+                }
+                // Always show "Clear Formatting" if any formatting exists
+                html += `<button class="context-menu-item" data-action="clearFormatting">🧹 Clear All Formatting</button>`;
+            } else {
+                // --- Plain text: show formatting actions ---
+                html += `<button class="context-menu-item" data-action="highlight">🖍️ Highlight</button>`;
+                html += `<button class="context-menu-item" data-action="bold">𝐁 Bold</button>`;
+                html += `<button class="context-menu-item" data-action="italic">𝘐 Italic</button>`;
+                html += `<button class="context-menu-item" data-action="underline">📝 Underline</button>`;
+            }
+
+            content.innerHTML = html;
+
+            // Position the menu
+            const menuWidth = 240;
+            const menuHeight = 300;
+            const padding = 10;
+            let posX = Math.max(padding, Math.min(x - 110, window.innerWidth - menuWidth - padding));
+            let posY = Math.max(padding, Math.min(y + 10, window.innerHeight - menuHeight - padding));
+            if (posY + menuHeight > window.innerHeight) {
+                posY = Math.max(padding, y - menuHeight - 10);
+            }
+            menu.style.left = posX + 'px';
+            menu.style.top = posY + 'px';
+            menu.classList.add('visible');
+
+            // ---- Event handlers for menu items ----
+            // Color picker
+            content.querySelectorAll('.color-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    currentHighlightColor = opt.dataset.color;
+                    content.querySelectorAll('.color-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                });
+            });
+
+            // Action buttons
+            content.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const action = btn.dataset.action;
+                    if (!currentSelection || currentSelection.isCollapsed) return;
+                    try {
+                        const range = currentSelection.getRangeAt(0);
+                        switch (action) {
+                            case 'highlight':
+                                await applyHighlight(range, currentHighlightColor);
+                                break;
+                            case 'bold':
+                                await applyFormatting(range, 'strong', 'markup-bold', 'bolds');
+                                break;
+                            case 'italic':
+                                await applyFormatting(range, 'em', 'markup-italic', 'italics');
+                                break;
+                            case 'underline':
+                                await applyFormatting(range, 'u', 'markup-underline', 'underlines');
+                                break;
+                            case 'removeHighlight':
+                                await removeFormatting(range, 'markup-highlight', 'highlights');
+                                break;
+                            case 'removeBold':
+                                await removeFormatting(range, 'markup-bold', 'bolds');
+                                break;
+                            case 'removeItalic':
+                                await removeFormatting(range, 'markup-italic', 'italics');
+                                break;
+                            case 'removeUnderline':
+                                await removeFormatting(range, 'markup-underline', 'underlines');
+                                break;
+                            case 'clearFormatting':
+                                await clearFormatting(range);
+                                break;
+                            default:
+                                break;
+                        }
+                    } catch (err) {
+                        console.warn('Formatting error:', err);
+                    }
+                    hideContextMenu();
+                    currentSelection.removeAllRanges();
+                    currentSelection = null;
+                });
+            });
+        }
+
+        // Remove a specific formatting type from the selection
+        async function removeFormatting(range, className, dbKey) {
+            const walker = document.createTreeWalker(
+                range.commonAncestorContainer,
+                NodeFilter.SHOW_ELEMENT,
+                {
+                    acceptNode: node => {
+                        if (node.classList && node.classList.contains(className)) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                        return NodeFilter.FILTER_SKIP;
+                    }
+                }
+            );
+            const nodesToUnwrap = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (range.intersectsNode(node)) {
+                    nodesToUnwrap.push(node);
+                }
+            }
+            for (const el of nodesToUnwrap) {
+                const text = el.textContent;
+                const textNode = document.createTextNode(text);
+                el.parentNode.replaceChild(textNode, el);
+                try {
+                    await db.ref(`${annotationKeys[dbKey]}/${btoa(text)}`).remove();
+                } catch(e) {}
+            }
+            showToast('✓ Formatting removed');
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').classList.remove('visible');
+        }
+
+        // ===== FIX #24: APPLY HIGHLIGHT - NO STACKING LAYERS =====
+        async function applyHighlight(range, color) {
+            try {
+                const contents = range.extractContents();
+                const div = document.createElement('div');
+                div.appendChild(contents);
+                
+                div.querySelectorAll('.markup-highlight').forEach(el => {
+                    const text = el.textContent;
+                    const textNode = document.createTextNode(text);
+                    el.parentNode.replaceChild(textNode, el);
+                });
+                
+                range.insertNode(div.firstChild);
+                
+                const span = document.createElement('mark');
+                span.className = `markup-highlight ${color}`;
+                range.surroundContents(span);
+                
+                const text = span.textContent;
+
+                await db.ref(`${annotationKeys.highlights}/${btoa(text)}`).set({
+                    text: text,
+                    color: color,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                showToast(`✓ Highlighted in ${color}`);
+            } catch (e) {
+                console.warn('Error:', e);
+            }
+        }
+
+        async function applyFormatting(range, tagName, className, dbKey) {
+            const span = document.createElement(tagName);
+            span.className = className;
+            
+            try {
+                range.surroundContents(span);
+                const text = span.textContent;
+
+                await db.ref(`${annotationKeys[dbKey]}/${btoa(text)}`).set({
+                    text: text,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+
+                showToast(`✓ Applied ${tagName}`);
+            } catch (e) {
+                console.warn('Error:', e);
+            }
+        }
+
+        // ===== FIX #25: CLEAR FORMATTING - KEEP TEXT =====
+        async function clearFormatting(range) {
+            try {
+                const contents = range.extractContents();
+                const div = document.createElement('div');
+                div.appendChild(contents);
+                
+                div.querySelectorAll('[class*="markup-"]').forEach(el => {
+                    const text = el.textContent;
+                    const textNode = document.createTextNode(text);
+                    el.parentNode.replaceChild(textNode, el);
+                });
+                
+                range.insertNode(div.firstChild);
+                showToast('✓ Formatting cleared');
+            } catch (e) {
+                console.warn('Error:', e);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ===== RIGHT-CLICK (desktop) =====
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.closest('#noteContent')) {
+                e.preventDefault();
+                const sel = window.getSelection();
+                if (sel && !sel.isCollapsed) {
+                    showContextMenu(e.clientX, e.clientY, sel);
+                } else {
+                    hideContextMenu();
+                }
+            }
+        });
+
+        // ===== DOUBLE-TAP (mobile) =====
+        document.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapInterval = currentTime - lastTouchTime;
+            if (tapInterval < 300 && tapInterval > 0) {
+                if (e.target.closest('#noteContent')) {
+                    e.preventDefault();
+                    const sel = window.getSelection();
+                    if (sel && !sel.isCollapsed) {
+                        const touch = e.changedTouches[0];
+                        showContextMenu(touch.clientX, touch.clientY, sel);
+                    }
+                }
+            }
+            lastTouchTime = currentTime;
+        }, { passive: false });
+
+        // ===== MOUSEUP (clear selection when clicking outside) =====
+        document.addEventListener('mouseup', (e) => {
+            if (!e.target.closest('#noteContent')) {
+                window.getSelection().removeAllRanges();
+                hideContextMenu();
+            }
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#contextMenu')) {
+                hideContextMenu();
+            }
+        });
+
+        // Firebase initialization
+        (async () => {
+            try {
+                await auth.signInAnonymously();
+            } catch (e) {
+                console.warn('Auth error:', e);
+            }
+        })();
+
+        if (!sessionStorage.getItem('gyaan_portal_previous_page')) {
+            const referrer = document.referrer;
+            if (referrer) {
+                sessionStorage.setItem('gyaan_portal_previous_page', referrer);
+            }
+        }
+    </script>
+</body>
+</html>
